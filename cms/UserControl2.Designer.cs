@@ -31,9 +31,9 @@
             this.monthlySale = new System.Windows.Forms.Panel();
             this.weeklySale = new System.Windows.Forms.Panel();
             this.panel11 = new System.Windows.Forms.Panel();
-            this.label4 = new System.Windows.Forms.Label();
+            this.generateReport = new System.Windows.Forms.Label();
             this.panel12 = new System.Windows.Forms.Panel();
-            this.label10 = new System.Windows.Forms.Label();
+            this.refreshData = new System.Windows.Forms.Label();
             this.panel6 = new System.Windows.Forms.Panel();
             this.totalSalesTxt = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
@@ -44,17 +44,18 @@
             this.panel8 = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
             this.totalSessionTxt = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
             this.panel9 = new System.Windows.Forms.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
             this.activeSessionTxt = new System.Windows.Forms.Label();
             this.panel10 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             this.panel11.SuspendLayout();
             this.panel12.SuspendLayout();
             this.panel6.SuspendLayout();
             this.panel5.SuspendLayout();
             this.panel4.SuspendLayout();
+            this.panel9.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel10.SuspendLayout();
             this.SuspendLayout();
@@ -83,46 +84,46 @@
             // panel11
             // 
             this.panel11.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.panel11.Controls.Add(this.label4);
+            this.panel11.Controls.Add(this.generateReport);
             this.panel11.Location = new System.Drawing.Point(1295, 796);
             this.panel11.Name = "panel11";
             this.panel11.Size = new System.Drawing.Size(292, 47);
             this.panel11.TabIndex = 12;
-            this.panel11.Click += new System.EventHandler(this.panel11_Click);
+            this.generateReport.Click += new System.EventHandler(this.generateReport_Click);
             // 
-            // label4
+            // generateReport
             // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.label4.Location = new System.Drawing.Point(28, 12);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(221, 25);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "GENERATE REPORT";
-            this.label4.Click += new System.EventHandler(this.panel11_Click);
+            this.generateReport.AutoSize = true;
+            this.generateReport.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.generateReport.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
+            this.generateReport.Location = new System.Drawing.Point(28, 12);
+            this.generateReport.Name = "generateReport";
+            this.generateReport.Size = new System.Drawing.Size(221, 25);
+            this.generateReport.TabIndex = 4;
+            this.generateReport.Text = "GENERATE REPORT";
+            this.generateReport.Click += new System.EventHandler(this.generateReport_Click);
             // 
             // panel12
             // 
             this.panel12.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.panel12.Controls.Add(this.label10);
+            this.panel12.Controls.Add(this.refreshData);
             this.panel12.Location = new System.Drawing.Point(1001, 795);
             this.panel12.Name = "panel12";
             this.panel12.Size = new System.Drawing.Size(283, 47);
             this.panel12.TabIndex = 11;
             this.panel12.Click += new System.EventHandler(this.panel12_Click);
             // 
-            // label10
+            // refreshData
             // 
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.label10.Location = new System.Drawing.Point(46, 12);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(176, 25);
-            this.label10.TabIndex = 5;
-            this.label10.Text = "REFRESH DATA";
-            this.label10.Click += new System.EventHandler(this.panel12_Click);
+            this.refreshData.AutoSize = true;
+            this.refreshData.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.refreshData.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
+            this.refreshData.Location = new System.Drawing.Point(46, 12);
+            this.refreshData.Name = "refreshData";
+            this.refreshData.Size = new System.Drawing.Size(176, 25);
+            this.refreshData.TabIndex = 5;
+            this.refreshData.Text = "REFRESH DATA";
+            this.refreshData.Click += new System.EventHandler(this.panel12_Click);
             // 
             // panel6
             // 
@@ -219,7 +220,6 @@
             this.panel4.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.panel4.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panel4.Controls.Add(this.totalSessionTxt);
-            this.panel4.Controls.Add(this.label5);
             this.panel4.Controls.Add(this.panel9);
             this.panel4.Location = new System.Drawing.Point(478, 39);
             this.panel4.Name = "panel4";
@@ -238,21 +238,10 @@
             this.totalSessionTxt.Text = "17";
             this.totalSessionTxt.Click += new System.EventHandler(this.totalSessionTxt_Click);
             // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.label5.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.label5.Location = new System.Drawing.Point(31, 20);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(202, 25);
-            this.label5.TabIndex = 7;
-            this.label5.Text = "TOTAL SESSIONS";
-            // 
             // panel9
             // 
             this.panel9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
+            this.panel9.Controls.Add(this.label2);
             this.panel9.Location = new System.Drawing.Point(0, 0);
             this.panel9.Name = "panel9";
             this.panel9.Size = new System.Drawing.Size(344, 66);
@@ -301,6 +290,17 @@
             this.label1.TabIndex = 5;
             this.label1.Text = "ACTIVE SESSIONS";
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
+            this.label2.Location = new System.Drawing.Point(31, 20);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(202, 25);
+            this.label2.TabIndex = 6;
+            this.label2.Text = "TOTAL SESSIONS";
+            // 
             // UserControl2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -325,6 +325,8 @@
             this.panel5.PerformLayout();
             this.panel4.ResumeLayout(false);
             this.panel4.PerformLayout();
+            this.panel9.ResumeLayout(false);
+            this.panel9.PerformLayout();
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
             this.panel10.ResumeLayout(false);
@@ -338,9 +340,9 @@
         private System.Windows.Forms.Panel monthlySale;
         private System.Windows.Forms.Panel weeklySale;
         private System.Windows.Forms.Panel panel11;
-        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label generateReport;
         private System.Windows.Forms.Panel panel12;
-        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Label refreshData;
         private System.Windows.Forms.Panel panel6;
         private System.Windows.Forms.Panel panel7;
         private System.Windows.Forms.Panel panel5;
@@ -353,9 +355,9 @@
         private System.Windows.Forms.Label tablesInUseTxt;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label totalSessionTxt;
-        private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label activeSessionTxt;
         private System.Windows.Forms.Label totalSalesTxt;
         private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label2;
     }
 }

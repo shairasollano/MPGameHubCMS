@@ -7,14 +7,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace cms
 {
     public partial class Form2 : Form
     {
-        // Hardcoded credentials
-        private const string HARDCODED_USERNAME = "ADMIN";
-        private const string HARDCODED_PASSWORD = "ADMIN123";
+        // Hardcoded credentials - Staff and Admin credentials
+        private const string STAFF_USERNAME = "staff";
+        private const string STAFF_PASSWORD = "staff123";
+        private const string ADMIN_USERNAME = "admin";
+        private const string ADMIN_PASSWORD = "admin123";
+
+        // Track password visibility state
+        private bool isPasswordVisible = false;
+        private string passwordText = ""; // Store actual password text
+
+        // Add this field to store logged in username and role
+        private string loggedInUsername = "";
+        private string loggedInRole = "";
 
         public Form2()
         {
@@ -30,31 +41,189 @@ namespace cms
             this.StartPosition = FormStartPosition.CenterScreen;
 
             // Wire up the button click event
-            button1.Click += button1_Click;
+            signInBtn.Click += signInBtn_Click;
 
             // Set Enter key to trigger login
-            this.AcceptButton = button1;
+            this.AcceptButton = signInBtn;
 
             // Auto-focus on username field
-            richTextBox1.Focus();
+            usernameType.Focus();
 
-            // Change "Forgot Password?" to show test credentials
-            label3.Text = "Test: ADMIN / ADMIN123";
+            // Initialize password field
+            passwordType.Text = "";
+            passwordText = "";
+
+            // Change "Forgot Password?" to show test credentials - Updated to show correct credentials
+            label3.Text = "Staff: staff / staff123 | Admin: admin / admin123";
             label3.ForeColor = Color.Gray;
             label3.Font = new System.Drawing.Font(label3.Font, System.Drawing.FontStyle.Italic);
+
+            // Setup show password icon click event
+            showPassIcon.Click += showPassIcon_Click;
+            showPassIcon.Cursor = Cursors.Hand;
+
+            // Handle text changes for password field
+            passwordType.TextChanged += passwordType_TextChanged;
+
+            // Handle key events
+            passwordType.KeyPress += passwordType_KeyPress;
+            passwordType.KeyDown += passwordType_KeyDown;
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        // Add this method to expose the logged-in username
+        public string GetLoggedInUsername()
         {
-            string username = richTextBox1.Text.Trim();
-            string password = richTextBox2.Text;
+            return loggedInUsername;
+        }
 
-            // Check hardcoded credentials
-            if (username.ToUpper() == HARDCODED_USERNAME && password == HARDCODED_PASSWORD)
+        // Add this method to expose the logged-in role
+        public string GetLoggedInRole()
+        {
+            return loggedInRole;
+        }
+
+        private void passwordType_TextChanged(object sender, EventArgs e)
+        {
+            // When in hidden mode, we need to track the actual password
+            if (!isPasswordVisible)
             {
+                // Get the current cursor position
+                int cursorPosition = passwordType.SelectionStart;
+
+                // Temporarily remove event handler to avoid recursion
+                passwordType.TextChanged -= passwordType_TextChanged;
+
+                // If the text changed and we're in hidden mode, the user might have pasted or something
+                // For simplicity, we'll just maintain the passwordText based on the displayed asterisks
+                // This is not perfect but works for basic typing
+
+                // Re-attach event handler
+                passwordType.TextChanged += passwordType_TextChanged;
+            }
+        }
+
+        private void passwordType_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!isPasswordVisible && !char.IsControl(e.KeyChar))
+            {
+                // Handle regular character input
+                int cursorPos = passwordType.SelectionStart;
+
+                // Insert character at cursor position
+                passwordText = passwordText.Insert(cursorPos, e.KeyChar.ToString());
+
+                // Show asterisk
+                passwordType.Text = passwordType.Text + "•"; // Simplified for now
+
+                // Move cursor to end
+                passwordType.SelectionStart = passwordType.Text.Length;
+
+                // Prevent the character from being added normally
+                e.Handled = true;
+
+                // Debug - show that passwordText is being updated
+                Console.WriteLine("Password text: " + passwordText);
+            }
+        }
+
+        private void passwordType_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (!isPasswordVisible)
+            {
+                if (e.KeyCode == Keys.Back)
+                {
+                    // Handle backspace
+                    if (passwordText.Length > 0)
+                    {
+                        passwordText = passwordText.Substring(0, passwordText.Length - 1);
+
+                        // Update display
+                        passwordType.Text = new string('•', passwordText.Length);
+                        passwordType.SelectionStart = passwordType.Text.Length;
+                    }
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+                else if (e.KeyCode == Keys.Delete)
+                {
+                    // Handle delete - simplified, just ignore for now
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                }
+                else if (e.KeyCode == Keys.Enter)
+                {
+                    signInBtn_Click(signInBtn, new EventArgs());
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private void showPassIcon_Click(object sender, EventArgs e)
+        {
+            // Toggle password visibility
+            isPasswordVisible = !isPasswordVisible;
+
+            if (isPasswordVisible)
+            {
+                // Show actual password
+                passwordType.Text = passwordText;
+                showPassIcon.Text = "👁️"; // Open eye
+                showPassIcon.ForeColor = Color.Blue;
+            }
+            else
+            {
+                // Show asterisks
+                passwordType.Text = new string('•', passwordText.Length);
+                showPassIcon.Text = "👁️‍🗨️"; // Closed eye
+                showPassIcon.ForeColor = Color.Gray;
+            }
+
+            // Move cursor to end
+            passwordType.SelectionStart = passwordType.Text.Length;
+
+            // Debug
+            Console.WriteLine("Toggle visibility: " + isPasswordVisible + ", Password: " + passwordText);
+        }
+
+        private void signInBtn_Click(object sender, EventArgs e)
+        {
+            string username = usernameType.Text.Trim();
+            string password = passwordText; // Always use passwordText which stores the actual password
+
+            // Debug
+            Console.WriteLine("Login attempt - Username: " + username + ", Password: " + password);
+
+            // Check credentials - Staff login (case insensitive username)
+            if (username.ToLower() == STAFF_USERNAME && password == STAFF_PASSWORD)
+            {
+                loggedInUsername = username;
+                loggedInRole = "Staff";
+
+                // Show POS coming soon message for staff
+                MessageBox.Show("POS is coming soon!",
+                    "Point of Sale System",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                // Don't close the form - stay on login screen
+                // Clear password field for next attempt
+                passwordType.Text = "";
+                passwordText = "";
+                usernameType.Focus();
+                usernameType.SelectAll();
+
+                return;
+            }
+            // Check credentials - Admin login (case insensitive username)
+            else if (username.ToLower() == ADMIN_USERNAME && password == ADMIN_PASSWORD)
+            {
+                // Store which user logged in
+                loggedInUsername = username;
+                loggedInRole = "Admin";
+
                 // Login successful - set DialogResult to OK
                 this.DialogResult = DialogResult.OK;
-                this.Close(); // This will return to Program.cs
+                this.Close();
             }
             else
             {
@@ -65,25 +234,18 @@ namespace cms
                     MessageBoxIcon.Error);
 
                 // Clear password field
-                richTextBox2.Text = "";
-                richTextBox1.Focus();
+                passwordType.Text = "";
+                passwordText = "";
+                usernameType.Focus();
+                usernameType.SelectAll();
             }
         }
 
-        private void richTextBox1_KeyDown(object sender, KeyEventArgs e)
+        private void usernameType_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                richTextBox2.Focus();
-                e.Handled = true;
-            }
-        }
-
-        private void richTextBox2_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                button1_Click(button1, new EventArgs());
+                passwordType.Focus();
                 e.Handled = true;
             }
         }
@@ -112,6 +274,31 @@ namespace cms
         private void pictureBox2_Click(object sender, EventArgs e)
         {
             // Your picture box click handler code here
+        }
+
+        private void usernameType_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void signInBtn_Click_1(object sender, EventArgs e)
+        {
+
         }
     }
 }

@@ -22,6 +22,9 @@ namespace cms
         private Activitylogs activityLogsControl; // Add Activitylogs control reference
         private bool isSigningOut = false; // Add this flag
 
+        // Add property to store logged in user role
+        public string LoggedInUserRole { get; set; }
+
         // Helper class to store original colors
         private class LabelColors
         {
@@ -50,6 +53,48 @@ namespace cms
 
             // Add hover effects for menu labels
             AttachMenuHoverEffects();
+
+            // Set the welcome message with logged in user role
+            SetWelcomeMessage();
+        }
+
+        // New method to set the welcome message based on logged in user
+        private void SetWelcomeMessage()
+        {
+            if (loggedName != null)
+            {
+                // Check if we have a role passed from Form2
+                if (!string.IsNullOrEmpty(LoggedInUserRole))
+                {
+                    loggedName.Text = $"Welcome, {LoggedInUserRole}!";
+                }
+                else
+                {
+                    // Default fallback
+                    loggedName.Text = "Welcome, Admin!";
+                }
+
+                // Optional: Change color based on role
+                if (LoggedInUserRole == "Super Admin")
+                {
+                    loggedName.ForeColor = Color.Gold; // Special color for Super Admin
+                }
+            }
+        }
+
+        // Method to pass login info from Form2
+        public void SetLoggedInUser(string username)
+        {
+            if (username.ToUpper() == "SUPERADMIN")
+            {
+                LoggedInUserRole = "Super Admin";
+            }
+            else
+            {
+                LoggedInUserRole = "Admin";
+            }
+
+            SetWelcomeMessage();
         }
 
         private void AttachSignOutEvent()
@@ -119,16 +164,29 @@ namespace cms
                     this.Hide();
 
                     // Show the login form
-                    loginForm.Show();
+                    if (loginForm.ShowDialog() == DialogResult.OK)
+                    {
+                        // Get the username from Form2
+                        string username = loginForm.GetLoggedInUsername();
 
-                    // Now close current form
-                    this.Close();
+                        // Update the welcome message
+                        SetLoggedInUser(username);
+
+                        // Show this form again
+                        this.Show();
+                    }
+                    else
+                    {
+                        // Login was cancelled or failed - exit application
+                        Application.Exit();
+                    }
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Error opening login form: {ex.Message}",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     isSigningOut = false; // Reset flag
+                    this.Show(); // Show current form again
                 }
             }
         }
@@ -646,6 +704,11 @@ namespace cms
             {
                 dateButton.Text = formattedDate;
             }
+        }
+
+        private void label8_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

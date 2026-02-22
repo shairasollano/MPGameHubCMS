@@ -40,7 +40,7 @@ namespace cms
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.date = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
+            this.loggedName = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
@@ -183,16 +183,17 @@ namespace cms
             this.date.Text = "🗓️";
             this.date.Click += new System.EventHandler(this.date_Click);
             // 
-            // label8
+            // loggedName
             // 
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.label8.Location = new System.Drawing.Point(404, 44);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(253, 36);
-            this.label8.TabIndex = 4;
-            this.label8.Text = "Welcome, Name!";
+            this.loggedName.AutoSize = true;
+            this.loggedName.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.loggedName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
+            this.loggedName.Location = new System.Drawing.Point(404, 44);
+            this.loggedName.Name = "loggedName";
+            this.loggedName.Size = new System.Drawing.Size(253, 36);
+            this.loggedName.TabIndex = 4;
+            this.loggedName.Text = "Welcome, Name!";
+            this.loggedName.Click += new System.EventHandler(this.label8_Click);
             // 
             // label9
             // 
@@ -232,7 +233,7 @@ namespace cms
             this.AutoSize = true;
             this.ClientSize = new System.Drawing.Size(1924, 1055);
             this.Controls.Add(this.label9);
-            this.Controls.Add(this.label8);
+            this.Controls.Add(this.loggedName);
             this.Controls.Add(this.date);
             this.Controls.Add(this.pictureBox3);
             this.Controls.Add(this.label6);
@@ -270,6 +271,6 @@ namespace cms
         private System.Windows.Forms.PictureBox pictureBox3;
         private System.Windows.Forms.Label date;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label loggedName;
     }
 }

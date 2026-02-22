@@ -32,12 +32,13 @@
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.button1 = new System.Windows.Forms.Button();
+            this.showPassIcon = new System.Windows.Forms.Label();
+            this.signInBtn = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.richTextBox2 = new System.Windows.Forms.RichTextBox();
+            this.passwordType = new System.Windows.Forms.RichTextBox();
             this.label1 = new System.Windows.Forms.Label();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+            this.usernameType = new System.Windows.Forms.RichTextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.dashboardBtn = new System.Windows.Forms.Label();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
@@ -82,12 +83,13 @@
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.panel1.Controls.Add(this.button1);
+            this.panel1.Controls.Add(this.showPassIcon);
+            this.panel1.Controls.Add(this.signInBtn);
             this.panel1.Controls.Add(this.label3);
             this.panel1.Controls.Add(this.label2);
-            this.panel1.Controls.Add(this.richTextBox2);
+            this.panel1.Controls.Add(this.passwordType);
             this.panel1.Controls.Add(this.label1);
-            this.panel1.Controls.Add(this.richTextBox1);
+            this.panel1.Controls.Add(this.usernameType);
             this.panel1.Controls.Add(this.label9);
             this.panel1.Controls.Add(this.dashboardBtn);
             this.panel1.Controls.Add(this.pictureBox3);
@@ -96,17 +98,31 @@
             this.panel1.Size = new System.Drawing.Size(539, 655);
             this.panel1.TabIndex = 3;
             // 
-            // button1
+            // showPassIcon
             // 
-            this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.button1.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(44, 530);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(150, 48);
-            this.button1.TabIndex = 12;
-            this.button1.Text = "Sign In";
-            this.button1.UseVisualStyleBackColor = false;
+            this.showPassIcon.AutoSize = true;
+            this.showPassIcon.BackColor = System.Drawing.Color.White;
+            this.showPassIcon.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.showPassIcon.ForeColor = System.Drawing.Color.Black;
+            this.showPassIcon.Location = new System.Drawing.Point(448, 410);
+            this.showPassIcon.Name = "showPassIcon";
+            this.showPassIcon.Size = new System.Drawing.Size(39, 29);
+            this.showPassIcon.TabIndex = 13;
+            this.showPassIcon.Text = "👁️";
+            this.showPassIcon.Click += new System.EventHandler(this.showPassIcon_Click);
+            // 
+            // signInBtn
+            // 
+            this.signInBtn.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
+            this.signInBtn.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
+            this.signInBtn.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.signInBtn.Location = new System.Drawing.Point(44, 530);
+            this.signInBtn.Name = "signInBtn";
+            this.signInBtn.Size = new System.Drawing.Size(150, 48);
+            this.signInBtn.TabIndex = 12;
+            this.signInBtn.Text = "Sign In";
+            this.signInBtn.UseVisualStyleBackColor = false;
+            this.signInBtn.Click += new System.EventHandler(this.signInBtn_Click_1);
             // 
             // label3
             // 
@@ -118,6 +134,7 @@
             this.label3.Size = new System.Drawing.Size(131, 18);
             this.label3.TabIndex = 11;
             this.label3.Text = "Forgot Password?";
+            this.label3.Click += new System.EventHandler(this.label3_Click);
             // 
             // label2
             // 
@@ -129,14 +146,17 @@
             this.label2.Size = new System.Drawing.Size(83, 20);
             this.label2.TabIndex = 10;
             this.label2.Text = "Password";
+            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
-            // richTextBox2
+            // passwordType
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(45, 404);
-            this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(451, 42);
-            this.richTextBox2.TabIndex = 9;
-            this.richTextBox2.Text = "";
+            this.passwordType.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.passwordType.Location = new System.Drawing.Point(45, 404);
+            this.passwordType.Name = "passwordType";
+            this.passwordType.Size = new System.Drawing.Size(451, 42);
+            this.passwordType.TabIndex = 9;
+            this.passwordType.Text = "";
+            this.passwordType.TextChanged += new System.EventHandler(this.passwordType_TextChanged);
             // 
             // label1
             // 
@@ -148,15 +168,17 @@
             this.label1.Size = new System.Drawing.Size(86, 20);
             this.label1.TabIndex = 8;
             this.label1.Text = "Username";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
             // 
-            // richTextBox1
+            // usernameType
             // 
-            this.richTextBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBox1.Location = new System.Drawing.Point(45, 312);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(451, 42);
-            this.richTextBox1.TabIndex = 7;
-            this.richTextBox1.Text = "";
+            this.usernameType.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.usernameType.Location = new System.Drawing.Point(45, 312);
+            this.usernameType.Name = "usernameType";
+            this.usernameType.Size = new System.Drawing.Size(451, 42);
+            this.usernameType.TabIndex = 7;
+            this.usernameType.Text = "";
+            this.usernameType.TextChanged += new System.EventHandler(this.usernameType_TextChanged);
             // 
             // label9
             // 
@@ -218,13 +240,14 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.PictureBox pictureBox3;
         private System.Windows.Forms.Label dashboardBtn;
-        private System.Windows.Forms.RichTextBox richTextBox1;
+        private System.Windows.Forms.RichTextBox usernameType;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button signInBtn;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.RichTextBox richTextBox2;
+        private System.Windows.Forms.RichTextBox passwordType;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label date;
+        private System.Windows.Forms.Label showPassIcon;
     }
 }
