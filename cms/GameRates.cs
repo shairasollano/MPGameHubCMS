@@ -1326,5 +1326,15 @@ namespace cms
         }
 
         #endregion
+
+        private void btnAddNew_Click_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnManage_Click_1(object sender, EventArgs e)
+        {
+
+        }
     }
 }
