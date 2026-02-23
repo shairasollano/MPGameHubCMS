@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,18 @@ namespace cms
         // Configuration file path
         private string configFilePath = Path.Combine(Application.StartupPath, "config.xml");
 
+        // Site identity fields
+        private string currentLogoPath = string.Empty;
+        private Image originalLogo;
+        private PictureBox pictureBoxSiteLogo;
+        private TextBox txtSiteName;
+        private Button btnChangeLogo;
+        private Button btnRemoveLogo;
+        private GroupBox groupBoxSiteIdentity;
+        private Label labelSiteName;
+        private Label labelLogoPreview;
+        private Panel panelLogoPreview;
+
         // Settings data class
         public class SettingsData
         {
@@ -25,6 +38,11 @@ namespace cms
             public bool EnableNotifications { get; set; }
             public bool AutoBackup { get; set; }
             public int SessionTimeout { get; set; }
+
+            // Site Identity Settings
+            public string SiteName { get; set; }
+            public byte[] SiteLogo { get; set; }
+            public string LogoPath { get; set; }
 
             // Database Settings
             public string Server { get; set; }
@@ -63,6 +81,9 @@ namespace cms
         {
             InitializeComponent();
 
+            // Initialize site identity controls
+            InitializeSiteIdentityControls();
+
             // Apply light colors
             ApplyLightTheme();
 
@@ -74,6 +95,249 @@ namespace cms
 
             // Set logo image
             SetLogoImage();
+        }
+
+        private void InitializeSiteIdentityControls()
+        {
+            // GroupBox Site Identity
+            this.groupBoxSiteIdentity = new System.Windows.Forms.GroupBox();
+            this.pictureBoxSiteLogo = new System.Windows.Forms.PictureBox();
+            this.labelSiteName = new System.Windows.Forms.Label();
+            this.txtSiteName = new System.Windows.Forms.TextBox();
+            this.btnChangeLogo = new System.Windows.Forms.Button();
+            this.btnRemoveLogo = new System.Windows.Forms.Button();
+            this.labelLogoPreview = new System.Windows.Forms.Label();
+            this.panelLogoPreview = new System.Windows.Forms.Panel();
+
+            this.groupBoxSiteIdentity.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSiteLogo)).BeginInit();
+            this.panelLogoPreview.SuspendLayout();
+
+            // groupBoxSiteIdentity
+            this.groupBoxSiteIdentity.Controls.Add(this.panelLogoPreview);
+            this.groupBoxSiteIdentity.Controls.Add(this.labelSiteName);
+            this.groupBoxSiteIdentity.Controls.Add(this.txtSiteName);
+            this.groupBoxSiteIdentity.Controls.Add(this.btnChangeLogo);
+            this.groupBoxSiteIdentity.Controls.Add(this.btnRemoveLogo);
+            this.groupBoxSiteIdentity.Location = new System.Drawing.Point(20, 20);
+            this.groupBoxSiteIdentity.Name = "groupBoxSiteIdentity";
+            this.groupBoxSiteIdentity.Size = new System.Drawing.Size(650, 200);
+            this.groupBoxSiteIdentity.TabIndex = 0;
+            this.groupBoxSiteIdentity.TabStop = false;
+            this.groupBoxSiteIdentity.Text = "Site Identity";
+            this.groupBoxSiteIdentity.BackColor = System.Drawing.Color.White;
+
+            // panelLogoPreview
+            this.panelLogoPreview.Controls.Add(this.pictureBoxSiteLogo);
+            this.panelLogoPreview.Controls.Add(this.labelLogoPreview);
+            this.panelLogoPreview.Location = new System.Drawing.Point(20, 30);
+            this.panelLogoPreview.Name = "panelLogoPreview";
+            this.panelLogoPreview.Size = new System.Drawing.Size(140, 140);
+            this.panelLogoPreview.TabIndex = 6;
+            this.panelLogoPreview.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panelLogoPreview.BackColor = System.Drawing.Color.FromArgb(250, 250, 250);
+
+            // pictureBoxSiteLogo
+            this.pictureBoxSiteLogo.Location = new System.Drawing.Point(10, 10);
+            this.pictureBoxSiteLogo.Name = "pictureBoxSiteLogo";
+            this.pictureBoxSiteLogo.Size = new System.Drawing.Size(120, 100);
+            this.pictureBoxSiteLogo.TabIndex = 4;
+            this.pictureBoxSiteLogo.TabStop = false;
+            this.pictureBoxSiteLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBoxSiteLogo.Click += new System.EventHandler(this.PictureBoxSiteLogo_Click);
+
+            // labelLogoPreview
+            this.labelLogoPreview.AutoSize = true;
+            this.labelLogoPreview.Location = new System.Drawing.Point(30, 115);
+            this.labelLogoPreview.Name = "labelLogoPreview";
+            this.labelLogoPreview.Size = new System.Drawing.Size(75, 15);
+            this.labelLogoPreview.TabIndex = 5;
+            this.labelLogoPreview.Text = "Logo Preview";
+            this.labelLogoPreview.ForeColor = System.Drawing.Color.Gray;
+
+            // labelSiteName
+            this.labelSiteName.AutoSize = true;
+            this.labelSiteName.Location = new System.Drawing.Point(180, 40);
+            this.labelSiteName.Name = "labelSiteName";
+            this.labelSiteName.Size = new System.Drawing.Size(63, 15);
+            this.labelSiteName.TabIndex = 0;
+            this.labelSiteName.Text = "Site Name:";
+
+            // txtSiteName
+            this.txtSiteName.Location = new System.Drawing.Point(180, 60);
+            this.txtSiteName.Name = "txtSiteName";
+            this.txtSiteName.Size = new System.Drawing.Size(300, 23);
+            this.txtSiteName.TabIndex = 1;
+            this.txtSiteName.Text = "MatchPoint CMS";
+            this.txtSiteName.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.txtSiteName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtSiteName.TextChanged += new System.EventHandler(this.TxtSiteName_TextChanged);
+
+            // btnChangeLogo
+            this.btnChangeLogo.Location = new System.Drawing.Point(180, 100);
+            this.btnChangeLogo.Name = "btnChangeLogo";
+            this.btnChangeLogo.Size = new System.Drawing.Size(120, 30);
+            this.btnChangeLogo.TabIndex = 2;
+            this.btnChangeLogo.Text = "Change Logo";
+            this.btnChangeLogo.UseVisualStyleBackColor = true;
+            this.btnChangeLogo.BackColor = System.Drawing.Color.FromArgb(70, 130, 180);
+            this.btnChangeLogo.ForeColor = System.Drawing.Color.White;
+            this.btnChangeLogo.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnChangeLogo.FlatAppearance.BorderSize = 0;
+            this.btnChangeLogo.Click += new System.EventHandler(this.BtnChangeLogo_Click);
+
+            // btnRemoveLogo
+            this.btnRemoveLogo.Location = new System.Drawing.Point(310, 100);
+            this.btnRemoveLogo.Name = "btnRemoveLogo";
+            this.btnRemoveLogo.Size = new System.Drawing.Size(100, 30);
+            this.btnRemoveLogo.TabIndex = 3;
+            this.btnRemoveLogo.Text = "Remove Logo";
+            this.btnRemoveLogo.UseVisualStyleBackColor = true;
+            this.btnRemoveLogo.BackColor = System.Drawing.Color.FromArgb(220, 220, 220);
+            this.btnRemoveLogo.ForeColor = System.Drawing.Color.FromArgb(70, 70, 70);
+            this.btnRemoveLogo.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnRemoveLogo.FlatAppearance.BorderSize = 0;
+            this.btnRemoveLogo.Click += new System.EventHandler(this.BtnRemoveLogo_Click);
+
+            // Add to tabPageGeneral
+            this.tabPageGeneral.Controls.Add(this.groupBoxSiteIdentity);
+
+            this.groupBoxSiteIdentity.ResumeLayout(false);
+            this.groupBoxSiteIdentity.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxSiteLogo)).EndInit();
+            this.panelLogoPreview.ResumeLayout(false);
+            this.panelLogoPreview.PerformLayout();
+
+            // Set default logo
+            SetDefaultSiteLogo();
+        }
+
+        private void SetDefaultSiteLogo()
+        {
+            try
+            {
+                // Create a simple default logo
+                Bitmap bmp = new Bitmap(120, 100);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.Clear(Color.FromArgb(250, 250, 250));
+
+                    // Draw a simple icon
+                    using (SolidBrush brush = new SolidBrush(Color.FromArgb(70, 130, 180)))
+                    {
+                        g.FillRectangle(brush, 30, 20, 60, 60);
+                    }
+
+                    // Draw MP text
+                    using (System.Drawing.Font font = new System.Drawing.Font("Arial", 16, System.Drawing.FontStyle.Bold))
+                    using (SolidBrush brush = new SolidBrush(Color.White))
+                    {
+                        g.DrawString("MP", font, brush, 45, 40);
+                    }
+                }
+                pictureBoxSiteLogo.Image = bmp;
+                originalLogo = bmp;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error creating default logo: {ex.Message}", "Error",
+                              MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BtnChangeLogo_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif|All Files|*.*";
+                openFileDialog.Title = "Select Site Logo";
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        // Load the selected image
+                        Image selectedImage = Image.FromFile(openFileDialog.FileName);
+
+                        // Resize image if too large
+                        Image resizedImage = ResizeImage(selectedImage, 120, 100);
+
+                        // Display in picture box
+                        pictureBoxSiteLogo.Image = resizedImage;
+
+                        // Store the path
+                        currentLogoPath = openFileDialog.FileName;
+
+                        // Dispose the original selected image if different from resized
+                        if (selectedImage != resizedImage)
+                        {
+                            selectedImage.Dispose();
+                        }
+
+                        MessageBox.Show("Logo selected successfully. Click 'Save All' to apply changes.",
+                                      "Logo Changed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error loading logo: {ex.Message}", "Error",
+                                      MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private Image ResizeImage(Image image, int width, int height)
+        {
+            // Create a new bitmap with the desired size
+            Bitmap resizedImage = new Bitmap(width, height);
+
+            using (Graphics g = Graphics.FromImage(resizedImage))
+            {
+                // Set high quality settings
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.HighQuality;
+                g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                g.CompositingQuality = CompositingQuality.HighQuality;
+
+                // Draw the image with the new size
+                g.DrawImage(image, 0, 0, width, height);
+            }
+
+            return resizedImage;
+        }
+
+        private void BtnRemoveLogo_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show(
+                "Are you sure you want to remove the site logo?",
+                "Remove Logo",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                // Restore default logo
+                SetDefaultSiteLogo();
+                currentLogoPath = string.Empty;
+
+                MessageBox.Show("Logo removed. Default logo will be used.",
+                              "Logo Removed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void TxtSiteName_TextChanged(object sender, EventArgs e)
+        {
+            // Live preview of site name (optional)
+        }
+
+        private void PictureBoxSiteLogo_Click(object sender, EventArgs e)
+        {
+            // Show preview
+            if (pictureBoxSiteLogo.Image != null)
+            {
+                MessageBox.Show("Current site logo. Click 'Change Logo' to update.",
+                              "Logo Preview", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         private void ApplyLightTheme()
@@ -100,6 +364,15 @@ namespace cms
                     groupBox.ForeColor = Color.FromArgb(50, 50, 50);
                 }
             }
+
+            // Update site identity group box if it exists
+            if (groupBoxSiteIdentity != null)
+            {
+                groupBoxSiteIdentity.BackColor = Color.White;
+                groupBoxSiteIdentity.ForeColor = Color.FromArgb(50, 50, 50);
+                panelLogoPreview.BackColor = Color.FromArgb(250, 250, 250);
+                labelLogoPreview.ForeColor = Color.Gray;
+            }
         }
 
         private void SETTINGS_Load(object sender, EventArgs e)
@@ -125,9 +398,6 @@ namespace cms
 
             // Website link
             linkLabelWebsite.LinkClicked += LinkLabelWebsite_LinkClicked;
-
-            // Theme change
-            
         }
 
         private void SetLogoImage()
@@ -167,15 +437,6 @@ namespace cms
                 MessageBox.Show($"Error creating logo: {ex.Message}", "Error",
                               MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        private void ComboBoxTheme_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            // Preview theme change
-            
-
-            // You can add theme preview logic here
-            // For example, change some colors temporarily
         }
 
         // ==============================================
@@ -255,6 +516,15 @@ namespace cms
                                 case "EmailNewUserAlerts": settings.EmailNewUserAlerts = bool.Parse(value); break;
                                 case "EmailLowInventoryAlerts": settings.EmailLowInventoryAlerts = bool.Parse(value); break;
                                 case "EmailSalesReport": settings.EmailSalesReport = bool.Parse(value); break;
+                                case "SiteName": settings.SiteName = value; break;
+                                case "LogoPath": settings.LogoPath = value; break;
+                                case "SiteLogoBase64":
+                                    try
+                                    {
+                                        settings.SiteLogo = Convert.FromBase64String(value);
+                                    }
+                                    catch { }
+                                    break;
                             }
                         }
                     }
@@ -304,6 +574,14 @@ namespace cms
                 lines.Add($"EmailNewUserAlerts={settings.EmailNewUserAlerts}");
                 lines.Add($"EmailLowInventoryAlerts={settings.EmailLowInventoryAlerts}");
                 lines.Add($"EmailSalesReport={settings.EmailSalesReport}");
+                lines.Add($"SiteName={settings.SiteName}");
+                lines.Add($"LogoPath={settings.LogoPath}");
+
+                // Convert logo to base64 if you want to store in the same file
+                if (settings.SiteLogo != null && settings.SiteLogo.Length > 0)
+                {
+                    lines.Add($"SiteLogoBase64={Convert.ToBase64String(settings.SiteLogo)}");
+                }
 
                 File.WriteAllLines(configFilePath, lines);
 
@@ -327,6 +605,11 @@ namespace cms
                 EnableNotifications = true,
                 AutoBackup = true,
                 SessionTimeout = 30,
+
+                // Site Identity
+                SiteName = "MatchPoint CMS",
+                LogoPath = "",
+                SiteLogo = null,
 
                 // Database
                 Server = "localhost",
@@ -364,7 +647,49 @@ namespace cms
 
         private void ApplySettingsToUI(SettingsData settings)
         {
-            
+            // Site Identity Settings
+            if (txtSiteName != null)
+            {
+                txtSiteName.Text = !string.IsNullOrEmpty(settings.SiteName) ? settings.SiteName : "MatchPoint CMS";
+            }
+
+            // Load logo if exists
+            if (pictureBoxSiteLogo != null)
+            {
+                if (!string.IsNullOrEmpty(settings.LogoPath) && File.Exists(settings.LogoPath))
+                {
+                    try
+                    {
+                        Image logo = Image.FromFile(settings.LogoPath);
+                        pictureBoxSiteLogo.Image = ResizeImage(logo, 120, 100);
+                        currentLogoPath = settings.LogoPath;
+                        logo.Dispose();
+                    }
+                    catch
+                    {
+                        SetDefaultSiteLogo();
+                    }
+                }
+                else if (settings.SiteLogo != null && settings.SiteLogo.Length > 0)
+                {
+                    try
+                    {
+                        using (MemoryStream ms = new MemoryStream(settings.SiteLogo))
+                        {
+                            Image logo = Image.FromStream(ms);
+                            pictureBoxSiteLogo.Image = ResizeImage(logo, 120, 100);
+                        }
+                    }
+                    catch
+                    {
+                        SetDefaultSiteLogo();
+                    }
+                }
+                else
+                {
+                    SetDefaultSiteLogo();
+                }
+            }
 
             // Database Settings
             txtServer.Text = settings.Server;
@@ -383,8 +708,6 @@ namespace cms
             numericUpDownPasswordHistory.Value = settings.PasswordHistoryCount;
             checkBoxForceLogout.Checked = settings.ForceLogoutOnPasswordChange;
 
-            
-
             // Email Settings
             txtSmtpServer.Text = settings.SmtpServer;
             txtSmtpPort.Text = settings.SmtpPort.ToString();
@@ -397,10 +720,8 @@ namespace cms
 
         private SettingsData GetSettingsFromUI()
         {
-            return new SettingsData
+            var settings = new SettingsData
             {
-                
-
                 // Database Settings
                 Server = txtServer.Text,
                 Username = txtUsername.Text,
@@ -418,8 +739,6 @@ namespace cms
                 PasswordHistoryCount = (int)numericUpDownPasswordHistory.Value,
                 ForceLogoutOnPasswordChange = checkBoxForceLogout.Checked,
 
-                
-
                 // Email Settings
                 SmtpServer = txtSmtpServer.Text,
                 SmtpPort = int.TryParse(txtSmtpPort.Text, out int port) ? port : 587,
@@ -427,8 +746,25 @@ namespace cms
                 EmailPassword = txtEmailPassword.Text,
                 EmailNewUserAlerts = checkBoxEmailNewUser.Checked,
                 EmailLowInventoryAlerts = checkBoxEmailLowInventory.Checked,
-                EmailSalesReport = checkBoxEmailSalesReport.Checked
+                EmailSalesReport = checkBoxEmailSalesReport.Checked,
+
+                // Site Identity Settings
+                SiteName = txtSiteName != null ? txtSiteName.Text : "MatchPoint CMS",
+                LogoPath = currentLogoPath
             };
+
+            // Convert logo to byte array if needed
+            if (pictureBoxSiteLogo != null && pictureBoxSiteLogo.Image != null && pictureBoxSiteLogo.Image != originalLogo)
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    // Save as PNG to maintain transparency
+                    pictureBoxSiteLogo.Image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                    settings.SiteLogo = ms.ToArray();
+                }
+            }
+
+            return settings;
         }
 
         // ==============================================
@@ -443,7 +779,10 @@ namespace cms
                 SaveSettingsToFile(settings);
 
                 // Apply theme changes if needed
-                ApplyTheme(settings.Theme);
+                if (settings != null)
+                {
+                    ApplyTheme(settings.Theme);
+                }
             }
             catch (Exception ex)
             {
@@ -694,31 +1033,100 @@ namespace cms
 
         private void ApplyTheme(string theme)
         {
-            // This method would apply the selected theme to the application
+            // This method applies the selected theme to the settings UI
             switch (theme.ToLower())
             {
                 case "dark":
-                    // Apply dark theme
-                    MessageBox.Show("Dark theme selected. Restart application for changes to take effect.",
-                                  "Theme Change", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // Apply dark theme to the settings panel
+                    this.BackColor = Color.FromArgb(45, 45, 45);
+                    tabControl1.BackColor = Color.FromArgb(45, 45, 45);
+
+                    foreach (TabPage page in tabControl1.TabPages)
+                    {
+                        page.BackColor = Color.FromArgb(55, 55, 55);
+                        page.ForeColor = Color.White;
+                    }
+
+                    foreach (Control control in this.Controls)
+                    {
+                        if (control is GroupBox groupBox)
+                        {
+                            groupBox.BackColor = Color.FromArgb(65, 65, 65);
+                            groupBox.ForeColor = Color.White;
+                        }
+                    }
+
+                    // Update site identity group box if it exists
+                    if (groupBoxSiteIdentity != null)
+                    {
+                        groupBoxSiteIdentity.BackColor = Color.FromArgb(65, 65, 65);
+                        groupBoxSiteIdentity.ForeColor = Color.White;
+                        panelLogoPreview.BackColor = Color.FromArgb(55, 55, 55);
+                        labelLogoPreview.ForeColor = Color.LightGray;
+                    }
+
+                    MessageBox.Show("Dark theme applied. Some changes may require restart.",
+                                  "Theme Changed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     break;
+
                 case "light":
                     // Apply light theme
-                    MessageBox.Show("Light theme selected. Restart application for changes to take effect.",
-                                  "Theme Change", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    ApplyLightTheme();
+                    MessageBox.Show("Light theme applied.", "Theme Changed",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information);
                     break;
+
                 case "blue":
                     // Apply blue theme
-                    MessageBox.Show("Blue theme selected. Restart application for changes to take effect.",
-                                  "Theme Change", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.BackColor = Color.FromArgb(240, 248, 255);
+                    tabControl1.BackColor = Color.FromArgb(240, 248, 255);
+
+                    foreach (TabPage page in tabControl1.TabPages)
+                    {
+                        page.BackColor = Color.FromArgb(255, 255, 255);
+                        page.ForeColor = Color.FromArgb(0, 70, 140);
+                    }
+
+                    foreach (Control control in this.Controls)
+                    {
+                        if (control is GroupBox groupBox)
+                        {
+                            groupBox.BackColor = Color.FromArgb(230, 242, 255);
+                            groupBox.ForeColor = Color.FromArgb(0, 70, 140);
+                        }
+                    }
+
+                    MessageBox.Show("Blue theme applied.", "Theme Changed",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information);
                     break;
+
                 case "green":
                     // Apply green theme
-                    MessageBox.Show("Green theme selected. Restart application for changes to take effect.",
-                                  "Theme Change", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    this.BackColor = Color.FromArgb(240, 255, 240);
+                    tabControl1.BackColor = Color.FromArgb(240, 255, 240);
+
+                    foreach (TabPage page in tabControl1.TabPages)
+                    {
+                        page.BackColor = Color.FromArgb(255, 255, 255);
+                        page.ForeColor = Color.FromArgb(0, 100, 0);
+                    }
+
+                    foreach (Control control in this.Controls)
+                    {
+                        if (control is GroupBox groupBox)
+                        {
+                            groupBox.BackColor = Color.FromArgb(230, 255, 230);
+                            groupBox.ForeColor = Color.FromArgb(0, 100, 0);
+                        }
+                    }
+
+                    MessageBox.Show("Green theme applied.", "Theme Changed",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information);
                     break;
+
                 default:
-                    // Apply default theme
+                    // Apply default (light) theme
+                    ApplyLightTheme();
                     break;
             }
         }
@@ -751,405 +1159,85 @@ namespace cms
             return settings.SessionTimeout;
         }
 
-        private void tabPageSecurity_Click(object sender, EventArgs e)
-        {
-
-
-        }
-
-        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxSystem_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numericUpDownSessionTimeout_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label3_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxAutoBackup_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxNotifications_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void comboBoxLanguage_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void comboBoxTheme_SelectedIndexChanged_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void tabPageGeneral_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnTestConnection_Click_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnSaveDatabase_Click_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxBackup_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnRestoreDatabase_Click_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnBackupDatabase_Click_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label8_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtBackupPath_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxConnection_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtDatabaseName_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtPassword_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtUsername_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtServer_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label7_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label6_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label5_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label4_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void tabPageDatabase_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxPasswordPolicy_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numericUpDownPasswordHistory_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numericUpDownPasswordExpiry_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numericUpDownMaxAttempts_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numericUpDownMinLength_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxRequireSpecialChar_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxRequireNumber_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxRequireUppercase_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label13_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label12_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label11_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label10_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label9_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxSession_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxForceLogout_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void tabPageGameSettings_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxRates_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void numericUpDownDefaultRate_ValueChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label14_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxGameDefaults_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxAutoStartGame_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxEnableSound_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label15_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void comboBoxDefaultGame_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void tabPageNotifications_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxEmail_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnTestEmail_Click_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnSaveEmail_Click_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtEmailPassword_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtEmailUsername_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtSmtpServer_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void txtSmtpPort_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label20_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label19_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label18_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label17_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label16_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxNotificationTypes_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxEmailSalesReport_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxEmailLowInventory_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void checkBoxEmailNewUser_CheckedChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void tabPageAbout_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void groupBoxAbout_Enter(object sender, EventArgs e)
-        {
-
-        }
-
-        private void linkLabelWebsite_LinkClicked_1(object sender, LinkLabelLinkClickedEventArgs e)
-        {
-
-        }
-
-        private void label24_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label23_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label22_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label21_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void pictureBoxLogo_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnSaveAll_Click_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void btnReset_Click_1(object sender, EventArgs e)
-        {
-
-        }
+        // Empty event handlers that are required by the designer
+        private void tabPageSecurity_Click(object sender, EventArgs e) { }
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e) { }
+        private void groupBoxSystem_Enter(object sender, EventArgs e) { }
+        private void numericUpDownSessionTimeout_ValueChanged(object sender, EventArgs e) { }
+        private void label3_Click(object sender, EventArgs e) { }
+        private void checkBoxAutoBackup_CheckedChanged(object sender, EventArgs e) { }
+        private void checkBoxNotifications_CheckedChanged(object sender, EventArgs e) { }
+        private void label2_Click(object sender, EventArgs e) { }
+        private void comboBoxLanguage_SelectedIndexChanged(object sender, EventArgs e) { }
+        private void label1_Click(object sender, EventArgs e) { }
+        private void comboBoxTheme_SelectedIndexChanged_1(object sender, EventArgs e) { }
+        private void tabPageGeneral_Click(object sender, EventArgs e) { }
+        private void btnTestConnection_Click_1(object sender, EventArgs e) { }
+        private void btnSaveDatabase_Click_1(object sender, EventArgs e) { }
+        private void groupBoxBackup_Enter(object sender, EventArgs e) { }
+        private void btnRestoreDatabase_Click_1(object sender, EventArgs e) { }
+        private void btnBackupDatabase_Click_1(object sender, EventArgs e) { }
+        private void label8_Click(object sender, EventArgs e) { }
+        private void txtBackupPath_TextChanged(object sender, EventArgs e) { }
+        private void groupBoxConnection_Enter(object sender, EventArgs e) { }
+        private void txtDatabaseName_TextChanged(object sender, EventArgs e) { }
+        private void txtPassword_TextChanged(object sender, EventArgs e) { }
+        private void txtUsername_TextChanged(object sender, EventArgs e) { }
+        private void txtServer_TextChanged(object sender, EventArgs e) { }
+        private void label7_Click(object sender, EventArgs e) { }
+        private void label6_Click(object sender, EventArgs e) { }
+        private void label5_Click(object sender, EventArgs e) { }
+        private void label4_Click(object sender, EventArgs e) { }
+        private void tabPageDatabase_Click(object sender, EventArgs e) { }
+        private void groupBoxPasswordPolicy_Enter(object sender, EventArgs e) { }
+        private void numericUpDownPasswordHistory_ValueChanged(object sender, EventArgs e) { }
+        private void numericUpDownPasswordExpiry_ValueChanged(object sender, EventArgs e) { }
+        private void numericUpDownMaxAttempts_ValueChanged(object sender, EventArgs e) { }
+        private void numericUpDownMinLength_ValueChanged(object sender, EventArgs e) { }
+        private void checkBoxRequireSpecialChar_CheckedChanged(object sender, EventArgs e) { }
+        private void checkBoxRequireNumber_CheckedChanged(object sender, EventArgs e) { }
+        private void checkBoxRequireUppercase_CheckedChanged(object sender, EventArgs e) { }
+        private void label13_Click(object sender, EventArgs e) { }
+        private void label12_Click(object sender, EventArgs e) { }
+        private void label11_Click(object sender, EventArgs e) { }
+        private void label10_Click(object sender, EventArgs e) { }
+        private void label9_Click(object sender, EventArgs e) { }
+        private void groupBoxSession_Enter(object sender, EventArgs e) { }
+        private void checkBoxForceLogout_CheckedChanged(object sender, EventArgs e) { }
+        private void tabPageGameSettings_Click(object sender, EventArgs e) { }
+        private void groupBoxRates_Enter(object sender, EventArgs e) { }
+        private void numericUpDownDefaultRate_ValueChanged(object sender, EventArgs e) { }
+        private void label14_Click(object sender, EventArgs e) { }
+        private void groupBoxGameDefaults_Enter(object sender, EventArgs e) { }
+        private void checkBoxAutoStartGame_CheckedChanged(object sender, EventArgs e) { }
+        private void checkBoxEnableSound_CheckedChanged(object sender, EventArgs e) { }
+        private void label15_Click(object sender, EventArgs e) { }
+        private void comboBoxDefaultGame_SelectedIndexChanged(object sender, EventArgs e) { }
+        private void tabPageNotifications_Click(object sender, EventArgs e) { }
+        private void groupBoxEmail_Enter(object sender, EventArgs e) { }
+        private void btnTestEmail_Click_1(object sender, EventArgs e) { }
+        private void btnSaveEmail_Click_1(object sender, EventArgs e) { }
+        private void txtEmailPassword_TextChanged(object sender, EventArgs e) { }
+        private void txtEmailUsername_TextChanged(object sender, EventArgs e) { }
+        private void txtSmtpServer_TextChanged(object sender, EventArgs e) { }
+        private void txtSmtpPort_TextChanged(object sender, EventArgs e) { }
+        private void label20_Click(object sender, EventArgs e) { }
+        private void label19_Click(object sender, EventArgs e) { }
+        private void label18_Click(object sender, EventArgs e) { }
+        private void label17_Click(object sender, EventArgs e) { }
+        private void label16_Click(object sender, EventArgs e) { }
+        private void groupBoxNotificationTypes_Enter(object sender, EventArgs e) { }
+        private void checkBoxEmailSalesReport_CheckedChanged(object sender, EventArgs e) { }
+        private void checkBoxEmailLowInventory_CheckedChanged(object sender, EventArgs e) { }
+        private void checkBoxEmailNewUser_CheckedChanged(object sender, EventArgs e) { }
+        private void tabPageAbout_Click(object sender, EventArgs e) { }
+        private void groupBoxAbout_Enter(object sender, EventArgs e) { }
+        private void label24_Click(object sender, EventArgs e) { }
+        private void label23_Click(object sender, EventArgs e) { }
+        private void label22_Click(object sender, EventArgs e) { }
+        private void label21_Click(object sender, EventArgs e) { }
+        private void pictureBoxLogo_Click(object sender, EventArgs e) { }
+        private void btnSaveAll_Click_1(object sender, EventArgs e) { }
+        private void btnReset_Click_1(object sender, EventArgs e) { }
     }
 }
