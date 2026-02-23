@@ -1,10 +1,7 @@
-﻿using MySql.Data.MySqlClient;
+﻿using MySqlConnector;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace cms
@@ -61,14 +58,14 @@ namespace cms
                 tempConn.Open();
 
                 // Check if database exists
-                string checkDbQuery = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'matchpointdb'";
+                string checkDbQuery = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'matchpoint_db'";
                 MySqlCommand checkCmd = new MySqlCommand(checkDbQuery, tempConn);
                 object result = checkCmd.ExecuteScalar();
 
                 if (result == null)
                 {
                     // Create database
-                    string createDbQuery = "CREATE DATABASE matchpointdb";
+                    string createDbQuery = "CREATE DATABASE matchpoint_db";
                     MySqlCommand createCmd = new MySqlCommand(createDbQuery, tempConn);
                     createCmd.ExecuteNonQuery();
                 }
