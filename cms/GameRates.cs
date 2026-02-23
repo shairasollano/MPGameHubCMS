@@ -14,7 +14,7 @@ namespace cms
         private List<string> _gameTypes;
 
         // Database connection string for XAMPP MySQL
-        private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
+        private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;Allow User Variables=True;";
         private MySqlConnection connection;
 
         public GameRates()

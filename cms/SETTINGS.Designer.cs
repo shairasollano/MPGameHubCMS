@@ -30,6 +30,15 @@
         {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPageGeneral = new System.Windows.Forms.TabPage();
+            this.groupBoxSystem = new System.Windows.Forms.GroupBox();
+            this.numericUpDownSessionTimeout = new System.Windows.Forms.NumericUpDown();
+            this.label3 = new System.Windows.Forms.Label();
+            this.checkBoxAutoBackup = new System.Windows.Forms.CheckBox();
+            this.checkBoxNotifications = new System.Windows.Forms.CheckBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.comboBoxLanguage = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.comboBoxTheme = new System.Windows.Forms.ComboBox();
             this.tabPageDatabase = new System.Windows.Forms.TabPage();
             this.btnTestConnection = new System.Windows.Forms.Button();
             this.btnSaveDatabase = new System.Windows.Forms.Button();
@@ -87,21 +96,14 @@
             this.label23 = new System.Windows.Forms.Label();
             this.label22 = new System.Windows.Forms.Label();
             this.label21 = new System.Windows.Forms.Label();
+            this.pictureBoxLogo = new System.Windows.Forms.PictureBox();
             this.btnSaveAll = new System.Windows.Forms.Button();
             this.btnReset = new System.Windows.Forms.Button();
             this.panelContainer = new System.Windows.Forms.Panel();
-            this.pictureBoxLogo = new System.Windows.Forms.PictureBox();
-            this.comboBoxTheme = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.comboBoxLanguage = new System.Windows.Forms.ComboBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.checkBoxNotifications = new System.Windows.Forms.CheckBox();
-            this.checkBoxAutoBackup = new System.Windows.Forms.CheckBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.numericUpDownSessionTimeout = new System.Windows.Forms.NumericUpDown();
-            this.groupBoxSystem = new System.Windows.Forms.GroupBox();
             this.tabControl1.SuspendLayout();
             this.tabPageGeneral.SuspendLayout();
+            this.groupBoxSystem.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSessionTimeout)).BeginInit();
             this.tabPageDatabase.SuspendLayout();
             this.groupBoxBackup.SuspendLayout();
             this.groupBoxConnection.SuspendLayout();
@@ -117,10 +119,8 @@
             this.groupBoxNotificationTypes.SuspendLayout();
             this.tabPageAbout.SuspendLayout();
             this.groupBoxAbout.SuspendLayout();
-            this.panelContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSessionTimeout)).BeginInit();
-            this.groupBoxSystem.SuspendLayout();
+            this.panelContainer.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -150,6 +150,151 @@
             this.tabPageGeneral.TabIndex = 0;
             this.tabPageGeneral.Text = "General";
             this.tabPageGeneral.Click += new System.EventHandler(this.tabPageGeneral_Click);
+            // 
+            // groupBoxSystem
+            // 
+            this.groupBoxSystem.BackColor = System.Drawing.Color.White;
+            this.groupBoxSystem.Controls.Add(this.numericUpDownSessionTimeout);
+            this.groupBoxSystem.Controls.Add(this.label3);
+            this.groupBoxSystem.Controls.Add(this.checkBoxAutoBackup);
+            this.groupBoxSystem.Controls.Add(this.checkBoxNotifications);
+            this.groupBoxSystem.Controls.Add(this.label2);
+            this.groupBoxSystem.Controls.Add(this.comboBoxLanguage);
+            this.groupBoxSystem.Controls.Add(this.label1);
+            this.groupBoxSystem.Controls.Add(this.comboBoxTheme);
+            this.groupBoxSystem.Font = new System.Drawing.Font("Segoe UI Semibold", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBoxSystem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.groupBoxSystem.Location = new System.Drawing.Point(30, 30);
+            this.groupBoxSystem.Name = "groupBoxSystem";
+            this.groupBoxSystem.Size = new System.Drawing.Size(650, 350);
+            this.groupBoxSystem.TabIndex = 0;
+            this.groupBoxSystem.TabStop = false;
+            this.groupBoxSystem.Text = "System Settings";
+            this.groupBoxSystem.Enter += new System.EventHandler(this.groupBoxSystem_Enter);
+            // 
+            // numericUpDownSessionTimeout
+            // 
+            this.numericUpDownSessionTimeout.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(245)))));
+            this.numericUpDownSessionTimeout.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numericUpDownSessionTimeout.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.numericUpDownSessionTimeout.Location = new System.Drawing.Point(250, 160);
+            this.numericUpDownSessionTimeout.Maximum = new decimal(new int[] {
+            240,
+            0,
+            0,
+            0});
+            this.numericUpDownSessionTimeout.Minimum = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            this.numericUpDownSessionTimeout.Name = "numericUpDownSessionTimeout";
+            this.numericUpDownSessionTimeout.Size = new System.Drawing.Size(120, 30);
+            this.numericUpDownSessionTimeout.TabIndex = 7;
+            this.numericUpDownSessionTimeout.Value = new decimal(new int[] {
+            30,
+            0,
+            0,
+            0});
+            this.numericUpDownSessionTimeout.ValueChanged += new System.EventHandler(this.numericUpDownSessionTimeout_ValueChanged);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.label3.Location = new System.Drawing.Point(30, 162);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(146, 25);
+            this.label3.TabIndex = 6;
+            this.label3.Text = "Session Timeout:";
+            this.label3.Click += new System.EventHandler(this.label3_Click);
+            // 
+            // checkBoxAutoBackup
+            // 
+            this.checkBoxAutoBackup.AutoSize = true;
+            this.checkBoxAutoBackup.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkBoxAutoBackup.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.checkBoxAutoBackup.Location = new System.Drawing.Point(250, 250);
+            this.checkBoxAutoBackup.Name = "checkBoxAutoBackup";
+            this.checkBoxAutoBackup.Size = new System.Drawing.Size(129, 27);
+            this.checkBoxAutoBackup.TabIndex = 5;
+            this.checkBoxAutoBackup.Text = "Auto Backup";
+            this.checkBoxAutoBackup.UseVisualStyleBackColor = true;
+            this.checkBoxAutoBackup.CheckedChanged += new System.EventHandler(this.checkBoxAutoBackup_CheckedChanged);
+            // 
+            // checkBoxNotifications
+            // 
+            this.checkBoxNotifications.AutoSize = true;
+            this.checkBoxNotifications.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkBoxNotifications.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.checkBoxNotifications.Location = new System.Drawing.Point(250, 220);
+            this.checkBoxNotifications.Name = "checkBoxNotifications";
+            this.checkBoxNotifications.Size = new System.Drawing.Size(184, 27);
+            this.checkBoxNotifications.TabIndex = 4;
+            this.checkBoxNotifications.Text = "Enable Notifications";
+            this.checkBoxNotifications.UseVisualStyleBackColor = true;
+            this.checkBoxNotifications.CheckedChanged += new System.EventHandler(this.checkBoxNotifications_CheckedChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.label2.Location = new System.Drawing.Point(30, 100);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(93, 25);
+            this.label2.TabIndex = 3;
+            this.label2.Text = "Language:";
+            this.label2.Click += new System.EventHandler(this.label2_Click);
+            // 
+            // comboBoxLanguage
+            // 
+            this.comboBoxLanguage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(245)))));
+            this.comboBoxLanguage.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxLanguage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.comboBoxLanguage.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboBoxLanguage.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.comboBoxLanguage.FormattingEnabled = true;
+            this.comboBoxLanguage.Items.AddRange(new object[] {
+            "English",
+            "Filipino"});
+            this.comboBoxLanguage.Location = new System.Drawing.Point(250, 97);
+            this.comboBoxLanguage.Name = "comboBoxLanguage";
+            this.comboBoxLanguage.Size = new System.Drawing.Size(250, 31);
+            this.comboBoxLanguage.TabIndex = 2;
+            this.comboBoxLanguage.SelectedIndexChanged += new System.EventHandler(this.comboBoxLanguage_SelectedIndexChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.label1.Location = new System.Drawing.Point(30, 40);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(69, 25);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "Theme:";
+            this.label1.Click += new System.EventHandler(this.label1_Click);
+            // 
+            // comboBoxTheme
+            // 
+            this.comboBoxTheme.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(245)))));
+            this.comboBoxTheme.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxTheme.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.comboBoxTheme.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.comboBoxTheme.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.comboBoxTheme.FormattingEnabled = true;
+            this.comboBoxTheme.Items.AddRange(new object[] {
+            "Light",
+            "Dark",
+            "Blue",
+            "Green"});
+            this.comboBoxTheme.Location = new System.Drawing.Point(250, 37);
+            this.comboBoxTheme.Name = "comboBoxTheme";
+            this.comboBoxTheme.Size = new System.Drawing.Size(250, 31);
+            this.comboBoxTheme.TabIndex = 0;
+            this.comboBoxTheme.SelectedIndexChanged += new System.EventHandler(this.comboBoxTheme_SelectedIndexChanged_1);
             // 
             // tabPageDatabase
             // 
@@ -925,7 +1070,7 @@
             this.linkLabelWebsite.TabIndex = 5;
             this.linkLabelWebsite.TabStop = true;
             this.linkLabelWebsite.Text = "www.matchpoint.ph";
-            this.linkLabelWebsite.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabelWebsite_LinkClicked_1);
+            this.linkLabelWebsite.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinkLabelWebsite_LinkClicked);
             // 
             // label24
             // 
@@ -970,10 +1115,21 @@
             this.label21.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
             this.label21.Location = new System.Drawing.Point(280, 120);
             this.label21.Name = "label21";
-            this.label21.Size = new System.Drawing.Size(194, 31);
+            this.label21.Size = new System.Drawing.Size(139, 31);
             this.label21.TabIndex = 1;
-            this.label21.Text = "MatchPoint CMS";
+            this.label21.Text = "MatchPoint";
             this.label21.Click += new System.EventHandler(this.label21_Click);
+            // 
+            // pictureBoxLogo
+            // 
+            this.pictureBoxLogo.BackColor = System.Drawing.Color.White;
+            this.pictureBoxLogo.Location = new System.Drawing.Point(70, 120);
+            this.pictureBoxLogo.Name = "pictureBoxLogo";
+            this.pictureBoxLogo.Size = new System.Drawing.Size(180, 180);
+            this.pictureBoxLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBoxLogo.TabIndex = 0;
+            this.pictureBoxLogo.TabStop = false;
+            this.pictureBoxLogo.Click += new System.EventHandler(this.pictureBoxLogo_Click);
             // 
             // btnSaveAll
             // 
@@ -1018,162 +1174,6 @@
             this.panelContainer.Size = new System.Drawing.Size(1727, 939);
             this.panelContainer.TabIndex = 3;
             // 
-            // pictureBoxLogo
-            // 
-            this.pictureBoxLogo.BackColor = System.Drawing.Color.White;
-            this.pictureBoxLogo.Location = new System.Drawing.Point(70, 120);
-            this.pictureBoxLogo.Name = "pictureBoxLogo";
-            this.pictureBoxLogo.Size = new System.Drawing.Size(180, 180);
-            this.pictureBoxLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBoxLogo.TabIndex = 0;
-            this.pictureBoxLogo.TabStop = false;
-            this.pictureBoxLogo.Click += new System.EventHandler(this.pictureBoxLogo_Click);
-            // 
-            // comboBoxTheme
-            // 
-            this.comboBoxTheme.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(245)))));
-            this.comboBoxTheme.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBoxTheme.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.comboBoxTheme.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboBoxTheme.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
-            this.comboBoxTheme.FormattingEnabled = true;
-            this.comboBoxTheme.Items.AddRange(new object[] {
-            "Light",
-            "Dark",
-            "Blue",
-            "Green"});
-            this.comboBoxTheme.Location = new System.Drawing.Point(250, 37);
-            this.comboBoxTheme.Name = "comboBoxTheme";
-            this.comboBoxTheme.Size = new System.Drawing.Size(250, 31);
-            this.comboBoxTheme.TabIndex = 0;
-            this.comboBoxTheme.SelectedIndexChanged += new System.EventHandler(this.comboBoxTheme_SelectedIndexChanged_1);
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
-            this.label1.Location = new System.Drawing.Point(30, 40);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(69, 25);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Theme:";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
-            // 
-            // comboBoxLanguage
-            // 
-            this.comboBoxLanguage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(245)))));
-            this.comboBoxLanguage.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBoxLanguage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.comboBoxLanguage.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.comboBoxLanguage.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
-            this.comboBoxLanguage.FormattingEnabled = true;
-            this.comboBoxLanguage.Items.AddRange(new object[] {
-            "English",
-            "Filipino"});
-            this.comboBoxLanguage.Location = new System.Drawing.Point(250, 97);
-            this.comboBoxLanguage.Name = "comboBoxLanguage";
-            this.comboBoxLanguage.Size = new System.Drawing.Size(250, 31);
-            this.comboBoxLanguage.TabIndex = 2;
-            this.comboBoxLanguage.SelectedIndexChanged += new System.EventHandler(this.comboBoxLanguage_SelectedIndexChanged);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
-            this.label2.Location = new System.Drawing.Point(30, 100);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(93, 25);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "Language:";
-            this.label2.Click += new System.EventHandler(this.label2_Click);
-            // 
-            // checkBoxNotifications
-            // 
-            this.checkBoxNotifications.AutoSize = true;
-            this.checkBoxNotifications.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkBoxNotifications.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
-            this.checkBoxNotifications.Location = new System.Drawing.Point(250, 220);
-            this.checkBoxNotifications.Name = "checkBoxNotifications";
-            this.checkBoxNotifications.Size = new System.Drawing.Size(184, 27);
-            this.checkBoxNotifications.TabIndex = 4;
-            this.checkBoxNotifications.Text = "Enable Notifications";
-            this.checkBoxNotifications.UseVisualStyleBackColor = true;
-            this.checkBoxNotifications.CheckedChanged += new System.EventHandler(this.checkBoxNotifications_CheckedChanged);
-            // 
-            // checkBoxAutoBackup
-            // 
-            this.checkBoxAutoBackup.AutoSize = true;
-            this.checkBoxAutoBackup.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.checkBoxAutoBackup.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
-            this.checkBoxAutoBackup.Location = new System.Drawing.Point(250, 250);
-            this.checkBoxAutoBackup.Name = "checkBoxAutoBackup";
-            this.checkBoxAutoBackup.Size = new System.Drawing.Size(129, 27);
-            this.checkBoxAutoBackup.TabIndex = 5;
-            this.checkBoxAutoBackup.Text = "Auto Backup";
-            this.checkBoxAutoBackup.UseVisualStyleBackColor = true;
-            this.checkBoxAutoBackup.CheckedChanged += new System.EventHandler(this.checkBoxAutoBackup_CheckedChanged);
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
-            this.label3.Location = new System.Drawing.Point(30, 162);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(146, 25);
-            this.label3.TabIndex = 6;
-            this.label3.Text = "Session Timeout:";
-            this.label3.Click += new System.EventHandler(this.label3_Click);
-            // 
-            // numericUpDownSessionTimeout
-            // 
-            this.numericUpDownSessionTimeout.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(245)))), ((int)(((byte)(245)))));
-            this.numericUpDownSessionTimeout.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.numericUpDownSessionTimeout.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.numericUpDownSessionTimeout.Location = new System.Drawing.Point(250, 160);
-            this.numericUpDownSessionTimeout.Maximum = new decimal(new int[] {
-            240,
-            0,
-            0,
-            0});
-            this.numericUpDownSessionTimeout.Minimum = new decimal(new int[] {
-            5,
-            0,
-            0,
-            0});
-            this.numericUpDownSessionTimeout.Name = "numericUpDownSessionTimeout";
-            this.numericUpDownSessionTimeout.Size = new System.Drawing.Size(120, 30);
-            this.numericUpDownSessionTimeout.TabIndex = 7;
-            this.numericUpDownSessionTimeout.Value = new decimal(new int[] {
-            30,
-            0,
-            0,
-            0});
-            this.numericUpDownSessionTimeout.ValueChanged += new System.EventHandler(this.numericUpDownSessionTimeout_ValueChanged);
-            // 
-            // groupBoxSystem
-            // 
-            this.groupBoxSystem.BackColor = System.Drawing.Color.White;
-            this.groupBoxSystem.Controls.Add(this.numericUpDownSessionTimeout);
-            this.groupBoxSystem.Controls.Add(this.label3);
-            this.groupBoxSystem.Controls.Add(this.checkBoxAutoBackup);
-            this.groupBoxSystem.Controls.Add(this.checkBoxNotifications);
-            this.groupBoxSystem.Controls.Add(this.label2);
-            this.groupBoxSystem.Controls.Add(this.comboBoxLanguage);
-            this.groupBoxSystem.Controls.Add(this.label1);
-            this.groupBoxSystem.Controls.Add(this.comboBoxTheme);
-            this.groupBoxSystem.Font = new System.Drawing.Font("Segoe UI Semibold", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBoxSystem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
-            this.groupBoxSystem.Location = new System.Drawing.Point(30, 30);
-            this.groupBoxSystem.Name = "groupBoxSystem";
-            this.groupBoxSystem.Size = new System.Drawing.Size(650, 350);
-            this.groupBoxSystem.TabIndex = 0;
-            this.groupBoxSystem.TabStop = false;
-            this.groupBoxSystem.Text = "System Settings";
-            this.groupBoxSystem.Enter += new System.EventHandler(this.groupBoxSystem_Enter);
-            // 
             // SETTINGS
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -1184,6 +1184,9 @@
             this.Size = new System.Drawing.Size(1727, 939);
             this.tabControl1.ResumeLayout(false);
             this.tabPageGeneral.ResumeLayout(false);
+            this.groupBoxSystem.ResumeLayout(false);
+            this.groupBoxSystem.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSessionTimeout)).EndInit();
             this.tabPageDatabase.ResumeLayout(false);
             this.groupBoxBackup.ResumeLayout(false);
             this.groupBoxBackup.PerformLayout();
@@ -1206,11 +1209,8 @@
             this.tabPageAbout.ResumeLayout(false);
             this.groupBoxAbout.ResumeLayout(false);
             this.groupBoxAbout.PerformLayout();
-            this.panelContainer.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxLogo)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSessionTimeout)).EndInit();
-            this.groupBoxSystem.ResumeLayout(false);
-            this.groupBoxSystem.PerformLayout();
+            this.panelContainer.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
