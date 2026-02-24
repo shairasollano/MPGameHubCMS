@@ -135,8 +135,9 @@
     <Compile Include="UserControl2.Designer.cs">
       <DependentUpon>UserControl2.cs</DependentUpon>
     </Compile>
-    <Compile Include="USERSMAINFORM.cs">
+    <Compile Include="..\..\meupdar\USERSMAINFORM.cs">
       <SubType>UserControl</SubType>
+      <Link>USERSMAINFORM.cs</Link>
     </Compile>
     <EmbeddedResource Include="Activitylogs.resx">
       <DependentUpon>Activitylogs.cs</DependentUpon>
@@ -166,8 +167,9 @@
     <EmbeddedResource Include="UserControl2.resx">
       <DependentUpon>UserControl2.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="USERSMAINFORM.resx">
+    <EmbeddedResource Include="..\..\meupdar\USERSMAINFORM.resx">
       <DependentUpon>USERSMAINFORM.cs</DependentUpon>
+      <Link>USERSMAINFORM.resx</Link>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
