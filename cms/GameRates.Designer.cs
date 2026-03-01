@@ -226,7 +226,6 @@
 
             // colEdit
             this.colEdit.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.colEdit.FillWeight = 5F;
             this.colEdit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.colEdit.HeaderText = "";
             this.colEdit.MinimumWidth = 80;

@@ -833,37 +833,42 @@ namespace cms
                 cboStatus.SelectedIndex = 0;
                 tlp.Controls.Add(cboStatus, 1, 6);
 
-                // Buttons panel
+                // Buttons panel - FIXED ALIGNMENT
                 FlowLayoutPanel buttonPanel = new FlowLayoutPanel
                 {
                     FlowDirection = FlowDirection.RightToLeft,
                     Dock = DockStyle.Fill,
-                    Height = 50
+                    Height = 50,
+                    Padding = new Padding(0),
+                    Margin = new Padding(0),
+                    WrapContents = false
                 };
 
                 Button btnCancel = new Button
                 {
                     Text = "Cancel",
-                    Size = new Size(100, 35),
+                    Size = new Size(100, 40),
                     Font = regularFont,
                     BackColor = Color.FromArgb(108, 117, 125),
                     ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat
+                    FlatStyle = FlatStyle.Flat,
+                    Margin = new Padding(10, 5, 0, 5)
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
 
                 Button btnAdd = new Button
                 {
                     Text = "Add Rate",
-                    Size = new Size(120, 35),
+                    Size = new Size(120, 40),
                     Font = semiboldFont,
                     BackColor = Color.FromArgb(40, 167, 69),
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
-                    Margin = new Padding(10, 0, 0, 0)
+                    Margin = new Padding(10, 5, 0, 5)
                 };
                 btnAdd.FlatAppearance.BorderSize = 0;
 
+                // Add buttons in reverse order for RightToLeft flow
                 buttonPanel.Controls.Add(btnCancel);
                 buttonPanel.Controls.Add(btnAdd);
                 tlp.Controls.Add(buttonPanel, 1, 7);
@@ -1246,48 +1251,54 @@ namespace cms
                 cboStatusEdit.SelectedItem = status;
                 tlp.Controls.Add(cboStatusEdit, 1, 6);
 
-                // Buttons panel
+                // Buttons panel - FIXED ALIGNMENT
                 FlowLayoutPanel buttonPanel = new FlowLayoutPanel
                 {
                     FlowDirection = FlowDirection.RightToLeft,
                     Dock = DockStyle.Fill,
-                    Height = 50
+                    Height = 50,
+                    Padding = new Padding(0),
+                    Margin = new Padding(0),
+                    WrapContents = false
                 };
-
-                Button btnCancel = new Button
-                {
-                    Text = "Cancel",
-                    Size = new Size(100, 35),
-                    Font = regularFont,
-                    BackColor = Color.FromArgb(108, 117, 125),
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat
-                };
-                btnCancel.FlatAppearance.BorderSize = 0;
-
-                Button btnDelete = new Button
-                {
-                    Text = "Delete",
-                    Size = new Size(100, 35),
-                    Font = regularFont,
-                    BackColor = Color.FromArgb(220, 53, 69),
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat
-                };
-                btnDelete.FlatAppearance.BorderSize = 0;
 
                 Button btnSave = new Button
                 {
                     Text = "Save Changes",
-                    Size = new Size(120, 35),
+                    Size = new Size(120, 40),
                     Font = semiboldFont,
                     BackColor = Color.FromArgb(40, 167, 69),
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
-                    Margin = new Padding(10, 0, 0, 0)
+                    Margin = new Padding(10, 5, 0, 5)
                 };
                 btnSave.FlatAppearance.BorderSize = 0;
 
+                Button btnDelete = new Button
+                {
+                    Text = "Delete",
+                    Size = new Size(100, 40),
+                    Font = regularFont,
+                    BackColor = Color.FromArgb(220, 53, 69),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Margin = new Padding(10, 5, 0, 5)
+                };
+                btnDelete.FlatAppearance.BorderSize = 0;
+
+                Button btnCancel = new Button
+                {
+                    Text = "Cancel",
+                    Size = new Size(100, 40),
+                    Font = regularFont,
+                    BackColor = Color.FromArgb(108, 117, 125),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Margin = new Padding(10, 5, 0, 5)
+                };
+                btnCancel.FlatAppearance.BorderSize = 0;
+
+                // Add buttons in reverse order for RightToLeft flow
                 buttonPanel.Controls.Add(btnCancel);
                 buttonPanel.Controls.Add(btnDelete);
                 buttonPanel.Controls.Add(btnSave);
