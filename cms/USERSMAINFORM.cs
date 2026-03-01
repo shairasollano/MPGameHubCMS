@@ -35,12 +35,29 @@ namespace finaluserandstaff
         private ToolStripMenuItem MANAGER;
         private ToolStripMenuItem STAFF;
         private TextBox txtSearch;
+        private Panel panel1;
+        private Panel lblPageStatus;
+        private Button btnNext;
+        private Button btnPrev;
+        private Button btnPage5;
+        private Button btnPage4;
+        private Button btnPage3;
+        private Button btnPage2;
+        private Button btnPage1;
         private DataGridViewComboBoxColumn STATUS;
 
         public UserManagementControl()
         {
             InitializeComponent();
-            this.datagrd.CellBeginEdit += new DataGridViewCellCancelEventHandler(this.datagrd_CellBeginEdit);
+
+            // Avoid executing runtime-only code while the WinForms designer is loading
+            // The designer instantiates the control which can cause runtime-only logic
+            // (like event handlers that assume runtime state) to throw. Use
+            // LicenseManager.UsageMode to detect design-time hosting.
+            if (LicenseManager.UsageMode != LicenseUsageMode.Designtime)
+            {
+                this.datagrd.CellBeginEdit += new DataGridViewCellCancelEventHandler(this.datagrd_CellBeginEdit);
+            }
         }
 
         private void datagrd_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
@@ -82,6 +99,15 @@ namespace finaluserandstaff
             this.labelTitle = new System.Windows.Forms.Label();
             this.btnManage = new System.Windows.Forms.Button();
             this.panel2 = new System.Windows.Forms.Panel();
+            this.lblPageStatus = new System.Windows.Forms.Panel();
+            this.btnPage5 = new System.Windows.Forms.Button();
+            this.btnPage4 = new System.Windows.Forms.Button();
+            this.btnPage3 = new System.Windows.Forms.Button();
+            this.btnPage2 = new System.Windows.Forms.Button();
+            this.btnPage1 = new System.Windows.Forms.Button();
+            this.btnNext = new System.Windows.Forms.Button();
+            this.btnPrev = new System.Windows.Forms.Button();
+            this.panel1 = new System.Windows.Forms.Panel();
             this.datagrd = new System.Windows.Forms.DataGridView();
             this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.NAME = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -98,6 +124,7 @@ namespace finaluserandstaff
             this.STAFF = new System.Windows.Forms.ToolStripMenuItem();
             this.panelHeader.SuspendLayout();
             this.panel2.SuspendLayout();
+            this.lblPageStatus.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.datagrd)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
             this.filterContextMenu.SuspendLayout();
@@ -114,17 +141,18 @@ namespace finaluserandstaff
             this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelHeader.Location = new System.Drawing.Point(0, 0);
             this.panelHeader.Name = "panelHeader";
-            this.panelHeader.Size = new System.Drawing.Size(1124, 80);
+            this.panelHeader.Size = new System.Drawing.Size(1270, 80);
             this.panelHeader.TabIndex = 0;
+            this.panelHeader.Paint += new System.Windows.Forms.PaintEventHandler(this.panelHeader_Paint);
             // 
             // txtSearch
             // 
             this.txtSearch.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.txtSearch.Font = new System.Drawing.Font("Segoe UI Semilight", 10.2F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtSearch.ForeColor = System.Drawing.Color.Black;
-            this.txtSearch.Location = new System.Drawing.Point(477, 30);
+            this.txtSearch.Location = new System.Drawing.Point(511, 29);
             this.txtSearch.Name = "txtSearch";
-            this.txtSearch.Size = new System.Drawing.Size(253, 23);
+            this.txtSearch.Size = new System.Drawing.Size(227, 23);
             this.txtSearch.TabIndex = 10;
             this.txtSearch.Text = "search here";
             this.txtSearch.MouseClick += new System.Windows.Forms.MouseEventHandler(this.txtSearch_MouseClick);
@@ -134,7 +162,7 @@ namespace finaluserandstaff
             // 
             // btnFilter
             // 
-            this.btnFilter.Location = new System.Drawing.Point(743, 20);
+            this.btnFilter.Location = new System.Drawing.Point(743, 19);
             this.btnFilter.Name = "btnFilter";
             this.btnFilter.Size = new System.Drawing.Size(116, 40);
             this.btnFilter.TabIndex = 3;
@@ -149,7 +177,7 @@ namespace finaluserandstaff
             this.btnEdit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEdit.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnEdit.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.btnEdit.Location = new System.Drawing.Point(736, 20);
+            this.btnEdit.Location = new System.Drawing.Point(882, 20);
             this.btnEdit.Name = "btnEdit";
             this.btnEdit.Size = new System.Drawing.Size(180, 40);
             this.btnEdit.TabIndex = 2;
@@ -167,6 +195,7 @@ namespace finaluserandstaff
             this.labelTitle.Size = new System.Drawing.Size(464, 28);
             this.labelTitle.TabIndex = 0;
             this.labelTitle.Text = "USER AND STAFF MANAGEMENT | ADMIN SIDE";
+            this.labelTitle.Click += new System.EventHandler(this.labelTitle_Click);
             // 
             // btnManage
             // 
@@ -175,7 +204,7 @@ namespace finaluserandstaff
             this.btnManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnManage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnManage.ForeColor = System.Drawing.Color.White;
-            this.btnManage.Location = new System.Drawing.Point(924, 20);
+            this.btnManage.Location = new System.Drawing.Point(1070, 20);
             this.btnManage.Name = "btnManage";
             this.btnManage.Size = new System.Drawing.Size(180, 40);
             this.btnManage.TabIndex = 1;
@@ -186,13 +215,111 @@ namespace finaluserandstaff
             // panel2
             // 
             this.panel2.BackColor = System.Drawing.Color.White;
+            this.panel2.Controls.Add(this.lblPageStatus);
+            this.panel2.Controls.Add(this.panel1);
             this.panel2.Controls.Add(this.datagrd);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 80);
             this.panel2.Name = "panel2";
             this.panel2.Padding = new System.Windows.Forms.Padding(20);
-            this.panel2.Size = new System.Drawing.Size(1124, 420);
+            this.panel2.Size = new System.Drawing.Size(1270, 488);
             this.panel2.TabIndex = 1;
+            this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
+            // 
+            // lblPageStatus
+            // 
+            this.lblPageStatus.Controls.Add(this.btnPage5);
+            this.lblPageStatus.Controls.Add(this.btnPage4);
+            this.lblPageStatus.Controls.Add(this.btnPage3);
+            this.lblPageStatus.Controls.Add(this.btnPage2);
+            this.lblPageStatus.Controls.Add(this.btnPage1);
+            this.lblPageStatus.Controls.Add(this.btnNext);
+            this.lblPageStatus.Controls.Add(this.btnPrev);
+            this.lblPageStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.lblPageStatus.Location = new System.Drawing.Point(20, 427);
+            this.lblPageStatus.Name = "lblPageStatus";
+            this.lblPageStatus.Size = new System.Drawing.Size(1230, 41);
+            this.lblPageStatus.TabIndex = 2;
+            this.lblPageStatus.Paint += new System.Windows.Forms.PaintEventHandler(this.lblPageStatus_Paint);
+            // 
+            // btnPage5
+            // 
+            this.btnPage5.Location = new System.Drawing.Point(684, 7);
+            this.btnPage5.Name = "btnPage5";
+            this.btnPage5.Size = new System.Drawing.Size(34, 34);
+            this.btnPage5.TabIndex = 9;
+            this.btnPage5.Text = "5";
+            this.btnPage5.UseVisualStyleBackColor = true;
+            this.btnPage5.Click += new System.EventHandler(this.btnPage5_Click);
+            // 
+            // btnPage4
+            // 
+            this.btnPage4.Location = new System.Drawing.Point(644, 7);
+            this.btnPage4.Name = "btnPage4";
+            this.btnPage4.Size = new System.Drawing.Size(34, 34);
+            this.btnPage4.TabIndex = 8;
+            this.btnPage4.Text = "4";
+            this.btnPage4.UseVisualStyleBackColor = true;
+            this.btnPage4.Click += new System.EventHandler(this.btnPage4_Click);
+            // 
+            // btnPage3
+            // 
+            this.btnPage3.Location = new System.Drawing.Point(604, 7);
+            this.btnPage3.Name = "btnPage3";
+            this.btnPage3.Size = new System.Drawing.Size(34, 34);
+            this.btnPage3.TabIndex = 7;
+            this.btnPage3.Text = "3";
+            this.btnPage3.UseVisualStyleBackColor = true;
+            this.btnPage3.Click += new System.EventHandler(this.btnPage3_Click);
+            // 
+            // btnPage2
+            // 
+            this.btnPage2.Location = new System.Drawing.Point(564, 7);
+            this.btnPage2.Name = "btnPage2";
+            this.btnPage2.Size = new System.Drawing.Size(34, 34);
+            this.btnPage2.TabIndex = 6;
+            this.btnPage2.Text = "2";
+            this.btnPage2.UseVisualStyleBackColor = true;
+            this.btnPage2.Click += new System.EventHandler(this.btnPage2_Click);
+            // 
+            // btnPage1
+            // 
+            this.btnPage1.Location = new System.Drawing.Point(524, 7);
+            this.btnPage1.Name = "btnPage1";
+            this.btnPage1.Size = new System.Drawing.Size(34, 34);
+            this.btnPage1.TabIndex = 5;
+            this.btnPage1.Text = "1";
+            this.btnPage1.UseVisualStyleBackColor = true;
+            this.btnPage1.Click += new System.EventHandler(this.btnPage1_Click);
+            // 
+            // btnNext
+            // 
+            this.btnNext.Location = new System.Drawing.Point(742, 3);
+            this.btnNext.Name = "btnNext";
+            this.btnNext.Size = new System.Drawing.Size(37, 35);
+            this.btnNext.TabIndex = 4;
+            this.btnNext.Text = ">";
+            this.btnNext.UseVisualStyleBackColor = true;
+            this.btnNext.Click += new System.EventHandler(this.btnNext_Click_1);
+            // 
+            // btnPrev
+            // 
+            this.btnPrev.Location = new System.Drawing.Point(466, 3);
+            this.btnPrev.Name = "btnPrev";
+            this.btnPrev.Size = new System.Drawing.Size(37, 35);
+            this.btnPrev.TabIndex = 3;
+            this.btnPrev.Text = "<";
+            this.btnPrev.UseVisualStyleBackColor = true;
+            this.btnPrev.Click += new System.EventHandler(this.btnPrev_Click);
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.Black;
+            this.panel1.Location = new System.Drawing.Point(581, 666);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(299, 41);
+            this.panel1.TabIndex = 1;
+            this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
             // 
             // datagrd
             // 
@@ -215,8 +342,9 @@ namespace finaluserandstaff
             this.datagrd.RowHeadersWidth = 51;
             this.datagrd.RowTemplate.Height = 24;
             this.datagrd.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.datagrd.Size = new System.Drawing.Size(1084, 380);
+            this.datagrd.Size = new System.Drawing.Size(1230, 448);
             this.datagrd.TabIndex = 0;
+            this.datagrd.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.datagrd_CellContentClick);
             // 
             // ID
             // 
@@ -258,6 +386,7 @@ namespace finaluserandstaff
             this.dELETEUSERToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(187, 52);
+            this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
             // 
             // toolStripMenuItem1
             // 
@@ -277,11 +406,13 @@ namespace finaluserandstaff
             // 
             this.uPDATEUSERToolStripMenuItem.Name = "uPDATEUSERToolStripMenuItem";
             this.uPDATEUSERToolStripMenuItem.Size = new System.Drawing.Size(32, 19);
+            this.uPDATEUSERToolStripMenuItem.Click += new System.EventHandler(this.uPDATEUSERToolStripMenuItem_Click);
             // 
             // cHANGEPASSWORDToolStripMenuItem
             // 
             this.cHANGEPASSWORDToolStripMenuItem.Name = "cHANGEPASSWORDToolStripMenuItem";
             this.cHANGEPASSWORDToolStripMenuItem.Size = new System.Drawing.Size(32, 19);
+            this.cHANGEPASSWORDToolStripMenuItem.Click += new System.EventHandler(this.cHANGEPASSWORDToolStripMenuItem_Click);
             // 
             // filterContextMenu
             // 
@@ -325,11 +456,12 @@ namespace finaluserandstaff
             this.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "UserManagementControl";
-            this.Size = new System.Drawing.Size(1124, 500);
+            this.Size = new System.Drawing.Size(1270, 568);
             this.Load += new System.EventHandler(this.UserManagementControl_Load);
             this.panelHeader.ResumeLayout(false);
             this.panelHeader.PerformLayout();
             this.panel2.ResumeLayout(false);
+            this.lblPageStatus.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.datagrd)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);
             this.filterContextMenu.ResumeLayout(false);
@@ -386,8 +518,32 @@ namespace finaluserandstaff
 
         private void UserManagementControl_Load(object sender, EventArgs e)
         {
+            // Prevent running initialization logic at design time which can crash the designer.
+            if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
+            {
+                return;
+            }
+
             LoadSampleData();
             this.ActiveControl = labelTitle;
+            this.txtSearch.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtSearch_KeyDown);
+
+
+            // Next/Prev Buttons
+            btnNext.Click += (s, ev) => { if (currentPage < 5) { currentPage++; ApplyPagination(); } };
+            btnPrev.Click += (s, ev) => { if (currentPage > 1) { currentPage--; ApplyPagination(); } };
+
+            // Number Buttons
+            btnPage1.Click += (s, ev) => { currentPage = 1; ApplyPagination(); };
+            btnPage2.Click += (s, ev) => { currentPage = 2; ApplyPagination(); };
+            btnPage3.Click += (s, ev) => { currentPage = 3; ApplyPagination(); };
+            btnPage4.Click += (s, ev) => { currentPage = 4; ApplyPagination(); };
+            btnPage5.Click += (s, ev) => { currentPage = 5; ApplyPagination(); };
+
+            ApplyPagination(); // Run once at start
+
+
+
         }
 
         private void LoadSampleData()
@@ -395,6 +551,7 @@ namespace finaluserandstaff
             datagrd.Rows.Clear();
 
             int rowIndex = datagrd.Rows.Add("00001", "admin01", "MANAGER", "ACTIVE");
+            datagrd.Rows[rowIndex].Tag = "SHOW";
             datagrd.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Red;
             datagrd.Rows[rowIndex].DefaultCellStyle.Font = new System.Drawing.Font(datagrd.Font, System.Drawing.FontStyle.Bold);
 
@@ -834,24 +991,41 @@ namespace finaluserandstaff
 
         private void ALL_Click(object sender, EventArgs e)
         {
+            // Clear search box
+            txtSearch.Text = "search here";
+            txtSearch.ForeColor = Color.Gray;
+
             foreach (DataGridViewRow row in datagrd.Rows)
             {
-                row.Visible = true;
+                row.Tag = "SHOW";
             }
+
+            currentPage = 1;
+            ApplyPagination();
         }
 
         private void MANAGER_Click(object sender, EventArgs e)
         {
+
             FilterRowsByRole("MANAGER");
+
+
         }
 
         private void STAFF_Click(object sender, EventArgs e)
         {
+
             FilterRowsByRole("STAFF");
+
         }
 
         private void FilterRowsByRole(string role)
         {
+            // RULE: Clear search UI when applying a category filter
+            // SUBSTITUTION: txtSearch.Text = ""; activeControl = labelTitle;
+            txtSearch.Text = "search here";
+            txtSearch.ForeColor = Color.Gray;
+            this.ActiveControl = labelTitle; // Moves focus away to reset placeholder
 
             datagrd.CurrentCell = null;
 
@@ -859,9 +1033,13 @@ namespace finaluserandstaff
             {
                 if (row.Cells["ROLE"].Value != null)
                 {
-                    row.Visible = (row.Cells["ROLE"].Value.ToString() == role);
+                    // Apply the filter tag
+                    row.Tag = (row.Cells["ROLE"].Value.ToString() == role) ? "SHOW" : "HIDE";
                 }
             }
+
+            currentPage = 1;
+            ApplyPagination();
         }
 
         private void filterContextMenu_Opening(object sender, CancelEventArgs e)
@@ -876,26 +1054,51 @@ namespace finaluserandstaff
             ShowMyProfileEditForm(myAdminUser);
         }
 
+        private void txtSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            // RULE: If key is Enter, reset search box and show all results
+            // SUBSTITUTION: KeyCode == Keys.Enter -> Text = "", Tag = "SHOW"
+            if (e.KeyCode == Keys.Enter)
+            {
+                txtSearch.Clear();
+
+                // Reset the grid to show everything after clearing
+                foreach (DataGridViewRow row in datagrd.Rows)
+                {
+                    row.Tag = "SHOW";
+                }
+
+                currentPage = 1;
+                ApplyPagination();
+
+                // Optional: Remove focus from search box so placeholder "search here" returns
+                this.ActiveControl = labelTitle;
+
+                // Prevents the "Ding" sound Windows makes when pressing Enter in a single-line textbox
+                e.SuppressKeyPress = true;
+            }
+        }
+
+
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-
-            if (txtSearch.Text == "search here" || txtSearch.ForeColor == Color.DimGray)
-            {
-                foreach (DataGridViewRow r in datagrd.Rows) r.Visible = true;
-                return;
-            }
-
-            string searchText = txtSearch.Text.Trim().ToLower();
-            datagrd.CurrentCell = null;
+            string searchText = txtSearch.Text.ToLower().Trim();
 
             foreach (DataGridViewRow row in datagrd.Rows)
             {
-                if (row.Cells["NAME"].Value != null)
+                if (searchText == "search here" || string.IsNullOrWhiteSpace(searchText))
                 {
-                    string username = row.Cells["NAME"].Value.ToString().ToLower();
-                    row.Visible = username.Contains(searchText);
+                    row.Tag = "SHOW";
+                }
+                else if (row.Cells["NAME"].Value != null)
+                {
+                    bool isMatch = row.Cells["NAME"].Value.ToString().ToLower().Contains(searchText);
+                    row.Tag = isMatch ? "SHOW" : "HIDE";
                 }
             }
+
+            currentPage = 1; // Always reset to page 1 on new search
+            ApplyPagination();
         }
 
 
@@ -923,6 +1126,196 @@ namespace finaluserandstaff
         {
 
             txtSearch_Enter(sender, e);
+        }
+
+        private void datagrd_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void panel2_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+
+        private int currentPage = 1;
+        private int rowsPerPage = 10;
+
+        private void ApplyPagination()
+        {
+            datagrd.CurrentCell = null;
+
+            // RULE: Calculate visible range based only on rows that match the current filter
+            // SUBSTITUTION: currentMatchIndex tracks the "filtered" position
+            int currentMatchIndex = 0;
+            int start = (currentPage - 1) * rowsPerPage;
+            int end = start + rowsPerPage;
+
+            foreach (DataGridViewRow row in datagrd.Rows)
+            {
+                // If the row doesn't match the current filter (marked in FilterRowsByRole)
+                if (row.Tag != null && row.Tag.ToString() == "HIDE")
+                {
+                    row.Visible = false;
+                    continue;
+                }
+
+                // If it matches the filter, check if it belongs on the current page
+                if (currentMatchIndex >= start && currentMatchIndex < end)
+                {
+                    row.Visible = true;
+                }
+                else
+                {
+                    row.Visible = false;
+                }
+
+                currentMatchIndex++;
+            }
+
+
+        }
+
+        private void UpdatePageButtonStyles(int totalMatches)
+        {
+            // RULE: Calculate pages based on visible results
+            // SUBSTITUTION: pagesNeeded = Ceiling(Total / 5)
+            int pagesNeeded = (int)Math.Ceiling(totalMatches / (double)rowsPerPage);
+            if (pagesNeeded == 0) pagesNeeded = 1;
+
+            Button[] pageButtons = { btnPage1, btnPage2, btnPage3, btnPage4, btnPage5 };
+
+            for (int i = 0; i < pageButtons.Length; i++)
+            {
+                int pageNum = i + 1;
+
+                // Hide button if the results don't reach this page
+                pageButtons[i].Visible = (pageNum <= pagesNeeded);
+
+                // Active page styling
+                if (pageNum == currentPage)
+                {
+                    pageButtons[i].BackColor = Color.Maroon;
+                    pageButtons[i].ForeColor = Color.White;
+                }
+                else
+                {
+                    pageButtons[i].BackColor = Color.White;
+                    pageButtons[i].ForeColor = Color.Black;
+                }
+            }
+
+            btnPrev.Enabled = (currentPage > 1);
+            btnNext.Enabled = (currentPage < pagesNeeded);
+        }
+
+
+
+        private void btnPrev_Click(object sender, EventArgs e)
+        {
+            if (currentPage > 1)
+            {
+                currentPage--;
+                ApplyPagination();
+            }
+        }
+        private void btnNext_Click(object sender, EventArgs e)
+        {
+            if (currentPage < 5)
+            {
+                currentPage++;
+                ApplyPagination();
+            }
+        }
+
+        private void FilterByRole(string role)
+        {
+            // Reset to page 1 so the results are visible
+            currentPage = 1;
+
+            // Temporarily disable pagination to apply filter
+            datagrd.CurrentCell = null;
+
+            foreach (DataGridViewRow row in datagrd.Rows)
+            {
+                if (role == "ALL")
+                {
+                    row.Visible = true;
+                }
+                else
+                {
+                    // Check if the ROLE cell matches the selected filter
+                    row.Visible = (row.Cells["ROLE"].Value.ToString() == role);
+                }
+            }
+
+
+        }
+
+        private void btnPage1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void labelTitle_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnPage4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnPage3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnPage5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lblPageStatus_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void btnNext_Click_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void panelHeader_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void panel1_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void btnPage2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
+        {
+
+        }
+
+        private void uPDATEUSERToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cHANGEPASSWORDToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
