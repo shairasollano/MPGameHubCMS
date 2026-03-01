@@ -23,11 +23,6 @@ namespace finaluserandstaff
         private ToolStripMenuItem dELETEUSERToolStripMenuItem;
         private ToolStripMenuItem cHANGEPASSWORDToolStripMenuItem;
         private Label labelTitle;
-
-        // DataGridView Columns
-        private DataGridViewTextBoxColumn ID;
-        private DataGridViewTextBoxColumn NAME;
-        private DataGridViewTextBoxColumn ROLE;
         private Button btnEdit;
         private Button btnFilter;
         private ContextMenuStrip filterContextMenu;
@@ -44,7 +39,13 @@ namespace finaluserandstaff
         private Button btnPage3;
         private Button btnPage2;
         private Button btnPage1;
+        private DataGridViewTextBoxColumn ID;
+        private DataGridViewTextBoxColumn NAME;
+        private DataGridViewTextBoxColumn ROLE;
         private DataGridViewComboBoxColumn STATUS;
+
+        //storing local variable:
+        private static List<UserData> localUsers = new List<UserData>();
 
         public UserManagementControl()
         {
@@ -58,6 +59,14 @@ namespace finaluserandstaff
             {
                 this.datagrd.CellBeginEdit += new DataGridViewCellCancelEventHandler(this.datagrd_CellBeginEdit);
             }
+        }
+
+        public class UserData
+        {
+            public string ID { get; set; }
+            public string Name { get; set; }
+            public string Role { get; set; }
+            public string Status { get; set; }
         }
 
         private void datagrd_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
@@ -109,10 +118,6 @@ namespace finaluserandstaff
             this.btnPrev = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.datagrd = new System.Windows.Forms.DataGridView();
-            this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.NAME = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ROLE = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.STATUS = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.dELETEUSERToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -122,6 +127,10 @@ namespace finaluserandstaff
             this.ALL = new System.Windows.Forms.ToolStripMenuItem();
             this.MANAGER = new System.Windows.Forms.ToolStripMenuItem();
             this.STAFF = new System.Windows.Forms.ToolStripMenuItem();
+            this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.NAME = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ROLE = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.STATUS = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.panelHeader.SuspendLayout();
             this.panel2.SuspendLayout();
             this.lblPageStatus.SuspendLayout();
@@ -141,7 +150,7 @@ namespace finaluserandstaff
             this.panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelHeader.Location = new System.Drawing.Point(0, 0);
             this.panelHeader.Name = "panelHeader";
-            this.panelHeader.Size = new System.Drawing.Size(1270, 80);
+            this.panelHeader.Size = new System.Drawing.Size(1262, 80);
             this.panelHeader.TabIndex = 0;
             this.panelHeader.Paint += new System.Windows.Forms.PaintEventHandler(this.panelHeader_Paint);
             // 
@@ -177,7 +186,7 @@ namespace finaluserandstaff
             this.btnEdit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEdit.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnEdit.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.btnEdit.Location = new System.Drawing.Point(882, 20);
+            this.btnEdit.Location = new System.Drawing.Point(874, 20);
             this.btnEdit.Name = "btnEdit";
             this.btnEdit.Size = new System.Drawing.Size(180, 40);
             this.btnEdit.TabIndex = 2;
@@ -204,7 +213,7 @@ namespace finaluserandstaff
             this.btnManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnManage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnManage.ForeColor = System.Drawing.Color.White;
-            this.btnManage.Location = new System.Drawing.Point(1070, 20);
+            this.btnManage.Location = new System.Drawing.Point(1062, 20);
             this.btnManage.Name = "btnManage";
             this.btnManage.Size = new System.Drawing.Size(180, 40);
             this.btnManage.TabIndex = 1;
@@ -218,11 +227,10 @@ namespace finaluserandstaff
             this.panel2.Controls.Add(this.lblPageStatus);
             this.panel2.Controls.Add(this.panel1);
             this.panel2.Controls.Add(this.datagrd);
-            this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel2.Location = new System.Drawing.Point(0, 80);
             this.panel2.Name = "panel2";
             this.panel2.Padding = new System.Windows.Forms.Padding(20);
-            this.panel2.Size = new System.Drawing.Size(1270, 488);
+            this.panel2.Size = new System.Drawing.Size(1242, 485);
             this.panel2.TabIndex = 1;
             this.panel2.Paint += new System.Windows.Forms.PaintEventHandler(this.panel2_Paint);
             // 
@@ -235,16 +243,15 @@ namespace finaluserandstaff
             this.lblPageStatus.Controls.Add(this.btnPage1);
             this.lblPageStatus.Controls.Add(this.btnNext);
             this.lblPageStatus.Controls.Add(this.btnPrev);
-            this.lblPageStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.lblPageStatus.Location = new System.Drawing.Point(20, 427);
+            this.lblPageStatus.Location = new System.Drawing.Point(20, 436);
             this.lblPageStatus.Name = "lblPageStatus";
-            this.lblPageStatus.Size = new System.Drawing.Size(1230, 41);
+            this.lblPageStatus.Size = new System.Drawing.Size(1202, 43);
             this.lblPageStatus.TabIndex = 2;
             this.lblPageStatus.Paint += new System.Windows.Forms.PaintEventHandler(this.lblPageStatus_Paint);
             // 
             // btnPage5
             // 
-            this.btnPage5.Location = new System.Drawing.Point(684, 7);
+            this.btnPage5.Location = new System.Drawing.Point(623, 3);
             this.btnPage5.Name = "btnPage5";
             this.btnPage5.Size = new System.Drawing.Size(34, 34);
             this.btnPage5.TabIndex = 9;
@@ -254,7 +261,7 @@ namespace finaluserandstaff
             // 
             // btnPage4
             // 
-            this.btnPage4.Location = new System.Drawing.Point(644, 7);
+            this.btnPage4.Location = new System.Drawing.Point(583, 3);
             this.btnPage4.Name = "btnPage4";
             this.btnPage4.Size = new System.Drawing.Size(34, 34);
             this.btnPage4.TabIndex = 8;
@@ -264,7 +271,7 @@ namespace finaluserandstaff
             // 
             // btnPage3
             // 
-            this.btnPage3.Location = new System.Drawing.Point(604, 7);
+            this.btnPage3.Location = new System.Drawing.Point(543, 3);
             this.btnPage3.Name = "btnPage3";
             this.btnPage3.Size = new System.Drawing.Size(34, 34);
             this.btnPage3.TabIndex = 7;
@@ -274,7 +281,7 @@ namespace finaluserandstaff
             // 
             // btnPage2
             // 
-            this.btnPage2.Location = new System.Drawing.Point(564, 7);
+            this.btnPage2.Location = new System.Drawing.Point(503, 3);
             this.btnPage2.Name = "btnPage2";
             this.btnPage2.Size = new System.Drawing.Size(34, 34);
             this.btnPage2.TabIndex = 6;
@@ -284,7 +291,7 @@ namespace finaluserandstaff
             // 
             // btnPage1
             // 
-            this.btnPage1.Location = new System.Drawing.Point(524, 7);
+            this.btnPage1.Location = new System.Drawing.Point(463, 3);
             this.btnPage1.Name = "btnPage1";
             this.btnPage1.Size = new System.Drawing.Size(34, 34);
             this.btnPage1.TabIndex = 5;
@@ -294,7 +301,7 @@ namespace finaluserandstaff
             // 
             // btnNext
             // 
-            this.btnNext.Location = new System.Drawing.Point(742, 3);
+            this.btnNext.Location = new System.Drawing.Point(669, 2);
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(37, 35);
             this.btnNext.TabIndex = 4;
@@ -304,7 +311,7 @@ namespace finaluserandstaff
             // 
             // btnPrev
             // 
-            this.btnPrev.Location = new System.Drawing.Point(466, 3);
+            this.btnPrev.Location = new System.Drawing.Point(414, 2);
             this.btnPrev.Name = "btnPrev";
             this.btnPrev.Size = new System.Drawing.Size(37, 35);
             this.btnPrev.TabIndex = 3;
@@ -328,6 +335,7 @@ namespace finaluserandstaff
             this.datagrd.AllowUserToResizeRows = false;
             this.datagrd.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.datagrd.BackgroundColor = System.Drawing.Color.WhiteSmoke;
+            this.datagrd.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.datagrd.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.datagrd.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ID,
@@ -342,41 +350,11 @@ namespace finaluserandstaff
             this.datagrd.RowHeadersWidth = 51;
             this.datagrd.RowTemplate.Height = 24;
             this.datagrd.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.datagrd.Size = new System.Drawing.Size(1230, 448);
+            this.datagrd.Size = new System.Drawing.Size(1202, 445);
             this.datagrd.TabIndex = 0;
-            this.datagrd.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.datagrd_CellContentClick);
-            // 
-            // ID
-            // 
-            this.ID.HeaderText = "#ID";
-            this.ID.MinimumWidth = 6;
-            this.ID.Name = "ID";
-            this.ID.ReadOnly = true;
-            // 
-            // NAME
-            // 
-            this.NAME.HeaderText = "USERNAME";
-            this.NAME.MinimumWidth = 6;
-            this.NAME.Name = "NAME";
-            this.NAME.ReadOnly = true;
-            // 
-            // ROLE
-            // 
-            this.ROLE.HeaderText = "ROLE";
-            this.ROLE.MinimumWidth = 6;
-            this.ROLE.Name = "ROLE";
-            this.ROLE.ReadOnly = true;
-            // 
-            // STATUS
-            // 
-            this.STATUS.HeaderText = "STATUS";
-            this.STATUS.Items.AddRange(new object[] {
-            "ACTIVE",
-            "INACTIVE"});
-            this.STATUS.MinimumWidth = 6;
-            this.STATUS.Name = "STATUS";
-            this.STATUS.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.STATUS.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.datagrd.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.datagrd_CellValueChanged);
+            this.datagrd.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.datagrd_CellContentClick);
+            this.datagrd.CurrentCellDirtyStateChanged += new System.EventHandler(this.datagrd_CurrentCellDirtyStateChanged);
             // 
             // contextMenuStrip1
             // 
@@ -446,6 +424,39 @@ namespace finaluserandstaff
             this.STAFF.Text = "STAFF";
             this.STAFF.Click += new System.EventHandler(this.STAFF_Click);
             // 
+            // ID
+            // 
+            this.ID.HeaderText = "#ID";
+            this.ID.MinimumWidth = 6;
+            this.ID.Name = "ID";
+            this.ID.ReadOnly = true;
+            // 
+            // NAME
+            // 
+            this.NAME.HeaderText = "USERNAME";
+            this.NAME.MinimumWidth = 6;
+            this.NAME.Name = "NAME";
+            this.NAME.ReadOnly = true;
+            // 
+            // ROLE
+            // 
+            this.ROLE.HeaderText = "ROLE";
+            this.ROLE.MinimumWidth = 6;
+            this.ROLE.Name = "ROLE";
+            this.ROLE.ReadOnly = true;
+            this.ROLE.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            // 
+            // STATUS
+            // 
+            this.STATUS.HeaderText = "STATUS";
+            this.STATUS.Items.AddRange(new object[] {
+            "ACTIVE",
+            "INACTIVE"});
+            this.STATUS.MinimumWidth = 6;
+            this.STATUS.Name = "STATUS";
+            this.STATUS.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.STATUS.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
             // UserManagementControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 23F);
@@ -456,7 +467,7 @@ namespace finaluserandstaff
             this.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "UserManagementControl";
-            this.Size = new System.Drawing.Size(1270, 568);
+            this.Size = new System.Drawing.Size(1262, 568);
             this.Load += new System.EventHandler(this.UserManagementControl_Load);
             this.panelHeader.ResumeLayout(false);
             this.panelHeader.PerformLayout();
@@ -939,6 +950,24 @@ namespace finaluserandstaff
             profileForm.ShowDialog();
         }
 
+        private void btnAddUser_Click(object sender, EventArgs e)
+{
+    // 1. Create the new user in your static list
+    string nextID = GenerateNextID(); 
+    localUsers.Add(new UserData { ID = nextID, Name = "New User", Role = "Staff", Status = "Active" });
+
+    // 2. Clear and reload the grid so the 11th row actually exists
+    datagrd.Rows.Clear();
+    foreach (var user in localUsers)
+    {
+        int rowIndex = datagrd.Rows.Add(user.ID, user.Name, user.Role, user.Status);
+        datagrd.Rows[rowIndex].Tag = "SHOW";
+    }
+
+    // 3. THIS IS THE MISSING STEP: Force the grid to hide the 11th user immediately
+    ApplyPagination(); 
+}
+
 
         private void FilterRows(string role)
         {
@@ -1142,40 +1171,7 @@ namespace finaluserandstaff
         private int currentPage = 1;
         private int rowsPerPage = 10;
 
-        private void ApplyPagination()
-        {
-            datagrd.CurrentCell = null;
-
-            // RULE: Calculate visible range based only on rows that match the current filter
-            // SUBSTITUTION: currentMatchIndex tracks the "filtered" position
-            int currentMatchIndex = 0;
-            int start = (currentPage - 1) * rowsPerPage;
-            int end = start + rowsPerPage;
-
-            foreach (DataGridViewRow row in datagrd.Rows)
-            {
-                // If the row doesn't match the current filter (marked in FilterRowsByRole)
-                if (row.Tag != null && row.Tag.ToString() == "HIDE")
-                {
-                    row.Visible = false;
-                    continue;
-                }
-
-                // If it matches the filter, check if it belongs on the current page
-                if (currentMatchIndex >= start && currentMatchIndex < end)
-                {
-                    row.Visible = true;
-                }
-                else
-                {
-                    row.Visible = false;
-                }
-
-                currentMatchIndex++;
-            }
-
-
-        }
+        
 
         private void UpdatePageButtonStyles(int totalMatches)
         {
@@ -1210,6 +1206,44 @@ namespace finaluserandstaff
             btnNext.Enabled = (currentPage < pagesNeeded);
         }
 
+        private void ApplyPagination()
+        {
+            datagrd.CurrentCell = null;
+
+            int currentMatchIndex = 0;
+            int start = (currentPage - 1) * rowsPerPage;
+            int end = start + rowsPerPage;
+
+            foreach (DataGridViewRow row in datagrd.Rows)
+            {
+                // 1. If the row is explicitly hidden by a search/filter, keep it hidden
+                if (row.Tag != null && row.Tag.ToString() == "HIDE")
+                {
+                    row.Visible = false;
+                    continue;
+                }
+
+                // 2. If the row is valid (Tag is "SHOW" or null/newly added)
+                // Check if its position in the list falls within the current page range
+                if (currentMatchIndex >= start && currentMatchIndex < end)
+                {
+                    row.Visible = true;
+                }
+                else
+                {
+                    row.Visible = false;
+                }
+
+                // Only increment the counter for rows that "passed" the filter
+                currentMatchIndex++;
+            }
+
+            
+        }
+
+
+        
+
 
 
         private void btnPrev_Click(object sender, EventArgs e)
@@ -1227,6 +1261,18 @@ namespace finaluserandstaff
                 currentPage++;
                 ApplyPagination();
             }
+        }
+
+        private void AddNewUser(string id, string name, string role, string status)
+        {
+            // 1. Add the row
+            int rowIndex = datagrd.Rows.Add(id, name, role, status);
+
+            // 2. Set the Tag so the pagination logic sees it
+            datagrd.Rows[rowIndex].Tag = "SHOW";
+
+            // 3. Re-run pagination to hide it if it's the 11th row
+            ApplyPagination();
         }
 
         private void FilterByRole(string role)
@@ -1251,6 +1297,83 @@ namespace finaluserandstaff
             }
 
 
+        }
+
+        
+
+        private void LoadData()
+        {
+            if (localUsers.Count == 0)
+            {
+                // Add Admin first
+                localUsers.Add(new UserData { ID = "U001", Name = "Admin_User", Role = "Admin", Status = "Active" });
+
+                // Add 17 more users to reach ID U018
+                for (int i = 2; i <= 18; i++)
+                {
+                    // This ensures IDs like U002, U010, U018
+                    string generatedID = "U" + i.ToString("D3");
+                    string role = (i <= 9) ? "Manager" : "Staff"; // First 8 after admin are managers
+                    string name = (role == "Manager") ? "Manager_" + (i - 1) : "Staff_Member_" + i;
+
+                    localUsers.Add(new UserData { ID = generatedID, Name = name, Role = role, Status = "Active" });
+                }
+            }
+
+            // Sync to Grid
+            datagrd.Rows.Clear();
+            foreach (var user in localUsers)
+            {
+                int rowIndex = datagrd.Rows.Add(user.ID, user.Name, user.Role, user.Status);
+                datagrd.Rows[rowIndex].Tag = "SHOW";
+            }
+            ApplyPagination();
+        }
+
+        private string GenerateNextID()
+        {
+            int maxNumber = 0;
+
+            foreach (DataGridViewRow row in datagrd.Rows)
+            {
+                if (row.Cells["ID"].Value != null)
+                {
+                    // Extract number from "U010" -> 10
+                    string idStr = row.Cells["ID"].Value.ToString().Replace("U", "");
+                    if (int.TryParse(idStr, out int currentNum))
+                    {
+                        if (currentNum > maxNumber) maxNumber = currentNum;
+                    }
+                }
+            }
+
+            // Returns "U011" or "U019" correctly
+            return "U" + (maxNumber + 1).ToString("D3");
+        }
+
+        private void datagrd_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (datagrd.IsCurrentCellDirty)
+            {
+                datagrd.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+        }
+
+        private void datagrd_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            // Check if a valid row and the STATUS column were changed
+            if (e.RowIndex >= 0 && datagrd.Columns[e.ColumnIndex].Name == "STATUS")
+            {
+                string currentID = datagrd.Rows[e.RowIndex].Cells["ID"].Value.ToString();
+                string newStatus = datagrd.Rows[e.RowIndex].Cells["STATUS"].Value.ToString();
+
+                // Update the static list so it remembers the change when you switch forms
+                var user = localUsers.FirstOrDefault(u => u.ID == currentID);
+                if (user != null)
+                {
+                    user.Status = newStatus;
+                }
+            }
         }
 
         private void btnPage1_Click(object sender, EventArgs e)
