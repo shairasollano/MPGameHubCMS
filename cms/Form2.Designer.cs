@@ -1,4 +1,5 @@
-﻿namespace cms
+﻿
+namespace cms
 {
     partial class Form2
     {
@@ -218,7 +219,7 @@
             this.button1.BackColor = System.Drawing.Color.Red;
             this.button1.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
             this.button1.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(1803, 995);
+            this.button1.Location = new System.Drawing.Point(1893, 1010);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(150, 48);
             this.button1.TabIndex = 14;
@@ -230,7 +231,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1924, 1055);
+            this.ClientSize = new System.Drawing.Size(1942, 1042);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.panel7);
