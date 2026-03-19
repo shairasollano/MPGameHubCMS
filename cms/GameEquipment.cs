@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Linq;
+using System.IO;
 using Font = System.Drawing.Font;
 
 namespace cms
@@ -118,6 +119,9 @@ namespace cms
         {
             InitializeComponent();
 
+            // Set up the initial UI state
+            InitializeUI();
+
             // Initialize lists
             equipmentList = new List<EquipmentItem>();
             categoryList = new List<Category>();
@@ -133,14 +137,90 @@ namespace cms
             LoadConditions();
 
             // Setup filter
-            filterCombo.SelectedIndexChanged += FilterCombo_SelectedIndexChanged;
-            filterCombo.SelectedIndex = 0;
+            if (filterCombo != null)
+            {
+                filterCombo.SelectedIndexChanged += FilterCombo_SelectedIndexChanged;
+                filterCombo.SelectedIndex = 0;
+            }
+
+            // Setup tab change handler
+            if (managementTabs != null)
+            {
+                managementTabs.SelectedIndexChanged += ManagementTabs_SelectedIndexChanged;
+            }
 
             // Hide management overlay initially
-            managementOverlay.Visible = false;
+            if (managementOverlay != null)
+                managementOverlay.Visible = false;
 
             // Log that GameEquipment module was opened
-            Activitylogs.Instance.AddLogEntry(currentUser, "Module Opened", "Game Equipment management module was opened", "Info", "GameEquipment");
+            try
+            {
+                Activitylogs.Instance?.AddLogEntry(currentUser, "Module Opened", "Game Equipment management module was opened", "Info", "GameEquipment");
+            }
+            catch { }
+        }
+
+        private void InitializeUI()
+        {
+            // Set the title/label for the equipment section
+            if (lblTitle != null)
+            {
+                lblTitle.Text = "Game Equipment";
+                lblTitle.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+                lblTitle.ForeColor = Color.FromArgb(33, 33, 33);
+            }
+
+            // Set up the filter combo box if it exists
+            if (filterCombo != null)
+            {
+                filterCombo.Items.Clear();
+                filterCombo.Items.AddRange(new object[] {
+                    "All Equipment",
+                    "Available Only",
+                    "Unavailable Only",
+                    "Needs Maintenance"
+                });
+                filterCombo.DropDownStyle = ComboBoxStyle.DropDownList;
+                filterCombo.SelectedIndex = 0;
+            }
+
+            // Ensure the main container is visible and properly configured
+            if (mainContainer != null)
+            {
+                mainContainer.Visible = true;
+                mainContainer.Dock = DockStyle.Fill;
+            }
+
+            // Set up the equipment flow panel
+            if (equipmentFlowPanel != null)
+            {
+                equipmentFlowPanel.AutoScroll = true;
+                equipmentFlowPanel.WrapContents = true;
+                equipmentFlowPanel.FlowDirection = FlowDirection.LeftToRight;
+                equipmentFlowPanel.Padding = new Padding(10);
+            }
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            // Auto-load after a short delay
+            Timer autoLoadTimer = new Timer();
+            autoLoadTimer.Interval = 500;
+            autoLoadTimer.Tick += (s, args) =>
+            {
+                autoLoadTimer.Stop();
+
+                // Load data if needed
+                if (equipmentList == null || equipmentList.Count == 0)
+                {
+                    RefreshDataFromDatabase();
+                    DisplayEquipment();
+                }
+            };
+            autoLoadTimer.Start();
         }
 
         private void InitializeDatabase()
@@ -161,7 +241,12 @@ namespace cms
             }
             catch (Exception ex)
             {
-                Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, "Database initialization error");
+                try
+                {
+                    Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, "Database initialization error");
+                }
+                catch { }
+
                 MessageBox.Show($"Database initialization error: {ex.Message}\n\nUsing default sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeSampleData();
@@ -294,7 +379,11 @@ namespace cms
                     cmd.ExecuteNonQuery();
                 }
 
-                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default equipment categories were created", "Info", "GameEquipment");
+                try
+                {
+                    Activitylogs.Instance?.AddLogEntry(currentUser, "Default Data", "Default equipment categories were created", "Info", "GameEquipment");
+                }
+                catch { }
             }
 
             // Check and insert default conditions
@@ -322,7 +411,11 @@ namespace cms
                     cmd.ExecuteNonQuery();
                 }
 
-                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default equipment conditions were created", "Info", "GameEquipment");
+                try
+                {
+                    Activitylogs.Instance?.AddLogEntry(currentUser, "Default Data", "Default equipment conditions were created", "Info", "GameEquipment");
+                }
+                catch { }
             }
 
             // Check and insert sample equipment
@@ -360,7 +453,11 @@ namespace cms
                     cmd.ExecuteNonQuery();
                 }
 
-                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default equipment items were created", "Info", "GameEquipment");
+                try
+                {
+                    Activitylogs.Instance?.AddLogEntry(currentUser, "Default Data", "Default equipment items were created", "Info", "GameEquipment");
+                }
+                catch { }
             }
 
             // Insert sample checkout logs for demo
@@ -483,7 +580,7 @@ namespace cms
                         }
                     }
 
-                    // Load checkout logs - FIXED: Using if-else for nullable DateTime
+                    // Load checkout logs
                     checkoutLogs.Clear();
                     string logQuery = @"
                         SELECT id, equipment_id, equipment_name, quantity, checked_out_by,
@@ -507,7 +604,7 @@ namespace cms
                                 Status = reader["status"].ToString()
                             };
 
-                            // Handle nullable DateTime for actual_return_date - FIXED
+                            // Handle nullable DateTime for actual_return_date
                             if (reader["actual_return_date"] != DBNull.Value)
                             {
                                 log.ActualReturnDate = Convert.ToDateTime(reader["actual_return_date"]);
@@ -528,11 +625,20 @@ namespace cms
                     }
                 }
 
-                Activitylogs.Instance.AddLogEntry(currentUser, "Data Loaded", $"Loaded {equipmentList.Count} equipment items and {checkoutLogs.Count} logs from database", "Info", "GameEquipment");
+                try
+                {
+                    Activitylogs.Instance?.AddLogEntry(currentUser, "Data Loaded", $"Loaded {equipmentList.Count} equipment items and {checkoutLogs.Count} logs from database", "Info", "GameEquipment");
+                }
+                catch { }
             }
             catch (Exception ex)
             {
-                Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, "Error loading data from database");
+                try
+                {
+                    Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, "Error loading data from database");
+                }
+                catch { }
+
                 MessageBox.Show($"Error loading data: {ex.Message}\nUsing sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeSampleData();
@@ -714,12 +820,16 @@ namespace cms
 
         private void StyleButtons()
         {
-            StyleButton(btnAddEquipment, successColor);
-            StyleButton(btnManageCategories, primaryColor);
-            StyleButton(btnAddCategory, successColor);
-            StyleButton(btnAddCondition, successColor);
-            StyleButton(btnCloseManagement, dangerColor);
-            StyleButton(btnViewLogs, infoColor);
+            if (btnAddEquipment != null)
+                StyleButton(btnAddEquipment, successColor);
+            if (btnManageCategories != null)
+                StyleButton(btnManageCategories, primaryColor);
+            if (btnAddCategory != null)
+                StyleButton(btnAddCategory, successColor);
+            if (btnCloseManagement != null)
+                StyleButton(btnCloseManagement, dangerColor);
+            if (btnViewLogs != null)
+                StyleButton(btnViewLogs, infoColor);
         }
 
         private void StyleButton(Button btn, Color backColor)
@@ -738,6 +848,9 @@ namespace cms
 
         private void DisplayEquipment()
         {
+            if (equipmentFlowPanel == null)
+                return;
+
             if (equipmentFlowPanel.InvokeRequired)
             {
                 equipmentFlowPanel.Invoke(new MethodInvoker(() => DisplayEquipment()));
@@ -746,7 +859,22 @@ namespace cms
 
             equipmentFlowPanel.Controls.Clear();
 
-            string filter = filterCombo.SelectedItem?.ToString() ?? "All Equipment";
+            if (equipmentList == null || equipmentList.Count == 0)
+            {
+                Label lblNoData = new Label
+                {
+                    Text = "No equipment found. Click 'Add Equipment' to add new items.",
+                    Font = new Font("Segoe UI", 12F, FontStyle.Italic),
+                    ForeColor = Color.Gray,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    Size = new Size(400, 50),
+                    Location = new Point((equipmentFlowPanel.Width - 400) / 2, 50)
+                };
+                equipmentFlowPanel.Controls.Add(lblNoData);
+                return;
+            }
+
+            string filter = filterCombo?.SelectedItem?.ToString() ?? "All Equipment";
             var filteredList = equipmentList.Where(e =>
                 filter == "All Equipment" ||
                 (filter == "Available Only" && e.IsAvailable) ||
@@ -763,13 +891,13 @@ namespace cms
 
         private string GetCategoryIcon(string category)
         {
-            var cat = categoryList.FirstOrDefault(c => c.Name == category);
+            var cat = categoryList?.FirstOrDefault(c => c.Name == category);
             return cat?.Icon ?? "📦";
         }
 
         private Color GetConditionColor(string condition)
         {
-            var cond = conditionList.FirstOrDefault(c => c.Name == condition);
+            var cond = conditionList?.FirstOrDefault(c => c.Name == condition);
             if (cond != null)
             {
                 return ColorTranslator.FromHtml(cond.Color);
@@ -1143,13 +1271,21 @@ namespace cms
                         });
 
                         // Log the checkout
-                        Activitylogs.Instance.LogEquipmentCheckout(currentUser, item.Name, quantity, txtCheckedBy.Text);
+                        try
+                        {
+                            Activitylogs.Instance?.LogEquipmentCheckout(currentUser, item.Name, quantity, txtCheckedBy.Text);
+                        }
+                        catch { }
 
                         // Check for low stock warning
                         if (item.AvailableQuantity < 5)
                         {
-                            Activitylogs.Instance.LogWarning(currentUser, "GameEquipment",
-                                $"Low stock warning: {item.Name} only has {item.AvailableQuantity} left");
+                            try
+                            {
+                                Activitylogs.Instance?.LogWarning(currentUser, "GameEquipment",
+                                    $"Low stock warning: {item.Name} only has {item.AvailableQuantity} left");
+                            }
+                            catch { }
                         }
 
                         MessageBox.Show($"Successfully checked out {quantity} {item.Name}(s) to {txtCheckedBy.Text}.\n" +
@@ -1162,7 +1298,12 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking out {item.Name}");
+                        try
+                        {
+                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking out {item.Name}");
+                        }
+                        catch { }
+
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -1328,7 +1469,11 @@ namespace cms
                         item.AvailableQuantity += quantity;
 
                         // Log the check-in
-                        Activitylogs.Instance.LogEquipmentCheckin(currentUser, item.Name, quantity, returnedBy);
+                        try
+                        {
+                            Activitylogs.Instance?.LogEquipmentCheckin(currentUser, item.Name, quantity, returnedBy);
+                        }
+                        catch { }
 
                         MessageBox.Show($"Successfully checked in {quantity} {item.Name}(s).\n" +
                                       $"Check in time: {DateTime.Now:MMM dd, yyyy hh:mm tt}\n" +
@@ -1340,7 +1485,12 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking in {item.Name}");
+                        try
+                        {
+                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking in {item.Name}");
+                        }
+                        catch { }
+
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -1522,7 +1672,11 @@ namespace cms
                         item.AvailableQuantity += quantityToReturn;
 
                         // Log the check-in
-                        Activitylogs.Instance.LogEquipmentCheckin(currentUser, item.Name, quantityToReturn, selectedCheckout.CheckedOutBy);
+                        try
+                        {
+                            Activitylogs.Instance?.LogEquipmentCheckin(currentUser, item.Name, quantityToReturn, selectedCheckout.CheckedOutBy);
+                        }
+                        catch { }
 
                         MessageBox.Show($"Successfully returned {quantityToReturn} {item.Name}(s) from {selectedCheckout.CheckedOutBy}.\n" +
                                       $"Return time: {DateTime.Now:MMM dd, yyyy hh:mm tt}",
@@ -1536,7 +1690,12 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking in {item.Name}");
+                        try
+                        {
+                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking in {item.Name}");
+                        }
+                        catch { }
+
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -1612,7 +1771,7 @@ namespace cms
                                 Status = reader["status"].ToString()
                             };
 
-                            // Handle nullable DateTime for actual_return_date - FIXED
+                            // Handle nullable DateTime for actual_return_date
                             if (reader["actual_return_date"] != DBNull.Value)
                             {
                                 log.ActualReturnDate = Convert.ToDateTime(reader["actual_return_date"]);
@@ -1629,7 +1788,11 @@ namespace cms
             }
             catch (Exception ex)
             {
-                Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, "Error refreshing data");
+                try
+                {
+                    Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, "Error refreshing data");
+                }
+                catch { }
             }
         }
 
@@ -1902,8 +2065,8 @@ namespace cms
                 export += "-------------------\n";
             }
 
-            string tempFile = System.IO.Path.GetTempFileName() + ".txt";
-            System.IO.File.WriteAllText(tempFile, export);
+            string tempFile = Path.GetTempFileName() + ".txt";
+            File.WriteAllText(tempFile, export);
 
             System.Diagnostics.Process.Start("notepad.exe", tempFile);
         }
@@ -2157,8 +2320,12 @@ namespace cms
                                 equipmentList.Add(newItem);
 
                                 // Log the addition
-                                Activitylogs.Instance.LogEquipmentActivity(currentUser, "Added", newItem.Name,
-                                    $"Category: {newItem.Category}, Quantity: {newItem.TotalQuantity}, Location: {newItem.Location}");
+                                try
+                                {
+                                    Activitylogs.Instance?.LogEquipmentActivity(currentUser, "Added", newItem.Name,
+                                        $"Category: {newItem.Category}, Quantity: {newItem.TotalQuantity}, Location: {newItem.Location}");
+                                }
+                                catch { }
 
                                 MessageBox.Show("Equipment added successfully!", "Success",
                                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -2218,7 +2385,11 @@ namespace cms
                                 if (oldMaintenance != item.NeedsMaintenance)
                                     changes += $"Maintenance: {(oldMaintenance ? "Needed" : "Not needed")} → {(item.NeedsMaintenance ? "Needed" : "Not needed")} ";
 
-                                Activitylogs.Instance.LogEquipmentActivity(currentUser, "Updated", item.Name, changes);
+                                try
+                                {
+                                    Activitylogs.Instance?.LogEquipmentActivity(currentUser, "Updated", item.Name, changes);
+                                }
+                                catch { }
 
                                 MessageBox.Show("Equipment updated successfully!", "Success",
                                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -2230,8 +2401,13 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message,
-                            isNewItem ? "Error adding new equipment" : $"Error updating {item.Name}");
+                        try
+                        {
+                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message,
+                                isNewItem ? "Error adding new equipment" : $"Error updating {item.Name}");
+                        }
+                        catch { }
+
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -2261,7 +2437,11 @@ namespace cms
                                 equipmentList.Remove(item);
 
                                 // Log the deletion
-                                Activitylogs.Instance.LogEquipmentActivity(currentUser, "Deleted", deletedName);
+                                try
+                                {
+                                    Activitylogs.Instance?.LogEquipmentActivity(currentUser, "Deleted", deletedName);
+                                }
+                                catch { }
 
                                 MessageBox.Show("Equipment deleted successfully!", "Success",
                                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -2270,7 +2450,12 @@ namespace cms
                             }
                             catch (Exception ex)
                             {
-                                Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error deleting {item.Name}");
+                                try
+                                {
+                                    Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error deleting {item.Name}");
+                                }
+                                catch { }
+
                                 MessageBox.Show($"Database error: {ex.Message}", "Error",
                                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                             }
@@ -2393,12 +2578,20 @@ namespace cms
                         item.NeedsMaintenance = false;
 
                         // Log the maintenance
-                        Activitylogs.Instance.LogEquipmentMaintenance(currentUser, item.Name, item.Condition);
+                        try
+                        {
+                            Activitylogs.Instance?.LogEquipmentMaintenance(currentUser, item.Name, item.Condition);
+                        }
+                        catch { }
 
                         if (oldCondition != item.Condition)
                         {
-                            Activitylogs.Instance.AddLogEntry(currentUser, "Equipment Condition Changed",
-                                $"Equipment '{item.Name}' condition changed from {oldCondition} to {item.Condition} after maintenance", "Info", "GameEquipment");
+                            try
+                            {
+                                Activitylogs.Instance?.AddLogEntry(currentUser, "Equipment Condition Changed",
+                                    $"Equipment '{item.Name}' condition changed from {oldCondition} to {item.Condition} after maintenance", "Info", "GameEquipment");
+                            }
+                            catch { }
                         }
 
                         MessageBox.Show($"Maintenance completed for {item.Name}.\n" +
@@ -2410,7 +2603,12 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error completing maintenance for {item.Name}");
+                        try
+                        {
+                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error completing maintenance for {item.Name}");
+                        }
+                        catch { }
+
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -2448,26 +2646,56 @@ namespace cms
         private void btnManageCategories_Click(object sender, EventArgs e)
         {
             // Show the management overlay
-            managementOverlay.Visible = true;
-            managementOverlay.BringToFront();
-            btnManageCategories.Text = "Hide Management";
+            if (managementOverlay != null)
+            {
+                managementOverlay.Visible = true;
+                managementOverlay.BringToFront();
+            }
+
+            if (btnManageCategories != null)
+                btnManageCategories.Text = "Hide Management";
 
             // Load data
             LoadCategories();
             LoadConditions();
 
-            Activitylogs.Instance.AddLogEntry(currentUser, "Management View", "Opened categories and conditions management", "Info", "GameEquipment");
+            try
+            {
+                Activitylogs.Instance?.AddLogEntry(currentUser, "Management View", "Opened categories and conditions management", "Info", "GameEquipment");
+            }
+            catch { }
         }
 
         private void btnCloseManagement_Click(object sender, EventArgs e)
         {
             // Hide the management overlay
-            managementOverlay.Visible = false;
-            btnManageCategories.Text = "Manage Categories";
+            if (managementOverlay != null)
+                managementOverlay.Visible = false;
+
+            if (btnManageCategories != null)
+                btnManageCategories.Text = "Manage Categories";
+        }
+
+        private void ManagementTabs_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (managementTabs != null)
+            {
+                if (managementTabs.SelectedTab == tabCategories)
+                {
+                    LoadCategories();
+                }
+                else if (managementTabs.SelectedTab == tabConditions)
+                {
+                    LoadConditions();
+                }
+            }
         }
 
         private void LoadCategories()
         {
+            if (categoriesFlowPanel == null)
+                return;
+
             if (categoriesFlowPanel.InvokeRequired)
             {
                 categoriesFlowPanel.Invoke(new MethodInvoker(() => LoadCategories()));
@@ -2475,6 +2703,21 @@ namespace cms
             }
 
             categoriesFlowPanel.Controls.Clear();
+
+            if (categoryList == null || categoryList.Count == 0)
+            {
+                Label lblNoData = new Label
+                {
+                    Text = "No categories found. Click '+ Add New Category' to add one.",
+                    Font = new Font("Segoe UI", 11F, FontStyle.Italic),
+                    ForeColor = Color.Gray,
+                    AutoSize = true,
+                    Location = new Point(20, 20)
+                };
+                categoriesFlowPanel.Controls.Add(lblNoData);
+                return;
+            }
+
             foreach (var category in categoryList)
             {
                 var card = CreateCategoryCard(category);
@@ -2486,61 +2729,123 @@ namespace cms
         {
             Panel card = new Panel
             {
-                Width = 250,
-                Height = 100,
+                Width = 320,
+                Height = 130,
                 BackColor = cardBgColor,
                 Margin = new Padding(10),
                 Tag = category
             };
 
+            // Add border and shadow effect
             card.Paint += (s, e) =>
             {
                 ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
                     Color.FromArgb(230, 230, 230), ButtonBorderStyle.Solid);
+
+                // Add subtle shadow at bottom
+                using (Pen shadowPen = new Pen(Color.FromArgb(30, 0, 0, 0), 2))
+                {
+                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
+                }
             };
 
+            // Icon with background (left side) - FIXED positioning
+            Panel iconPanel = new Panel
+            {
+                Width = 60,
+                Height = 60,
+                Location = new Point(15, 35), // Centered vertically (130/2 - 60/2 = 35)
+                BackColor = Color.FromArgb(239, 246, 255)
+            };
+
+            // FIXED: Center the icon within the panel
             Label lblIcon = new Label
             {
-                Text = category.Icon,
-                Font = new Font("Segoe UI", 20F),
-                Location = new Point(10, 10),
+                Text = category.Icon ?? "📦",
+                Font = new Font("Segoe UI", 28F),
+                Location = new Point(10, 10), // Center in 60x60 panel (60/2 - 40/2 = 10)
                 Size = new Size(40, 40),
-                TextAlign = ContentAlignment.MiddleCenter
+                TextAlign = ContentAlignment.MiddleCenter,
+                ForeColor = primaryColor
             };
+            iconPanel.Controls.Add(lblIcon);
 
+            // Name (top right)
             Label lblName = new Label
             {
                 Text = category.Name,
                 Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                Location = new Point(60, 15),
-                Size = new Size(180, 20),
+                Location = new Point(90, 25),
+                Size = new Size(140, 20),
                 ForeColor = Color.FromArgb(33, 33, 33)
             };
 
+            // Description (middle right)
             Label lblDesc = new Label
             {
                 Text = category.Description,
                 Font = new Font("Segoe UI", 9F),
-                Location = new Point(60, 35),
-                Size = new Size(180, 20),
-                ForeColor = Color.FromArgb(100, 100, 100)
+                Location = new Point(90, 45),
+                Size = new Size(140, 20),
+                ForeColor = Color.FromArgb(107, 114, 128)
             };
 
+            // Item count (bottom right)
             Label lblCount = new Label
             {
                 Text = $"Items: {category.ItemCount}",
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Location = new Point(60, 55),
-                Size = new Size(100, 20),
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
+                Location = new Point(90, 70),
+                Size = new Size(100, 15),
                 ForeColor = primaryColor
             };
 
-            card.Controls.AddRange(new Control[] { lblIcon, lblName, lblDesc, lblCount });
+            // Edit button (right side, top)
+            Button btnEdit = new Button
+            {
+                Text = "Edit",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = primaryColor,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Size = new Size(70, 30),
+                Location = new Point(235, 25),
+                Tag = category,
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
+            };
+            btnEdit.Click += BtnEditCategory_Click;
+
+            // Delete button (right side, bottom)
+            Button btnDelete = new Button
+            {
+                Text = "Delete",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = dangerColor,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Size = new Size(70, 30),
+                Location = new Point(235, 60),
+                Tag = category,
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
+            };
+            btnDelete.Click += BtnDeleteCategory_Click;
+
+            card.Controls.AddRange(new Control[] { iconPanel, lblName, lblDesc, lblCount, btnEdit, btnDelete });
+
+            // Hover effect
+            card.MouseEnter += (s, e) => card.BackColor = hoverColor;
+            card.MouseLeave += (s, e) => card.BackColor = cardBgColor;
+
             return card;
         }
 
         private void LoadConditions()
         {
+            if (conditionsFlowPanel == null)
+                return;
+
             if (conditionsFlowPanel.InvokeRequired)
             {
                 conditionsFlowPanel.Invoke(new MethodInvoker(() => LoadConditions()));
@@ -2548,6 +2853,21 @@ namespace cms
             }
 
             conditionsFlowPanel.Controls.Clear();
+
+            if (conditionList == null || conditionList.Count == 0)
+            {
+                Label lblNoData = new Label
+                {
+                    Text = "No conditions available.",
+                    Font = new Font("Segoe UI", 11F, FontStyle.Italic),
+                    ForeColor = Color.Gray,
+                    AutoSize = true,
+                    Location = new Point(20, 20)
+                };
+                conditionsFlowPanel.Controls.Add(lblNoData);
+                return;
+            }
+
             foreach (var condition in conditionList)
             {
                 var card = CreateConditionCard(condition);
@@ -2559,8 +2879,8 @@ namespace cms
         {
             Panel card = new Panel
             {
-                Width = 200,
-                Height = 80,
+                Width = 280,
+                Height = 100,
                 BackColor = cardBgColor,
                 Margin = new Padding(10),
                 Tag = condition
@@ -2570,141 +2890,460 @@ namespace cms
             {
                 ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
                     Color.FromArgb(230, 230, 230), ButtonBorderStyle.Solid);
+
+                // Add subtle shadow at bottom
+                using (Pen shadowPen = new Pen(Color.FromArgb(30, 0, 0, 0), 2))
+                {
+                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
+                }
             };
 
-            // Color indicator
+            // Color indicator (left side)
             Panel colorIndicator = new Panel
             {
-                Width = 20,
-                Height = 20,
-                Location = new Point(10, 15),
-                BackColor = ColorTranslator.FromHtml(condition.Color)
+                Width = 50,
+                Height = 50,
+                Location = new Point(15, 25),
+                BackColor = ColorTranslator.FromHtml(condition.Color),
+                BorderStyle = BorderStyle.None
             };
 
+            // Name (top)
             Label lblName = new Label
             {
                 Text = condition.Name,
-                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
-                Location = new Point(40, 10),
-                Size = new Size(150, 20),
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                Location = new Point(80, 25),
+                Size = new Size(180, 20),
                 ForeColor = Color.FromArgb(33, 33, 33)
             };
 
+            // Description (bottom)
             Label lblDesc = new Label
             {
                 Text = condition.Description,
                 Font = new Font("Segoe UI", 9F),
-                Location = new Point(40, 30),
-                Size = new Size(150, 35),
-                ForeColor = Color.FromArgb(100, 100, 100)
+                Location = new Point(80, 45),
+                Size = new Size(180, 30),
+                ForeColor = Color.FromArgb(107, 114, 128)
             };
 
             card.Controls.AddRange(new Control[] { colorIndicator, lblName, lblDesc });
+
+            // Hover effect
+            card.MouseEnter += (s, e) => card.BackColor = hoverColor;
+            card.MouseLeave += (s, e) => card.BackColor = cardBgColor;
+
             return card;
         }
 
-        private void btnAddCategory_Click(object sender, EventArgs e)
+        private void BtnDeleteCategory_Click(object sender, EventArgs e)
         {
-            string newCategory = ShowInputDialog("Add Category", "Enter new category name:");
-            if (!string.IsNullOrWhiteSpace(newCategory))
-            {
-                if (categoryList.Any(c => c.Name.Equals(newCategory, StringComparison.OrdinalIgnoreCase)))
-                {
-                    MessageBox.Show("Category already exists!", "Duplicate",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
+            Button btn = (Button)sender;
+            Category category = (Category)btn.Tag;
 
+            // Check if category is used in any equipment
+            if (equipmentList.Any(eq => eq.Category == category.Name))
+            {
+                MessageBox.Show($"Cannot delete '{category.Name}' because it's used by existing equipment.",
+                    "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Delete category '{category.Name}'?", "Confirm Delete",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
                 try
                 {
                     using (MySqlConnection conn = new MySqlConnection(connectionString))
                     {
                         conn.Open();
-
-                        string insertQuery = "INSERT INTO equipment_categories (name, description, icon) VALUES (@name, @desc, @icon); SELECT LAST_INSERT_ID();";
-                        MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
-                        cmd.Parameters.AddWithValue("@name", newCategory);
-                        cmd.Parameters.AddWithValue("@desc", $"{newCategory} category");
-                        cmd.Parameters.AddWithValue("@icon", "📦");
-
-                        int newId = Convert.ToInt32(cmd.ExecuteScalar());
-
-                        categoryList.Add(new Category
-                        {
-                            Id = newId,
-                            Name = newCategory,
-                            Description = $"{newCategory} category",
-                            Icon = "📦",
-                            ItemCount = 0
-                        });
-
-                        LoadCategories();
+                        string deleteQuery = "DELETE FROM equipment_categories WHERE id = @id";
+                        MySqlCommand cmd = new MySqlCommand(deleteQuery, conn);
+                        cmd.Parameters.AddWithValue("@id", category.Id);
+                        cmd.ExecuteNonQuery();
                     }
 
-                    // Log the addition
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Category Added", $"New category '{newCategory}' was added", "Info", "GameEquipment");
+                    categoryList.Remove(category);
+                    LoadCategories();
 
-                    MessageBox.Show($"Category '{newCategory}' added successfully!", "Success",
+                    try
+                    {
+                        Activitylogs.Instance?.AddLogEntry(currentUser, "Category Deleted", $"Category '{category.Name}' was deleted", "Info", "GameEquipment");
+                    }
+                    catch { }
+
+                    MessageBox.Show("Category deleted successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error adding category {newCategory}");
-                    MessageBox.Show($"Error adding: {ex.Message}",
-                        "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    try
+                    {
+                        Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error deleting category {category.Name}");
+                    }
+                    catch { }
+
+                    MessageBox.Show($"Error deleting: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        private void btnAddCondition_Click(object sender, EventArgs e)
+        private void BtnEditCategory_Click(object sender, EventArgs e)
         {
-            string newCondition = ShowInputDialog("Add Condition", "Enter new condition name:");
-            if (!string.IsNullOrWhiteSpace(newCondition))
+            Button btn = (Button)sender;
+            Category category = (Category)btn.Tag;
+            ShowEditCategoryDialog(category);
+        }
+
+        private void ShowEditCategoryDialog(Category category)
+        {
+            using (var dialog = new Form())
             {
-                if (conditionList.Any(c => c.Name.Equals(newCondition, StringComparison.OrdinalIgnoreCase)))
-                {
-                    MessageBox.Show("Condition already exists!", "Duplicate",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
+                dialog.Text = "Edit Category";
+                dialog.Size = new Size(450, 350);
+                dialog.StartPosition = FormStartPosition.CenterParent;
+                dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dialog.MaximizeBox = false;
+                dialog.MinimizeBox = false;
+                dialog.BackColor = Color.White;
 
-                try
+                TableLayoutPanel tlp = new TableLayoutPanel
                 {
-                    using (MySqlConnection conn = new MySqlConnection(connectionString))
+                    Dock = DockStyle.Fill,
+                    ColumnCount = 2,
+                    RowCount = 5,
+                    Padding = new Padding(20),
+                    ColumnStyles = {
+                        new ColumnStyle(SizeType.Absolute, 100),
+                        new ColumnStyle(SizeType.Percent, 100)
+                    }
+                };
+
+                // Name
+                tlp.Controls.Add(new Label { Text = "Name:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 0);
+                TextBox txtName = new TextBox
+                {
+                    Text = category.Name,
+                    Font = new Font("Segoe UI", 10F),
+                    Dock = DockStyle.Fill
+                };
+                tlp.Controls.Add(txtName, 1, 0);
+
+                // Icon
+                tlp.Controls.Add(new Label { Text = "Icon:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 1);
+                ComboBox cboIcon = new ComboBox
+                {
+                    Font = new Font("Segoe UI", 10F),
+                    Dock = DockStyle.Fill,
+                    DropDownStyle = ComboBoxStyle.DropDownList
+                };
+                cboIcon.Items.AddRange(new object[] { "🏸", "⚽", "🏐", "🛡️", "👟", "🎾", "🏓", "🥊", "🎽", "📦" });
+                cboIcon.SelectedItem = category.Icon ?? "📦";
+                tlp.Controls.Add(cboIcon, 1, 1);
+
+                // Description
+                tlp.Controls.Add(new Label { Text = "Description:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 2);
+                TextBox txtDesc = new TextBox
+                {
+                    Text = category.Description,
+                    Font = new Font("Segoe UI", 10F),
+                    Dock = DockStyle.Fill,
+                    Multiline = true,
+                    Height = 80
+                };
+                tlp.Controls.Add(txtDesc, 1, 2);
+
+                // Buttons
+                FlowLayoutPanel btnPanel = new FlowLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    FlowDirection = FlowDirection.RightToLeft
+                };
+
+                Button btnCancel = new Button
+                {
+                    Text = "Cancel",
+                    Size = new Size(100, 35),
+                    BackColor = Color.Gray,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10F),
+                    Cursor = Cursors.Hand
+                };
+                btnCancel.FlatAppearance.BorderSize = 0;
+                btnCancel.Click += (s, args) => dialog.Close();
+
+                Button btnSave = new Button
+                {
+                    Text = "Save Changes",
+                    Size = new Size(120, 35),
+                    BackColor = successColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+                btnSave.FlatAppearance.BorderSize = 0;
+
+                btnPanel.Controls.Add(btnCancel);
+                btnPanel.Controls.Add(btnSave);
+                tlp.Controls.Add(btnPanel, 1, 4);
+
+                dialog.Controls.Add(tlp);
+
+                btnSave.Click += (s, args) =>
+                {
+                    if (string.IsNullOrWhiteSpace(txtName.Text))
                     {
-                        conn.Open();
-
-                        string insertQuery = "INSERT INTO equipment_conditions (name, color, description) VALUES (@name, @color, @desc); SELECT LAST_INSERT_ID();";
-                        MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
-                        cmd.Parameters.AddWithValue("@name", newCondition);
-                        cmd.Parameters.AddWithValue("@color", "#808080");
-                        cmd.Parameters.AddWithValue("@desc", $"{newCondition} condition");
-
-                        int newId = Convert.ToInt32(cmd.ExecuteScalar());
-
-                        conditionList.Add(new Condition
-                        {
-                            Id = newId,
-                            Name = newCondition,
-                            Color = "#808080",
-                            Description = $"{newCondition} condition"
-                        });
-
-                        LoadConditions();
+                        MessageBox.Show("Please enter a category name.", "Validation Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
                     }
 
-                    // Log the addition
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Condition Added", $"New condition '{newCondition}' was added", "Info", "GameEquipment");
+                    if (cboIcon.SelectedItem == null)
+                    {
+                        MessageBox.Show("Please select an icon.", "Validation Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
 
-                    MessageBox.Show($"Condition '{newCondition}' added successfully!", "Success",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
+                    // Check if name already exists (excluding current category)
+                    if (categoryList.Any(c => c.Name.Equals(txtName.Text.Trim(), StringComparison.OrdinalIgnoreCase) && c.Id != category.Id))
+                    {
+                        MessageBox.Show("A category with this name already exists!", "Duplicate",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    try
+                    {
+                        using (MySqlConnection conn = new MySqlConnection(connectionString))
+                        {
+                            conn.Open();
+                            string updateQuery = "UPDATE equipment_categories SET name = @name, description = @desc, icon = @icon WHERE id = @id";
+                            MySqlCommand cmd = new MySqlCommand(updateQuery, conn);
+                            cmd.Parameters.AddWithValue("@name", txtName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@desc", txtDesc.Text);
+                            cmd.Parameters.AddWithValue("@icon", cboIcon.SelectedItem.ToString());
+                            cmd.Parameters.AddWithValue("@id", category.Id);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        string oldName = category.Name;
+                        category.Name = txtName.Text.Trim();
+                        category.Description = txtDesc.Text;
+                        category.Icon = cboIcon.SelectedItem.ToString();
+
+                        LoadCategories();
+
+                        try
+                        {
+                            Activitylogs.Instance?.AddLogEntry(currentUser, "Category Updated",
+                                $"Category '{oldName}' was updated to '{category.Name}'", "Info", "GameEquipment");
+                        }
+                        catch { }
+
+                        MessageBox.Show("Category updated successfully!", "Success",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        dialog.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        try
+                        {
+                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error updating category {category.Name}");
+                        }
+                        catch { }
+
+                        MessageBox.Show($"Error updating category: {ex.Message}", "Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                };
+
+                dialog.ShowDialog(this);
+            }
+        }
+
+        private void btnAddCategory_Click(object sender, EventArgs e)
+        {
+            ShowAddCategoryDialog();
+        }
+
+        private void ShowAddCategoryDialog()
+        {
+            using (var dialog = new Form())
+            {
+                dialog.Text = "Add New Category";
+                dialog.Size = new Size(450, 350);
+                dialog.StartPosition = FormStartPosition.CenterParent;
+                dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dialog.MaximizeBox = false;
+                dialog.MinimizeBox = false;
+                dialog.BackColor = Color.White;
+
+                TableLayoutPanel tlp = new TableLayoutPanel
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error adding condition {newCondition}");
-                    MessageBox.Show($"Error adding: {ex.Message}",
-                        "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                    Dock = DockStyle.Fill,
+                    ColumnCount = 2,
+                    RowCount = 5,
+                    Padding = new Padding(20),
+                    ColumnStyles = {
+                        new ColumnStyle(SizeType.Absolute, 100),
+                        new ColumnStyle(SizeType.Percent, 100)
+                    }
+                };
+
+                // Name
+                tlp.Controls.Add(new Label { Text = "Name:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 0);
+                TextBox txtName = new TextBox
+                {
+                    Font = new Font("Segoe UI", 10F),
+                    Dock = DockStyle.Fill
+                };
+                tlp.Controls.Add(txtName, 1, 0);
+
+                // Icon
+                tlp.Controls.Add(new Label { Text = "Icon:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 1);
+                ComboBox cboIcon = new ComboBox
+                {
+                    Font = new Font("Segoe UI", 10F),
+                    Dock = DockStyle.Fill,
+                    DropDownStyle = ComboBoxStyle.DropDownList
+                };
+                cboIcon.Items.AddRange(new object[] { "🏸", "⚽", "🏐", "🛡️", "👟", "🎾", "🏓", "🥊", "🎽", "📦" });
+                cboIcon.SelectedIndex = 9; // Default to 📦
+                tlp.Controls.Add(cboIcon, 1, 1);
+
+                // Description
+                tlp.Controls.Add(new Label { Text = "Description:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 2);
+                TextBox txtDesc = new TextBox
+                {
+                    Font = new Font("Segoe UI", 10F),
+                    Dock = DockStyle.Fill,
+                    Multiline = true,
+                    Height = 80
+                };
+                tlp.Controls.Add(txtDesc, 1, 2);
+
+                // Buttons
+                FlowLayoutPanel btnPanel = new FlowLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    FlowDirection = FlowDirection.RightToLeft
+                };
+
+                Button btnCancel = new Button
+                {
+                    Text = "Cancel",
+                    Size = new Size(100, 35),
+                    BackColor = Color.Gray,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10F),
+                    Cursor = Cursors.Hand
+                };
+                btnCancel.FlatAppearance.BorderSize = 0;
+                btnCancel.Click += (s, args) => dialog.Close();
+
+                Button btnAdd = new Button
+                {
+                    Text = "Add Category",
+                    Size = new Size(120, 35),
+                    BackColor = successColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                    Cursor = Cursors.Hand
+                };
+                btnAdd.FlatAppearance.BorderSize = 0;
+
+                btnPanel.Controls.Add(btnCancel);
+                btnPanel.Controls.Add(btnAdd);
+                tlp.Controls.Add(btnPanel, 1, 4);
+
+                dialog.Controls.Add(tlp);
+
+                btnAdd.Click += (s, args) =>
+                {
+                    if (string.IsNullOrWhiteSpace(txtName.Text))
+                    {
+                        MessageBox.Show("Please enter a category name.", "Validation Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    if (cboIcon.SelectedItem == null)
+                    {
+                        MessageBox.Show("Please select an icon.", "Validation Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    // Check if name already exists
+                    if (categoryList.Any(c => c.Name.Equals(txtName.Text.Trim(), StringComparison.OrdinalIgnoreCase)))
+                    {
+                        MessageBox.Show("A category with this name already exists!", "Duplicate",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    try
+                    {
+                        using (MySqlConnection conn = new MySqlConnection(connectionString))
+                        {
+                            conn.Open();
+
+                            string insertQuery = "INSERT INTO equipment_categories (name, description, icon) VALUES (@name, @desc, @icon); SELECT LAST_INSERT_ID();";
+                            MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
+                            cmd.Parameters.AddWithValue("@name", txtName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@desc", txtDesc.Text);
+                            cmd.Parameters.AddWithValue("@icon", cboIcon.SelectedItem.ToString());
+
+                            int newId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                            categoryList.Add(new Category
+                            {
+                                Id = newId,
+                                Name = txtName.Text.Trim(),
+                                Description = txtDesc.Text,
+                                Icon = cboIcon.SelectedItem.ToString(),
+                                ItemCount = 0
+                            });
+
+                            LoadCategories();
+                        }
+
+                        // Log the addition
+                        try
+                        {
+                            Activitylogs.Instance?.AddLogEntry(currentUser, "Category Added", $"New category '{txtName.Text.Trim()}' was added", "Info", "GameEquipment");
+                        }
+                        catch { }
+
+                        MessageBox.Show("Category added successfully!", "Success",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        dialog.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        try
+                        {
+                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error adding category {txtName.Text}");
+                        }
+                        catch { }
+
+                        MessageBox.Show($"Error adding category: {ex.Message}",
+                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                };
+
+                dialog.ShowDialog(this);
             }
         }
 

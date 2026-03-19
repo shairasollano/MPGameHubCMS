@@ -14,12 +14,13 @@ namespace cms
     public partial class GameRates : UserControl
     {
         // Modern color scheme
-        private readonly Color primaryColor = Color.FromArgb(67, 97, 238);
-        private readonly Color successColor = Color.FromArgb(76, 175, 80);
-        private readonly Color dangerColor = Color.FromArgb(244, 67, 54);
-        private readonly Color warningColor = Color.FromArgb(255, 152, 0);
+        private readonly Color primaryColor = Color.FromArgb(79, 70, 229); // Indigo
+        private readonly Color successColor = Color.FromArgb(16, 185, 129); // Emerald
+        private readonly Color dangerColor = Color.FromArgb(239, 68, 68); // Red
+        private readonly Color warningColor = Color.FromArgb(245, 158, 11); // Amber
+        private readonly Color infoColor = Color.FromArgb(59, 130, 246); // Blue
         private readonly Color cardBgColor = Color.White;
-        private readonly Color hoverColor = Color.FromArgb(245, 247, 250);
+        private readonly Color hoverColor = Color.FromArgb(249, 250, 251);
 
         private List<GameRate> gameRates;
         private List<CourtType> courtTypes;
@@ -75,13 +76,13 @@ namespace cms
             Bitmap placeholder = new Bitmap(100, 100);
             using (Graphics g = Graphics.FromImage(placeholder))
             {
-                g.Clear(Color.FromArgb(240, 240, 240));
-                using (Pen pen = new Pen(Color.FromArgb(200, 200, 200), 2))
+                g.Clear(Color.FromArgb(249, 250, 251));
+                using (Pen pen = new Pen(Color.FromArgb(209, 213, 219), 2))
                 {
                     g.DrawRectangle(pen, 1, 1, 98, 98);
                 }
                 using (Font font = new Font("Segoe UI", 10, FontStyle.Regular))
-                using (Brush brush = new SolidBrush(Color.FromArgb(150, 150, 150)))
+                using (Brush brush = new SolidBrush(Color.FromArgb(156, 163, 175)))
                 {
                     StringFormat sf = new StringFormat
                     {
@@ -122,10 +123,10 @@ namespace cms
             btn.BackColor = backColor;
             btn.FlatAppearance.BorderSize = 0;
             btn.FlatStyle = FlatStyle.Flat;
-            btn.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            btn.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btn.ForeColor = Color.White;
             btn.Cursor = Cursors.Hand;
-            btn.Height = 35;
+            btn.Height = 32;
 
             // Hover effect
             btn.MouseEnter += (s, e) => btn.BackColor = ControlPaint.Light(backColor, 0.2f);
@@ -444,6 +445,7 @@ namespace cms
                 }
 
                 DisplayGameRates();
+                UpdateStatistics();
                 LoadCourtCards();
                 LoadGameTypeCards();
             }
@@ -507,6 +509,7 @@ namespace cms
                 filterCombo.SelectedIndex = 0;
                 managementOverlay.Visible = false;
             }
+            UpdateStatistics();
         }
 
         private void InitializeDefaultOptions()
@@ -594,6 +597,7 @@ namespace cms
             });
 
             DisplayGameRates();
+            UpdateStatistics();
         }
 
         private void LoadCourtCards()
@@ -623,10 +627,18 @@ namespace cms
                 Tag = court
             };
 
+            // Modern card styling
             card.Paint += (s, e) =>
             {
-                ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
-                    Color.FromArgb(230, 230, 230), ButtonBorderStyle.Solid);
+                using (Pen pen = new Pen(Color.FromArgb(229, 231, 235), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+                }
+
+                using (Pen shadowPen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
+                {
+                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
+                }
             };
 
             Label lblName = new Label
@@ -635,7 +647,7 @@ namespace cms
                 Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 Location = new Point(15, 15),
                 Size = new Size(250, 25),
-                ForeColor = Color.FromArgb(33, 33, 33)
+                ForeColor = Color.FromArgb(17, 24, 39)
             };
 
             Label lblDesc = new Label
@@ -644,7 +656,7 @@ namespace cms
                 Font = new Font("Segoe UI", 9F),
                 Location = new Point(15, 40),
                 Size = new Size(250, 20),
-                ForeColor = Color.FromArgb(100, 100, 100)
+                ForeColor = Color.FromArgb(107, 114, 128)
             };
 
             Button btnDelete = new Button
@@ -654,12 +666,16 @@ namespace cms
                 BackColor = dangerColor,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Size = new Size(70, 25),
-                Location = new Point(190, 65),
+                Size = new Size(70, 28),
+                Location = new Point(190, 62),
                 Tag = court,
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
             };
-            btnDelete.FlatAppearance.BorderSize = 0;
+
+            // Hover effect
+            btnDelete.MouseEnter += (s, e) => btnDelete.BackColor = ControlPaint.Light(dangerColor, 0.2f);
+            btnDelete.MouseLeave += (s, e) => btnDelete.BackColor = dangerColor;
             btnDelete.Click += BtnDeleteCourt_Click;
 
             card.Controls.AddRange(new Control[] { lblName, lblDesc, btnDelete });
@@ -695,8 +711,14 @@ namespace cms
 
             card.Paint += (s, e) =>
             {
-                ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
-                    Color.FromArgb(230, 230, 230), ButtonBorderStyle.Solid);
+                using (Pen pen = new Pen(Color.FromArgb(229, 231, 235), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+                }
+                using (Pen shadowPen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
+                {
+                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
+                }
             };
 
             Label lblName = new Label
@@ -705,7 +727,7 @@ namespace cms
                 Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 Location = new Point(15, 15),
                 Size = new Size(250, 25),
-                ForeColor = Color.FromArgb(33, 33, 33)
+                ForeColor = Color.FromArgb(17, 24, 39)
             };
 
             Label lblDesc = new Label
@@ -714,7 +736,7 @@ namespace cms
                 Font = new Font("Segoe UI", 9F),
                 Location = new Point(15, 40),
                 Size = new Size(250, 20),
-                ForeColor = Color.FromArgb(100, 100, 100)
+                ForeColor = Color.FromArgb(107, 114, 128)
             };
 
             Button btnDelete = new Button
@@ -724,12 +746,15 @@ namespace cms
                 BackColor = dangerColor,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Size = new Size(70, 25),
-                Location = new Point(190, 65),
+                Size = new Size(70, 28),
+                Location = new Point(190, 62),
                 Tag = gameType,
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
             };
-            btnDelete.FlatAppearance.BorderSize = 0;
+
+            btnDelete.MouseEnter += (s, e) => btnDelete.BackColor = ControlPaint.Light(dangerColor, 0.2f);
+            btnDelete.MouseLeave += (s, e) => btnDelete.BackColor = dangerColor;
             btnDelete.Click += BtnDeleteGameType_Click;
 
             card.Controls.AddRange(new Control[] { lblName, lblDesc, btnDelete });
@@ -783,20 +808,25 @@ namespace cms
             Panel card = new Panel
             {
                 Width = 350,
-                Height = 260,
+                Height = 280,
                 BackColor = cardBgColor,
-                Margin = new Padding(10),
+                Margin = new Padding(12),
                 Tag = rate
             };
 
-            // Add border
             card.Paint += (s, e) =>
             {
-                ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
-                    Color.FromArgb(230, 230, 230), ButtonBorderStyle.Solid);
+                using (Pen pen = new Pen(Color.FromArgb(229, 231, 235), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+                }
+
+                using (Pen shadowPen = new Pen(Color.FromArgb(30, 0, 0, 0), 2))
+                {
+                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
+                }
             };
 
-            // Status indicator
             Panel statusBar = new Panel
             {
                 Height = 6,
@@ -804,65 +834,68 @@ namespace cms
                 BackColor = rate.Status == "Enabled" ? successColor : dangerColor
             };
 
-            // Image or placeholder
             Panel imagePanel = new Panel
             {
                 Size = new Size(100, 100),
-                Location = new Point(15, 15),
-                BackColor = Color.FromArgb(245, 245, 245)
+                Location = new Point(16, 22),
+                BackColor = Color.FromArgb(249, 250, 251),
+                BorderStyle = BorderStyle.None
+            };
+
+            imagePanel.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(Color.FromArgb(209, 213, 219), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, imagePanel.Width - 1, imagePanel.Height - 1);
+                }
             };
 
             PictureBox pb = new PictureBox
             {
-                Size = new Size(96, 96),
-                Location = new Point(2, 2),
+                Size = new Size(94, 94),
+                Location = new Point(3, 3),
                 SizeMode = PictureBoxSizeMode.Zoom,
                 Image = rate.Image ?? CreatePlaceholderImage(),
-                BackColor = Color.White
+                BackColor = Color.Transparent
             };
             imagePanel.Controls.Add(pb);
 
-            // Name
             Label lblName = new Label
             {
                 Text = rate.Name,
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                Location = new Point(130, 15),
+                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                Location = new Point(130, 22),
                 Size = new Size(200, 25),
-                ForeColor = Color.FromArgb(33, 33, 33)
+                ForeColor = Color.FromArgb(17, 24, 39)
             };
 
-            // Court & Game Type
             Label lblType = new Label
             {
-                Text = $"{rate.CourtType} • {rate.GameType}",
+                Text = $"🏟️ {rate.CourtType}  •  🎮 {rate.GameType}",
                 Font = new Font("Segoe UI", 10F),
-                Location = new Point(130, 40),
+                Location = new Point(130, 47),
                 Size = new Size(200, 20),
-                ForeColor = Color.FromArgb(100, 100, 100)
+                ForeColor = Color.FromArgb(107, 114, 128)
             };
 
-            // Rate
             Label lblRate = new Label
             {
-                Text = $"₱{rate.Rate:N2}/hour",
-                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
-                Location = new Point(130, 65),
-                Size = new Size(200, 25),
+                Text = $"₱{rate.Rate:N0}/hr",
+                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
+                Location = new Point(130, 70),
+                Size = new Size(200, 30),
                 ForeColor = primaryColor
             };
 
-            // Description
             Label lblDesc = new Label
             {
                 Text = rate.Description,
                 Font = new Font("Segoe UI", 9F),
-                Location = new Point(15, 125),
-                Size = new Size(320, 35),
-                ForeColor = Color.FromArgb(80, 80, 80)
+                Location = new Point(16, 135),
+                Size = new Size(320, 40),
+                ForeColor = Color.FromArgb(75, 85, 99)
             };
 
-            // Action buttons
             Button btnToggle = new Button
             {
                 Text = rate.Status == "Enabled" ? "Disable" : "Enable",
@@ -870,12 +903,15 @@ namespace cms
                 BackColor = rate.Status == "Enabled" ? warningColor : successColor,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Size = new Size(70, 30),
-                Location = new Point(180, 170),
+                Size = new Size(75, 32),
+                Location = new Point(180, 185),
                 Tag = rate,
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
             };
-            btnToggle.FlatAppearance.BorderSize = 0;
+
+            btnToggle.MouseEnter += (s, e) => btnToggle.BackColor = ControlPaint.Light(rate.Status == "Enabled" ? warningColor : successColor, 0.2f);
+            btnToggle.MouseLeave += (s, e) => btnToggle.BackColor = rate.Status == "Enabled" ? warningColor : successColor;
             btnToggle.Click += BtnToggle_Click;
 
             Button btnEdit = new Button
@@ -885,12 +921,15 @@ namespace cms
                 BackColor = primaryColor,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Size = new Size(70, 30),
-                Location = new Point(260, 170),
+                Size = new Size(75, 32),
+                Location = new Point(260, 185),
                 Tag = rate,
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
             };
-            btnEdit.FlatAppearance.BorderSize = 0;
+
+            btnEdit.MouseEnter += (s, e) => btnEdit.BackColor = ControlPaint.Light(primaryColor, 0.2f);
+            btnEdit.MouseLeave += (s, e) => btnEdit.BackColor = primaryColor;
             btnEdit.Click += BtnEdit_Click;
 
             card.Controls.AddRange(new Control[] {
@@ -898,11 +937,45 @@ namespace cms
                 lblRate, lblDesc, btnToggle, btnEdit
             });
 
-            // Hover effect
             card.MouseEnter += (s, e) => card.BackColor = hoverColor;
             card.MouseLeave += (s, e) => card.BackColor = cardBgColor;
 
             return card;
+        }
+
+        private void UpdateStatistics()
+        {
+            try
+            {
+                if (this.InvokeRequired)
+                {
+                    this.Invoke(new MethodInvoker(() => UpdateStatistics()));
+                    return;
+                }
+
+                int totalRates = gameRates.Count;
+                int activeCount = gameRates.Count(r => r.Status == "Enabled");
+                int inactiveCount = gameRates.Count(r => r.Status == "Disabled");
+
+                decimal avgRate = 0;
+                if (gameRates.Count > 0)
+                {
+                    avgRate = gameRates.Average(r => r.Rate);
+                }
+
+                lblStatsValue1.Text = totalRates.ToString();
+                lblStatsValue2.Text = activeCount.ToString();
+                lblStatsValue3.Text = inactiveCount.ToString();
+                lblStatsValue4.Text = $"₱{avgRate:F0}";
+
+                lblStatsSub1.Text = totalRates == 1 ? "total rate" : "total rates";
+                lblStatsSub2.Text = activeCount == 1 ? "active" : "active";
+                lblStatsSub3.Text = inactiveCount == 1 ? "inactive" : "inactive";
+            }
+            catch (Exception ex)
+            {
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error updating statistics");
+            }
         }
 
         private void BtnToggle_Click(object sender, EventArgs e)
@@ -927,8 +1000,8 @@ namespace cms
 
                 rate.Status = newStatus;
                 DisplayGameRates();
+                UpdateStatistics();
 
-                // Log the status change
                 Activitylogs.Instance.LogGameRateActivity(currentUser, "Status Changed", rate.Name, $"Changed from {oldStatus} to {newStatus}");
 
                 MessageBox.Show($"Game rate {newStatus.ToLower()}!", "Status Changed",
@@ -1158,7 +1231,6 @@ namespace cms
                     Cursor = Cursors.Hand
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
-                btnCancel.Click += (s, args) => editDialog.Close();
 
                 Button btnSave = new Button
                 {
@@ -1248,13 +1320,11 @@ namespace cms
                             cmd.ExecuteNonQuery();
                         }
 
-                        // Store old values for logging
                         string oldName = rate.Name;
                         string oldCourtType = rate.CourtType;
                         string oldGameType = rate.GameType;
                         decimal oldRate = rate.Rate;
 
-                        // Update local object
                         rate.Name = txtNameEdit.Text.Trim();
                         rate.CourtType = cboCourtTypeEdit.Text;
                         rate.GameType = cboGameTypeEdit.Text;
@@ -1272,8 +1342,8 @@ namespace cms
                         }
 
                         DisplayGameRates();
+                        UpdateStatistics();
 
-                        // Log the update with details of what changed
                         string changes = "";
                         if (oldName != rate.Name) changes += $"Name: '{oldName}' → '{rate.Name}' ";
                         if (oldCourtType != rate.CourtType) changes += $"Court: '{oldCourtType}' → '{rate.CourtType}' ";
@@ -1317,8 +1387,8 @@ namespace cms
                             string deletedName = rate.Name;
                             gameRates.Remove(rate);
                             DisplayGameRates();
+                            UpdateStatistics();
 
-                            // Log the deletion
                             Activitylogs.Instance.LogGameRateActivity(currentUser, "Deleted", deletedName);
 
                             MessageBox.Show("Game rate deleted successfully!", "Success",
@@ -1540,7 +1610,6 @@ namespace cms
                     Cursor = Cursors.Hand
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
-                btnCancel.Click += (s, args) => addRateDialog.Close();
 
                 Button btnAdd = new Button
                 {
@@ -1632,9 +1701,9 @@ namespace cms
 
                             gameRates.Add(newRate);
                             DisplayGameRates();
+                            UpdateStatistics();
                         }
 
-                        // Log the addition
                         Activitylogs.Instance.LogGameRateActivity(currentUser, "Added", txtName.Text.Trim(),
                             $"Court: {cboCourtType.Text}, Game: {cboGameType.Text}, Rate: ₱{rate}");
 
@@ -1697,7 +1766,6 @@ namespace cms
                     courtTypes.Remove(court);
                     LoadCourtCards();
 
-                    // Log the deletion
                     Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Deleted", $"Court type '{deletedCourt}' was deleted", "Info", "GameRates");
 
                     MessageBox.Show($"Court type '{deletedCourt}' deleted successfully!", "Success",
@@ -1744,7 +1812,6 @@ namespace cms
                     gameTypesList.Remove(gameType);
                     LoadGameTypeCards();
 
-                    // Log the deletion
                     Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Deleted", $"Game type '{deletedGame}' was deleted", "Info", "GameRates");
 
                     MessageBox.Show($"Game type '{deletedGame}' deleted successfully!", "Success",
@@ -1759,6 +1826,7 @@ namespace cms
             }
         }
 
+        // ADD COURT BUTTON CLICK HANDLER
         private void btnAddCourt_Click(object sender, EventArgs e)
         {
             string newCourtName = ShowInputDialog("Add Court Type", "Enter new court type:");
@@ -1794,7 +1862,6 @@ namespace cms
                         LoadCourtCards();
                     }
 
-                    // Log the addition
                     Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Added", $"New court type '{newCourtName}' was added", "Info", "GameRates");
 
                     MessageBox.Show($"Court type '{newCourtName}' added successfully!", "Success",
@@ -1809,6 +1876,7 @@ namespace cms
             }
         }
 
+        // ADD GAME TYPE BUTTON CLICK HANDLER
         private void btnAddGameType_Click(object sender, EventArgs e)
         {
             string newGameName = ShowInputDialog("Add Game Type", "Enter new game type:");
@@ -1844,7 +1912,6 @@ namespace cms
                         LoadGameTypeCards();
                     }
 
-                    // Log the addition
                     Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Added", $"New game type '{newGameName}' was added", "Info", "GameRates");
 
                     MessageBox.Show($"Game type '{newGameName}' added successfully!", "Success",
