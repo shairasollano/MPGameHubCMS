@@ -26,6 +26,9 @@ namespace cms
         private List<GameType> gameTypesList;
         private Dictionary<int, byte[]> _imageCache;
 
+        // Current user (you should set this from your login system)
+        private string currentUser = "admin";
+
         // Database connection string for XAMPP MySQL
         private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
         private MySqlConnection connection;
@@ -104,10 +107,14 @@ namespace cms
             StyleButton(btnManage, primaryColor);
             StyleButton(btnAddCourt, successColor);
             StyleButton(btnAddGameType, successColor);
+            StyleButton(btnCloseManagement, dangerColor);
 
             // Initialize database and load data
             InitializeDatabase();
             InitializeControls();
+
+            // Log that GameRates module was opened
+            Activitylogs.Instance.AddLogEntry(currentUser, "Module Opened", "Game Rates management module was opened", "Info", "GameRates");
         }
 
         private void StyleButton(Button btn, Color backColor)
@@ -143,6 +150,7 @@ namespace cms
             }
             catch (Exception ex)
             {
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Database initialization error");
                 MessageBox.Show($"Database initialization error: {ex.Message}\n\nUsing default sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeDefaultOptions();
@@ -275,6 +283,8 @@ namespace cms
                     insertCmd.Parameters.AddWithValue("@desc", $"Court type for {court} games");
                     insertCmd.ExecuteNonQuery();
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default court types were created", "Info", "GameRates");
             }
 
             // Check game_types
@@ -293,6 +303,8 @@ namespace cms
                     insertCmd.Parameters.AddWithValue("@desc", $"{game} game type");
                     insertCmd.ExecuteNonQuery();
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game types were created", "Info", "GameRates");
             }
 
             // Check game_rates
@@ -311,6 +323,8 @@ namespace cms
                     ('Volleyball Court', 'Outdoor', 'Volleyball', 600, 'Beach sand court, net included, lights available', 'Enabled')";
                 MySqlCommand insertRatesCmd = new MySqlCommand(insertRate, connection);
                 insertRatesCmd.ExecuteNonQuery();
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game rates were created", "Info", "GameRates");
             }
         }
 
@@ -359,9 +373,12 @@ namespace cms
                     // Load game rates
                     LoadGameRatesFromDatabase();
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Data Loaded", $"Loaded {gameRates.Count} game rates from database", "Info", "GameRates");
             }
             catch (Exception ex)
             {
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading data from database");
                 MessageBox.Show($"Error loading data from database: {ex.Message}\nUsing sample data instead.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeDefaultOptions();
@@ -432,6 +449,7 @@ namespace cms
             }
             catch (Exception ex)
             {
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading game rates");
                 MessageBox.Show($"Error loading game rates: {ex.Message}\nUsing sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 AddSampleData();
@@ -481,13 +499,13 @@ namespace cms
             {
                 filterCombo.Invoke(new MethodInvoker(() => {
                     filterCombo.SelectedIndex = 0;
-                    managementPanel.Visible = false;
+                    managementOverlay.Visible = false;
                 }));
             }
             else
             {
                 filterCombo.SelectedIndex = 0;
-                managementPanel.Visible = false;
+                managementOverlay.Visible = false;
             }
         }
 
@@ -892,6 +910,7 @@ namespace cms
             Button btn = (Button)sender;
             GameRate rate = (GameRate)btn.Tag;
 
+            string oldStatus = rate.Status;
             string newStatus = rate.Status == "Enabled" ? "Disabled" : "Enabled";
 
             try
@@ -909,11 +928,15 @@ namespace cms
                 rate.Status = newStatus;
                 DisplayGameRates();
 
+                // Log the status change
+                Activitylogs.Instance.LogGameRateActivity(currentUser, "Status Changed", rate.Name, $"Changed from {oldStatus} to {newStatus}");
+
                 MessageBox.Show($"Game rate {newStatus.ToLower()}!", "Status Changed",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error changing status for {rate.Name}");
                 MessageBox.Show($"Error updating status: {ex.Message}",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -1039,6 +1062,7 @@ namespace cms
                 };
 
                 byte[] selectedImageBytes = rate.ImageData;
+                bool imageChanged = false;
 
                 btnBrowse.Click += (s, args) =>
                 {
@@ -1059,6 +1083,7 @@ namespace cms
                                     lblImageName.Text = Path.GetFileName(ofd.FileName);
                                     lblImageName.ForeColor = Color.Black;
                                     btnRemoveImage.Visible = true;
+                                    imageChanged = true;
                                 }
                             }
                             catch (Exception ex)
@@ -1077,6 +1102,7 @@ namespace cms
                     lblImageName.Text = "No image selected";
                     lblImageName.ForeColor = Color.Gray;
                     btnRemoveImage.Visible = false;
+                    imageChanged = true;
                 };
 
                 imagePanel.Controls.Add(pbPreview);
@@ -1222,6 +1248,12 @@ namespace cms
                             cmd.ExecuteNonQuery();
                         }
 
+                        // Store old values for logging
+                        string oldName = rate.Name;
+                        string oldCourtType = rate.CourtType;
+                        string oldGameType = rate.GameType;
+                        decimal oldRate = rate.Rate;
+
                         // Update local object
                         rate.Name = txtNameEdit.Text.Trim();
                         rate.CourtType = cboCourtTypeEdit.Text;
@@ -1241,6 +1273,16 @@ namespace cms
 
                         DisplayGameRates();
 
+                        // Log the update with details of what changed
+                        string changes = "";
+                        if (oldName != rate.Name) changes += $"Name: '{oldName}' → '{rate.Name}' ";
+                        if (oldCourtType != rate.CourtType) changes += $"Court: '{oldCourtType}' → '{rate.CourtType}' ";
+                        if (oldGameType != rate.GameType) changes += $"Game: '{oldGameType}' → '{rate.GameType}' ";
+                        if (oldRate != rate.Rate) changes += $"Rate: ₱{oldRate} → ₱{rate.Rate} ";
+                        if (imageChanged) changes += "Image updated ";
+
+                        Activitylogs.Instance.LogGameRateActivity(currentUser, "Updated", rate.Name, changes);
+
                         MessageBox.Show("Game rate updated successfully!", "Success",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -1248,6 +1290,7 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
+                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error updating {rate.Name}");
                         MessageBox.Show($"Error updating database: {ex.Message}",
                             "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -1255,7 +1298,7 @@ namespace cms
 
                 btnDelete.Click += (s, args) =>
                 {
-                    DialogResult result = MessageBox.Show("Are you sure you want to delete this game rate?",
+                    DialogResult result = MessageBox.Show($"Are you sure you want to delete '{rate.Name}'?",
                         "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                     if (result == DialogResult.Yes)
@@ -1271,8 +1314,12 @@ namespace cms
                                 cmd.ExecuteNonQuery();
                             }
 
+                            string deletedName = rate.Name;
                             gameRates.Remove(rate);
                             DisplayGameRates();
+
+                            // Log the deletion
+                            Activitylogs.Instance.LogGameRateActivity(currentUser, "Deleted", deletedName);
 
                             MessageBox.Show("Game rate deleted successfully!", "Success",
                                 MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1280,6 +1327,7 @@ namespace cms
                         }
                         catch (Exception ex)
                         {
+                            Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting {rate.Name}");
                             MessageBox.Show($"Error deleting: {ex.Message}",
                                 "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
@@ -1586,6 +1634,10 @@ namespace cms
                             DisplayGameRates();
                         }
 
+                        // Log the addition
+                        Activitylogs.Instance.LogGameRateActivity(currentUser, "Added", txtName.Text.Trim(),
+                            $"Court: {cboCourtType.Text}, Game: {cboGameType.Text}, Rate: ₱{rate}");
+
                         MessageBox.Show("Game rate added successfully!", "Success",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -1593,6 +1645,7 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
+                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error adding new game rate");
                         MessageBox.Show($"Error saving: {ex.Message}",
                             "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -1640,11 +1693,19 @@ namespace cms
                         cmd.ExecuteNonQuery();
                     }
 
+                    string deletedCourt = court.CourtName;
                     courtTypes.Remove(court);
                     LoadCourtCards();
+
+                    // Log the deletion
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Deleted", $"Court type '{deletedCourt}' was deleted", "Info", "GameRates");
+
+                    MessageBox.Show($"Court type '{deletedCourt}' deleted successfully!", "Success",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting court type {court.CourtName}");
                     MessageBox.Show($"Error deleting: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -1679,11 +1740,19 @@ namespace cms
                         cmd.ExecuteNonQuery();
                     }
 
+                    string deletedGame = gameType.GameName;
                     gameTypesList.Remove(gameType);
                     LoadGameTypeCards();
+
+                    // Log the deletion
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Deleted", $"Game type '{deletedGame}' was deleted", "Info", "GameRates");
+
+                    MessageBox.Show($"Game type '{deletedGame}' deleted successfully!", "Success",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting game type {gameType.GameName}");
                     MessageBox.Show($"Error deleting: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -1725,11 +1794,15 @@ namespace cms
                         LoadCourtCards();
                     }
 
+                    // Log the addition
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Added", $"New court type '{newCourtName}' was added", "Info", "GameRates");
+
                     MessageBox.Show($"Court type '{newCourtName}' added successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding court type {newCourtName}");
                     MessageBox.Show($"Error adding: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -1771,11 +1844,15 @@ namespace cms
                         LoadGameTypeCards();
                     }
 
+                    // Log the addition
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Added", $"New game type '{newGameName}' was added", "Info", "GameRates");
+
                     MessageBox.Show($"Game type '{newGameName}' added successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding game type {newGameName}");
                     MessageBox.Show($"Error adding: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -1784,17 +1861,22 @@ namespace cms
 
         private void btnManage_Click(object sender, EventArgs e)
         {
-            managementPanel.Visible = !managementPanel.Visible;
-            if (managementPanel.Visible)
-            {
-                btnManage.Text = "Hide Management";
-                LoadCourtCards();
-                LoadGameTypeCards();
-            }
-            else
-            {
-                btnManage.Text = "Manage Courts";
-            }
+            // Show the management overlay
+            managementOverlay.Visible = true;
+            managementOverlay.BringToFront();
+            btnManage.Text = "Hide Management";
+
+            LoadCourtCards();
+            LoadGameTypeCards();
+
+            Activitylogs.Instance.AddLogEntry(currentUser, "Management View", "Opened court and game type management", "Info", "GameRates");
+        }
+
+        private void btnCloseManagement_Click(object sender, EventArgs e)
+        {
+            // Hide the management overlay
+            managementOverlay.Visible = false;
+            btnManage.Text = "Manage Courts/Types";
         }
 
         private void btnAddNew_Click(object sender, EventArgs e)

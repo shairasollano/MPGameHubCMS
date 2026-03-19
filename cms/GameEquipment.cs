@@ -19,6 +19,9 @@ namespace cms
         private static readonly Color cardBgColor = Color.White;
         private static readonly Color hoverColor = Color.FromArgb(245, 247, 250);
 
+        // Current user (you should set this from your login system)
+        private string currentUser = "admin";
+
         // Database connection
         private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
         private MySqlConnection connection;
@@ -78,10 +81,37 @@ namespace cms
             public int Quantity { get; set; }
             public string CheckedOutBy { get; set; }
             public DateTime CheckOutDate { get; set; }
-            public DateTime? ExpectedReturnDate { get; set; }
             public DateTime? ActualReturnDate { get; set; }
             public string Notes { get; set; }
-            public string Status { get; set; } // "Checked Out", "Returned", "Overdue"
+            public string Status { get; set; } // "Checked Out", "Returned"
+            public string Duration
+            {
+                get
+                {
+                    if (ActualReturnDate.HasValue)
+                    {
+                        TimeSpan diff = ActualReturnDate.Value - CheckOutDate;
+                        return $"{(int)diff.TotalHours}h {diff.Minutes}m";
+                    }
+                    else
+                    {
+                        TimeSpan diff = DateTime.Now - CheckOutDate;
+                        return $"{(int)diff.TotalHours}h {diff.Minutes}m (ongoing)";
+                    }
+                }
+            }
+        }
+
+        // Helper class for sample logs
+        private class SampleLog
+        {
+            public int eqId { get; set; }
+            public string eqName { get; set; }
+            public int qty { get; set; }
+            public string by { get; set; }
+            public DateTime outDate { get; set; }
+            public object returnDate { get; set; }
+            public string status { get; set; }
         }
 
         public GameEquipment()
@@ -106,8 +136,11 @@ namespace cms
             filterCombo.SelectedIndexChanged += FilterCombo_SelectedIndexChanged;
             filterCombo.SelectedIndex = 0;
 
-            // Hide management panel initially
-            managementPanel.Visible = false;
+            // Hide management overlay initially
+            managementOverlay.Visible = false;
+
+            // Log that GameEquipment module was opened
+            Activitylogs.Instance.AddLogEntry(currentUser, "Module Opened", "Game Equipment management module was opened", "Info", "GameEquipment");
         }
 
         private void InitializeDatabase()
@@ -128,6 +161,7 @@ namespace cms
             }
             catch (Exception ex)
             {
+                Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, "Database initialization error");
                 MessageBox.Show($"Database initialization error: {ex.Message}\n\nUsing default sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeSampleData();
@@ -217,7 +251,6 @@ namespace cms
                         quantity INT NOT NULL,
                         checked_out_by VARCHAR(100) NOT NULL,
                         check_out_date DATETIME NOT NULL,
-                        expected_return_date DATE,
                         actual_return_date DATETIME,
                         notes TEXT,
                         status VARCHAR(20) DEFAULT 'Checked Out',
@@ -260,6 +293,8 @@ namespace cms
                     cmd.Parameters.AddWithValue("@icon", cat.icon);
                     cmd.ExecuteNonQuery();
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default equipment categories were created", "Info", "GameEquipment");
             }
 
             // Check and insert default conditions
@@ -286,6 +321,8 @@ namespace cms
                     cmd.Parameters.AddWithValue("@desc", cond.desc);
                     cmd.ExecuteNonQuery();
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default equipment conditions were created", "Info", "GameEquipment");
             }
 
             // Check and insert sample equipment
@@ -320,6 +357,50 @@ namespace cms
                     cmd.Parameters.AddWithValue("@notes", eq.notes);
                     cmd.Parameters.AddWithValue("@maint", eq.maint);
                     cmd.Parameters.AddWithValue("@lastMaint", eq.lastMaint);
+                    cmd.ExecuteNonQuery();
+                }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default equipment items were created", "Info", "GameEquipment");
+            }
+
+            // Insert sample checkout logs for demo
+            InsertSampleCheckoutLogs();
+        }
+
+        private void InsertSampleCheckoutLogs()
+        {
+            string checkLogs = "SELECT COUNT(*) FROM equipment_checkout_logs";
+            int logCount = Convert.ToInt32(new MySqlCommand(checkLogs, connection).ExecuteScalar());
+
+            if (logCount == 0)
+            {
+                // Use strongly-typed list instead of array
+                List<SampleLog> logs = new List<SampleLog>
+                {
+                    new SampleLog { eqId = 1, eqName = "Tennis Racket - Pro Staff", qty = 2, by = "John Smith", outDate = DateTime.Now.AddDays(-3), returnDate = DateTime.Now.AddDays(-1), status = "Returned" },
+                    new SampleLog { eqId = 1, eqName = "Tennis Racket - Pro Staff", qty = 1, by = "Mike Johnson", outDate = DateTime.Now.AddDays(-2), returnDate = DBNull.Value, status = "Checked Out" },
+                    new SampleLog { eqId = 2, eqName = "Badminton Shuttlecocks (Tube)", qty = 3, by = "Sarah Lee", outDate = DateTime.Now.AddDays(-5), returnDate = DateTime.Now.AddDays(-2), status = "Returned" },
+                    new SampleLog { eqId = 2, eqName = "Badminton Shuttlecocks (Tube)", qty = 2, by = "Tom Wilson", outDate = DateTime.Now.AddDays(-1), returnDate = DBNull.Value, status = "Checked Out" },
+                    new SampleLog { eqId = 3, eqName = "Basketball - Official Size", qty = 1, by = "David Brown", outDate = DateTime.Now.AddDays(-4), returnDate = DateTime.Now.AddDays(-1), status = "Returned" },
+                    new SampleLog { eqId = 4, eqName = "Volleyball Net (Complete Set)", qty = 1, by = "Lisa Chen", outDate = DateTime.Now.AddDays(-2), returnDate = DBNull.Value, status = "Checked Out" },
+                    new SampleLog { eqId = 5, eqName = "Knee Pads (Pair)", qty = 2, by = "Alex Garcia", outDate = DateTime.Now.AddDays(-3), returnDate = DateTime.Now, status = "Returned" }
+                };
+
+                foreach (var log in logs)
+                {
+                    string insert = @"
+                        INSERT INTO equipment_checkout_logs 
+                        (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, actual_return_date, status) 
+                        VALUES (@eqId, @eqName, @qty, @by, @outDate, @returnDate, @status)";
+
+                    MySqlCommand cmd = new MySqlCommand(insert, connection);
+                    cmd.Parameters.AddWithValue("@eqId", log.eqId);
+                    cmd.Parameters.AddWithValue("@eqName", log.eqName);
+                    cmd.Parameters.AddWithValue("@qty", log.qty);
+                    cmd.Parameters.AddWithValue("@by", log.by);
+                    cmd.Parameters.AddWithValue("@outDate", log.outDate);
+                    cmd.Parameters.AddWithValue("@returnDate", log.returnDate);
+                    cmd.Parameters.AddWithValue("@status", log.status);
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -402,11 +483,11 @@ namespace cms
                         }
                     }
 
-                    // Load checkout logs
+                    // Load checkout logs - FIXED: Using if-else for nullable DateTime
                     checkoutLogs.Clear();
                     string logQuery = @"
                         SELECT id, equipment_id, equipment_name, quantity, checked_out_by,
-                               check_out_date, expected_return_date, actual_return_date, notes, status
+                               check_out_date, actual_return_date, notes, status
                         FROM equipment_checkout_logs ORDER BY check_out_date DESC";
 
                     MySqlCommand logCmd = new MySqlCommand(logQuery, connection);
@@ -414,7 +495,7 @@ namespace cms
                     {
                         while (reader.Read())
                         {
-                            checkoutLogs.Add(new CheckoutLog
+                            CheckoutLog log = new CheckoutLog
                             {
                                 Id = Convert.ToInt32(reader["id"]),
                                 EquipmentId = Convert.ToInt32(reader["equipment_id"]),
@@ -422,13 +503,21 @@ namespace cms
                                 Quantity = Convert.ToInt32(reader["quantity"]),
                                 CheckedOutBy = reader["checked_out_by"].ToString(),
                                 CheckOutDate = Convert.ToDateTime(reader["check_out_date"]),
-                                ExpectedReturnDate = reader["expected_return_date"] != DBNull.Value ?
-                                    Convert.ToDateTime(reader["expected_return_date"]) : (DateTime?)null,
-                                ActualReturnDate = reader["actual_return_date"] != DBNull.Value ?
-                                    Convert.ToDateTime(reader["actual_return_date"]) : (DateTime?)null,
                                 Notes = reader["notes"]?.ToString() ?? "",
                                 Status = reader["status"].ToString()
-                            });
+                            };
+
+                            // Handle nullable DateTime for actual_return_date - FIXED
+                            if (reader["actual_return_date"] != DBNull.Value)
+                            {
+                                log.ActualReturnDate = Convert.ToDateTime(reader["actual_return_date"]);
+                            }
+                            else
+                            {
+                                log.ActualReturnDate = null;
+                            }
+
+                            checkoutLogs.Add(log);
                         }
                     }
 
@@ -438,9 +527,12 @@ namespace cms
                         category.ItemCount = equipmentList.Count(e => e.Category == category.Name);
                     }
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Data Loaded", $"Loaded {equipmentList.Count} equipment items and {checkoutLogs.Count} logs from database", "Info", "GameEquipment");
             }
             catch (Exception ex)
             {
+                Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, "Error loading data from database");
                 MessageBox.Show($"Error loading data: {ex.Message}\nUsing sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeSampleData();
@@ -533,6 +625,91 @@ namespace cms
                 NeedsMaintenance = false,
                 LastMaintenance = DateTime.Now.AddMonths(-1)
             });
+
+            // Add sample checkout logs
+            checkoutLogs.Add(new CheckoutLog
+            {
+                Id = 1,
+                EquipmentId = 1,
+                EquipmentName = "Tennis Racket - Pro Staff",
+                Quantity = 2,
+                CheckedOutBy = "John Smith",
+                CheckOutDate = DateTime.Now.AddDays(-3),
+                ActualReturnDate = DateTime.Now.AddDays(-1),
+                Status = "Returned"
+            });
+
+            checkoutLogs.Add(new CheckoutLog
+            {
+                Id = 2,
+                EquipmentId = 1,
+                EquipmentName = "Tennis Racket - Pro Staff",
+                Quantity = 1,
+                CheckedOutBy = "Mike Johnson",
+                CheckOutDate = DateTime.Now.AddDays(-2),
+                ActualReturnDate = null,
+                Status = "Checked Out"
+            });
+
+            checkoutLogs.Add(new CheckoutLog
+            {
+                Id = 3,
+                EquipmentId = 2,
+                EquipmentName = "Badminton Shuttlecocks (Tube)",
+                Quantity = 3,
+                CheckedOutBy = "Sarah Lee",
+                CheckOutDate = DateTime.Now.AddDays(-5),
+                ActualReturnDate = DateTime.Now.AddDays(-2),
+                Status = "Returned"
+            });
+
+            checkoutLogs.Add(new CheckoutLog
+            {
+                Id = 4,
+                EquipmentId = 2,
+                EquipmentName = "Badminton Shuttlecocks (Tube)",
+                Quantity = 2,
+                CheckedOutBy = "Tom Wilson",
+                CheckOutDate = DateTime.Now.AddDays(-1),
+                ActualReturnDate = null,
+                Status = "Checked Out"
+            });
+
+            checkoutLogs.Add(new CheckoutLog
+            {
+                Id = 5,
+                EquipmentId = 3,
+                EquipmentName = "Basketball - Official Size",
+                Quantity = 1,
+                CheckedOutBy = "David Brown",
+                CheckOutDate = DateTime.Now.AddDays(-4),
+                ActualReturnDate = DateTime.Now.AddDays(-1),
+                Status = "Returned"
+            });
+
+            checkoutLogs.Add(new CheckoutLog
+            {
+                Id = 6,
+                EquipmentId = 4,
+                EquipmentName = "Volleyball Net (Complete Set)",
+                Quantity = 1,
+                CheckedOutBy = "Lisa Chen",
+                CheckOutDate = DateTime.Now.AddDays(-2),
+                ActualReturnDate = null,
+                Status = "Checked Out"
+            });
+
+            checkoutLogs.Add(new CheckoutLog
+            {
+                Id = 7,
+                EquipmentId = 5,
+                EquipmentName = "Knee Pads (Pair)",
+                Quantity = 2,
+                CheckedOutBy = "Alex Garcia",
+                CheckOutDate = DateTime.Now.AddDays(-3),
+                ActualReturnDate = DateTime.Now,
+                Status = "Returned"
+            });
         }
 
         private void StyleButtons()
@@ -541,6 +718,8 @@ namespace cms
             StyleButton(btnManageCategories, primaryColor);
             StyleButton(btnAddCategory, successColor);
             StyleButton(btnAddCondition, successColor);
+            StyleButton(btnCloseManagement, dangerColor);
+            StyleButton(btnViewLogs, infoColor);
         }
 
         private void StyleButton(Button btn, Color backColor)
@@ -823,7 +1002,7 @@ namespace cms
             using (var dialog = new Form())
             {
                 dialog.Text = $"Check Out - {item.Name}";
-                dialog.Size = new Size(400, 300);
+                dialog.Size = new Size(400, 200);
                 dialog.StartPosition = FormStartPosition.CenterParent;
                 dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
                 dialog.MaximizeBox = false;
@@ -834,7 +1013,7 @@ namespace cms
                 {
                     Dock = DockStyle.Fill,
                     ColumnCount = 2,
-                    RowCount = 5,
+                    RowCount = 3,
                     Padding = new Padding(20),
                     ColumnStyles = {
                         new ColumnStyle(SizeType.Absolute, 120),
@@ -867,25 +1046,20 @@ namespace cms
 
                 // Checked out by
                 tlp.Controls.Add(new Label { Text = "Checked out by:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 2);
-                TextBox txtCheckedBy = new TextBox { Font = new Font("Segoe UI", 10F), Dock = DockStyle.Fill };
-                tlp.Controls.Add(txtCheckedBy, 1, 2);
-
-                // Expected return date
-                tlp.Controls.Add(new Label { Text = "Expected return:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 3);
-                DateTimePicker dtpReturn = new DateTimePicker
+                TextBox txtCheckedBy = new TextBox
                 {
-                    Value = DateTime.Now.AddDays(7),
-                    MinDate = DateTime.Now,
                     Font = new Font("Segoe UI", 10F),
-                    Width = 200
+                    Dock = DockStyle.Fill
                 };
-                tlp.Controls.Add(dtpReturn, 1, 3);
+                tlp.Controls.Add(txtCheckedBy, 1, 2);
 
                 // Buttons
                 FlowLayoutPanel btnPanel = new FlowLayoutPanel
                 {
-                    Dock = DockStyle.Fill,
-                    FlowDirection = FlowDirection.RightToLeft
+                    Dock = DockStyle.Bottom,
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Height = 50,
+                    Padding = new Padding(0, 0, 20, 0)
                 };
 
                 Button btnCancel = new Button
@@ -896,7 +1070,8 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 10F),
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(5)
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
                 btnCancel.Click += (s, args) => dialog.Close();
@@ -909,7 +1084,8 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(5)
                 };
                 btnConfirm.FlatAppearance.BorderSize = 0;
                 btnConfirm.Click += (s, args) =>
@@ -939,8 +1115,8 @@ namespace cms
                             // Create checkout log
                             string insertLog = @"
                                 INSERT INTO equipment_checkout_logs 
-                                (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, expected_return_date, status) 
-                                VALUES (@eqId, @eqName, @qty, @by, @outDate, @returnDate, 'Checked Out')";
+                                (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, status) 
+                                VALUES (@eqId, @eqName, @qty, @by, @outDate, 'Checked Out')";
 
                             MySqlCommand logCmd = new MySqlCommand(insertLog, conn);
                             logCmd.Parameters.AddWithValue("@eqId", item.Id);
@@ -948,7 +1124,6 @@ namespace cms
                             logCmd.Parameters.AddWithValue("@qty", quantity);
                             logCmd.Parameters.AddWithValue("@by", txtCheckedBy.Text);
                             logCmd.Parameters.AddWithValue("@outDate", DateTime.Now);
-                            logCmd.Parameters.AddWithValue("@returnDate", dtpReturn.Value);
                             logCmd.ExecuteNonQuery();
                         }
 
@@ -964,12 +1139,21 @@ namespace cms
                             Quantity = quantity,
                             CheckedOutBy = txtCheckedBy.Text,
                             CheckOutDate = DateTime.Now,
-                            ExpectedReturnDate = dtpReturn.Value,
                             Status = "Checked Out"
                         });
 
+                        // Log the checkout
+                        Activitylogs.Instance.LogEquipmentCheckout(currentUser, item.Name, quantity, txtCheckedBy.Text);
+
+                        // Check for low stock warning
+                        if (item.AvailableQuantity < 5)
+                        {
+                            Activitylogs.Instance.LogWarning(currentUser, "GameEquipment",
+                                $"Low stock warning: {item.Name} only has {item.AvailableQuantity} left");
+                        }
+
                         MessageBox.Show($"Successfully checked out {quantity} {item.Name}(s) to {txtCheckedBy.Text}.\n" +
-                                      $"Expected return: {dtpReturn.Value:MMM dd, yyyy}\n" +
+                                      $"Check out time: {DateTime.Now:MMM dd, yyyy hh:mm tt}\n" +
                                       $"Remaining stock: {item.AvailableQuantity}",
                             "Check Out Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -978,6 +1162,7 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
+                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking out {item.Name}");
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -985,9 +1170,9 @@ namespace cms
 
                 btnPanel.Controls.Add(btnCancel);
                 btnPanel.Controls.Add(btnConfirm);
-                tlp.Controls.Add(btnPanel, 1, 4);
 
                 dialog.Controls.Add(tlp);
+                dialog.Controls.Add(btnPanel);
                 dialog.ShowDialog(this);
             }
         }
@@ -1028,7 +1213,7 @@ namespace cms
                 {
                     Dock = DockStyle.Fill,
                     ColumnCount = 2,
-                    RowCount = 4,
+                    RowCount = 3,
                     Padding = new Padding(20),
                     ColumnStyles = {
                         new ColumnStyle(SizeType.Absolute, 120),
@@ -1059,23 +1244,22 @@ namespace cms
                 };
                 tlp.Controls.Add(nudQuantity, 1, 1);
 
-                // Condition after use
-                tlp.Controls.Add(new Label { Text = "Condition:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 2);
-                ComboBox cboCondition = new ComboBox
+                // Returned by
+                tlp.Controls.Add(new Label { Text = "Returned by:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 2);
+                TextBox txtReturnedBy = new TextBox
                 {
                     Font = new Font("Segoe UI", 10F),
-                    DropDownStyle = ComboBoxStyle.DropDownList,
-                    Width = 150
+                    Dock = DockStyle.Fill
                 };
-                cboCondition.Items.AddRange(conditionList.Select(c => c.Name).ToArray());
-                cboCondition.SelectedItem = item.Condition;
-                tlp.Controls.Add(cboCondition, 1, 2);
+                tlp.Controls.Add(txtReturnedBy, 1, 2);
 
                 // Buttons
                 FlowLayoutPanel btnPanel = new FlowLayoutPanel
                 {
-                    Dock = DockStyle.Fill,
-                    FlowDirection = FlowDirection.RightToLeft
+                    Dock = DockStyle.Bottom,
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Height = 50,
+                    Padding = new Padding(0, 0, 20, 0)
                 };
 
                 Button btnCancel = new Button
@@ -1086,7 +1270,8 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 10F),
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(5)
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
                 btnCancel.Click += (s, args) => dialog.Close();
@@ -1099,13 +1284,15 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    Margin = new Padding(5)
                 };
                 btnConfirm.FlatAppearance.BorderSize = 0;
+
                 btnConfirm.Click += (s, args) =>
                 {
                     int quantity = (int)nudQuantity.Value;
-                    string newCondition = cboCondition.SelectedItem.ToString();
+                    string returnedBy = string.IsNullOrWhiteSpace(txtReturnedBy.Text) ? "Unknown" : txtReturnedBy.Text;
 
                     try
                     {
@@ -1113,11 +1300,10 @@ namespace cms
                         {
                             conn.Open();
 
-                            // Update equipment stock and condition
-                            string updateEq = "UPDATE equipment_items SET available_quantity = available_quantity + @qty, condition_name = @cond WHERE id = @id";
+                            // Update equipment stock
+                            string updateEq = "UPDATE equipment_items SET available_quantity = available_quantity + @qty WHERE id = @id";
                             MySqlCommand updateCmd = new MySqlCommand(updateEq, conn);
                             updateCmd.Parameters.AddWithValue("@qty", quantity);
-                            updateCmd.Parameters.AddWithValue("@cond", newCondition);
                             updateCmd.Parameters.AddWithValue("@id", item.Id);
                             updateCmd.ExecuteNonQuery();
 
@@ -1125,22 +1311,27 @@ namespace cms
                             string insertLog = @"
                                 INSERT INTO equipment_checkout_logs 
                                 (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, actual_return_date, status, notes) 
-                                VALUES (@eqId, @eqName, @qty, 'Manual Return', @outDate, @returnDate, 'Returned', 'Manual check-in')";
+                                VALUES (@eqId, @eqName, @qty, @by, @outDate, @returnDate, 'Returned', @notes)";
 
                             MySqlCommand logCmd = new MySqlCommand(insertLog, conn);
                             logCmd.Parameters.AddWithValue("@eqId", item.Id);
                             logCmd.Parameters.AddWithValue("@eqName", item.Name);
                             logCmd.Parameters.AddWithValue("@qty", quantity);
-                            logCmd.Parameters.AddWithValue("@outDate", DateTime.Now.AddDays(-1));
+                            logCmd.Parameters.AddWithValue("@by", returnedBy);
+                            logCmd.Parameters.AddWithValue("@outDate", DateTime.Now.AddHours(-1));
                             logCmd.Parameters.AddWithValue("@returnDate", DateTime.Now);
+                            logCmd.Parameters.AddWithValue("@notes", $"Returned by {returnedBy}");
                             logCmd.ExecuteNonQuery();
                         }
 
                         // Update local object
                         item.AvailableQuantity += quantity;
-                        item.Condition = newCondition;
+
+                        // Log the check-in
+                        Activitylogs.Instance.LogEquipmentCheckin(currentUser, item.Name, quantity, returnedBy);
 
                         MessageBox.Show($"Successfully checked in {quantity} {item.Name}(s).\n" +
+                                      $"Check in time: {DateTime.Now:MMM dd, yyyy hh:mm tt}\n" +
                                       $"Current stock: {item.AvailableQuantity}/{item.TotalQuantity}",
                             "Check In Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -1149,6 +1340,7 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
+                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking in {item.Name}");
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -1156,9 +1348,9 @@ namespace cms
 
                 btnPanel.Controls.Add(btnCancel);
                 btnPanel.Controls.Add(btnConfirm);
-                tlp.Controls.Add(btnPanel, 1, 3);
 
                 dialog.Controls.Add(tlp);
+                dialog.Controls.Add(btnPanel);
                 dialog.ShowDialog(this);
             }
         }
@@ -1167,7 +1359,7 @@ namespace cms
         {
             using (var dialog = new Form())
             {
-                dialog.Text = $"Select Checkout to Return - {item.Name}";
+                dialog.Text = $"Return Equipment - {item.Name}";
                 dialog.Size = new Size(600, 400);
                 dialog.StartPosition = FormStartPosition.CenterParent;
                 dialog.BackColor = Color.White;
@@ -1183,33 +1375,76 @@ namespace cms
                 listView.Columns.Add("Checked Out By", 150);
                 listView.Columns.Add("Quantity", 80);
                 listView.Columns.Add("Check Out Date", 150);
-                listView.Columns.Add("Expected Return", 150);
-                listView.Columns.Add("Days Out", 80);
+                listView.Columns.Add("Time Out", 100);
+                listView.Columns.Add("Duration", 100);
 
                 foreach (var checkout in activeCheckouts)
                 {
-                    var daysOut = (DateTime.Now - checkout.CheckOutDate).Days;
                     var item2 = new ListViewItem(checkout.CheckedOutBy);
                     item2.SubItems.Add(checkout.Quantity.ToString());
                     item2.SubItems.Add(checkout.CheckOutDate.ToString("MMM dd, yyyy"));
-                    item2.SubItems.Add(checkout.ExpectedReturnDate?.ToString("MMM dd, yyyy") ?? "N/A");
-                    item2.SubItems.Add(daysOut.ToString());
+                    item2.SubItems.Add(checkout.CheckOutDate.ToString("hh:mm tt"));
+
+                    TimeSpan diff = DateTime.Now - checkout.CheckOutDate;
+                    item2.SubItems.Add($"{(int)diff.TotalHours}h {diff.Minutes}m");
+
                     item2.Tag = checkout;
                     listView.Items.Add(item2);
                 }
 
+                // Quantity to return panel
+                Panel returnPanel = new Panel
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 80,
+                    BackColor = Color.FromArgb(240, 240, 240)
+                };
+
+                Label lblQuantity = new Label
+                {
+                    Text = "Quantity to return:",
+                    Location = new Point(150, 15),
+                    Size = new Size(120, 25),
+                    Font = new Font("Segoe UI", 10F)
+                };
+
+                NumericUpDown nudQuantity = new NumericUpDown
+                {
+                    Location = new Point(280, 12),
+                    Minimum = 1,
+                    Maximum = 1,
+                    Value = 1,
+                    Width = 60,
+                    Font = new Font("Segoe UI", 10F)
+                };
+
                 Button btnReturn = new Button
                 {
                     Text = "Return Selected",
-                    Size = new Size(150, 40),
+                    Size = new Size(150, 35),
                     BackColor = successColor,
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    Location = new Point(220, 310),
+                    Location = new Point(220, 45),
                     Cursor = Cursors.Hand
                 };
                 btnReturn.FlatAppearance.BorderSize = 0;
+
+                // Update max quantity when item selected
+                listView.SelectedIndexChanged += (s, args) =>
+                {
+                    if (listView.SelectedItems.Count > 0)
+                    {
+                        var selectedCheckout = (CheckoutLog)listView.SelectedItems[0].Tag;
+                        nudQuantity.Maximum = selectedCheckout.Quantity;
+                        nudQuantity.Value = selectedCheckout.Quantity;
+                    }
+                };
+
+                returnPanel.Controls.Add(lblQuantity);
+                returnPanel.Controls.Add(nudQuantity);
+                returnPanel.Controls.Add(btnReturn);
 
                 btnReturn.Click += (s, args) =>
                 {
@@ -1221,6 +1456,7 @@ namespace cms
                     }
 
                     var selectedCheckout = (CheckoutLog)listView.SelectedItems[0].Tag;
+                    int quantityToReturn = (int)nudQuantity.Value;
 
                     try
                     {
@@ -1231,40 +1467,445 @@ namespace cms
                             // Update equipment stock
                             string updateEq = "UPDATE equipment_items SET available_quantity = available_quantity + @qty WHERE id = @id";
                             MySqlCommand updateCmd = new MySqlCommand(updateEq, conn);
-                            updateCmd.Parameters.AddWithValue("@qty", selectedCheckout.Quantity);
+                            updateCmd.Parameters.AddWithValue("@qty", quantityToReturn);
                             updateCmd.Parameters.AddWithValue("@id", item.Id);
                             updateCmd.ExecuteNonQuery();
 
-                            // Update checkout log
-                            string updateLog = "UPDATE equipment_checkout_logs SET actual_return_date = @returnDate, status = 'Returned' WHERE id = @id";
-                            MySqlCommand logCmd = new MySqlCommand(updateLog, conn);
-                            logCmd.Parameters.AddWithValue("@returnDate", DateTime.Now);
-                            logCmd.Parameters.AddWithValue("@id", selectedCheckout.Id);
-                            logCmd.ExecuteNonQuery();
+                            if (quantityToReturn == selectedCheckout.Quantity)
+                            {
+                                // Full return
+                                string updateLog = @"
+                                    UPDATE equipment_checkout_logs 
+                                    SET actual_return_date = @returnDate, status = 'Returned' 
+                                    WHERE id = @id";
+
+                                MySqlCommand logCmd = new MySqlCommand(updateLog, conn);
+                                logCmd.Parameters.AddWithValue("@returnDate", DateTime.Now);
+                                logCmd.Parameters.AddWithValue("@id", selectedCheckout.Id);
+                                logCmd.ExecuteNonQuery();
+
+                                selectedCheckout.Status = "Returned";
+                                selectedCheckout.ActualReturnDate = DateTime.Now;
+                            }
+                            else
+                            {
+                                // Partial return - split the log
+                                string updateLog = @"
+                                    UPDATE equipment_checkout_logs 
+                                    SET quantity = @newQty 
+                                    WHERE id = @id";
+
+                                MySqlCommand updateCmd2 = new MySqlCommand(updateLog, conn);
+                                updateCmd2.Parameters.AddWithValue("@newQty", selectedCheckout.Quantity - quantityToReturn);
+                                updateCmd2.Parameters.AddWithValue("@id", selectedCheckout.Id);
+                                updateCmd2.ExecuteNonQuery();
+
+                                // Create new log for returned items
+                                string insertLog = @"
+                                    INSERT INTO equipment_checkout_logs 
+                                    (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, actual_return_date, status, notes) 
+                                    VALUES (@eqId, @eqName, @qty, @by, @outDate, @returnDate, 'Returned', @notes)";
+
+                                MySqlCommand insertCmd = new MySqlCommand(insertLog, conn);
+                                insertCmd.Parameters.AddWithValue("@eqId", item.Id);
+                                insertCmd.Parameters.AddWithValue("@eqName", item.Name);
+                                insertCmd.Parameters.AddWithValue("@qty", quantityToReturn);
+                                insertCmd.Parameters.AddWithValue("@by", selectedCheckout.CheckedOutBy);
+                                insertCmd.Parameters.AddWithValue("@outDate", selectedCheckout.CheckOutDate);
+                                insertCmd.Parameters.AddWithValue("@returnDate", DateTime.Now);
+                                insertCmd.Parameters.AddWithValue("@notes", $"Partial return");
+                                insertCmd.ExecuteNonQuery();
+                            }
                         }
 
-                        // Update local objects
-                        item.AvailableQuantity += selectedCheckout.Quantity;
-                        selectedCheckout.ActualReturnDate = DateTime.Now;
-                        selectedCheckout.Status = "Returned";
+                        // Update local object
+                        item.AvailableQuantity += quantityToReturn;
 
-                        MessageBox.Show($"Successfully returned {selectedCheckout.Quantity} {item.Name}(s) from {selectedCheckout.CheckedOutBy}.",
+                        // Log the check-in
+                        Activitylogs.Instance.LogEquipmentCheckin(currentUser, item.Name, quantityToReturn, selectedCheckout.CheckedOutBy);
+
+                        MessageBox.Show($"Successfully returned {quantityToReturn} {item.Name}(s) from {selectedCheckout.CheckedOutBy}.\n" +
+                                      $"Return time: {DateTime.Now:MMM dd, yyyy hh:mm tt}",
                             "Return Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        // Refresh data to update logs
+                        RefreshDataFromDatabase();
 
                         dialog.Close();
                         DisplayEquipment();
                     }
                     catch (Exception ex)
                     {
+                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking in {item.Name}");
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 };
 
                 dialog.Controls.Add(listView);
-                dialog.Controls.Add(btnReturn);
+                dialog.Controls.Add(returnPanel);
                 dialog.ShowDialog(this);
             }
+        }
+
+        private void RefreshDataFromDatabase()
+        {
+            try
+            {
+                using (connection = new MySqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Reload equipment
+                    equipmentList.Clear();
+                    string eqQuery = @"
+                        SELECT id, name, category, total_quantity, available_quantity, 
+                               condition_name, location, notes, needs_maintenance, last_maintenance,
+                               created_at, updated_at
+                        FROM equipment_items ORDER BY name";
+
+                    MySqlCommand eqCmd = new MySqlCommand(eqQuery, connection);
+                    using (MySqlDataReader reader = eqCmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            equipmentList.Add(new EquipmentItem
+                            {
+                                Id = Convert.ToInt32(reader["id"]),
+                                Name = reader["name"].ToString(),
+                                Category = reader["category"].ToString(),
+                                TotalQuantity = Convert.ToInt32(reader["total_quantity"]),
+                                AvailableQuantity = Convert.ToInt32(reader["available_quantity"]),
+                                Condition = reader["condition_name"].ToString(),
+                                Location = reader["location"]?.ToString() ?? "",
+                                Notes = reader["notes"]?.ToString() ?? "",
+                                NeedsMaintenance = Convert.ToBoolean(reader["needs_maintenance"]),
+                                LastMaintenance = reader["last_maintenance"] != DBNull.Value ?
+                                    Convert.ToDateTime(reader["last_maintenance"]) : DateTime.Now,
+                                CreatedAt = Convert.ToDateTime(reader["created_at"]),
+                                UpdatedAt = Convert.ToDateTime(reader["updated_at"])
+                            });
+                        }
+                    }
+
+                    // Reload checkout logs
+                    checkoutLogs.Clear();
+                    string logQuery = @"
+                        SELECT id, equipment_id, equipment_name, quantity, checked_out_by,
+                               check_out_date, actual_return_date, notes, status
+                        FROM equipment_checkout_logs ORDER BY check_out_date DESC";
+
+                    MySqlCommand logCmd = new MySqlCommand(logQuery, connection);
+                    using (MySqlDataReader reader = logCmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            CheckoutLog log = new CheckoutLog
+                            {
+                                Id = Convert.ToInt32(reader["id"]),
+                                EquipmentId = Convert.ToInt32(reader["equipment_id"]),
+                                EquipmentName = reader["equipment_name"].ToString(),
+                                Quantity = Convert.ToInt32(reader["quantity"]),
+                                CheckedOutBy = reader["checked_out_by"].ToString(),
+                                CheckOutDate = Convert.ToDateTime(reader["check_out_date"]),
+                                Notes = reader["notes"]?.ToString() ?? "",
+                                Status = reader["status"].ToString()
+                            };
+
+                            // Handle nullable DateTime for actual_return_date - FIXED
+                            if (reader["actual_return_date"] != DBNull.Value)
+                            {
+                                log.ActualReturnDate = Convert.ToDateTime(reader["actual_return_date"]);
+                            }
+                            else
+                            {
+                                log.ActualReturnDate = null;
+                            }
+
+                            checkoutLogs.Add(log);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, "Error refreshing data");
+            }
+        }
+
+        private void btnViewLogs_Click(object sender, EventArgs e)
+        {
+            ShowLogsDialog();
+        }
+
+        private void ShowLogsDialog()
+        {
+            using (var dialog = new Form())
+            {
+                dialog.Text = "Equipment Checkout Logs";
+                dialog.Size = new Size(1000, 600);
+                dialog.StartPosition = FormStartPosition.CenterParent;
+                dialog.BackColor = Color.White;
+
+                // Create TabControl for different log views
+                TabControl tabControl = new TabControl
+                {
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Segoe UI", 10F)
+                };
+
+                // All Logs Tab
+                TabPage allLogsTab = new TabPage("All Transactions");
+                CreateLogsListView(allLogsTab, checkoutLogs);
+                tabControl.TabPages.Add(allLogsTab);
+
+                // Active Checkouts Tab
+                TabPage activeTab = new TabPage("Active Checkouts");
+                var activeLogs = checkoutLogs.Where(l => l.Status == "Checked Out").ToList();
+                CreateLogsListView(activeTab, activeLogs);
+                tabControl.TabPages.Add(activeTab);
+
+                // Returned Items Tab
+                TabPage returnedTab = new TabPage("Returned Items");
+                var returnedLogs = checkoutLogs.Where(l => l.Status == "Returned").ToList();
+                CreateLogsListView(returnedTab, returnedLogs);
+                tabControl.TabPages.Add(returnedTab);
+
+                // Summary Tab
+                TabPage summaryTab = new TabPage("Summary");
+                CreateSummaryView(summaryTab);
+                tabControl.TabPages.Add(summaryTab);
+
+                // Export Button
+                Button btnExport = new Button
+                {
+                    Text = "Export Logs",
+                    Size = new Size(120, 35),
+                    BackColor = successColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                    Location = new Point(850, 550),
+                    Cursor = Cursors.Hand
+                };
+                btnExport.FlatAppearance.BorderSize = 0;
+                btnExport.Click += (s, args) => ExportLogs();
+
+                Button btnClose = new Button
+                {
+                    Text = "Close",
+                    Size = new Size(100, 35),
+                    BackColor = Color.Gray,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10F),
+                    Location = new Point(980, 550),
+                    Cursor = Cursors.Hand
+                };
+                btnClose.FlatAppearance.BorderSize = 0;
+                btnClose.Click += (s, args) => dialog.Close();
+
+                dialog.Controls.Add(tabControl);
+                dialog.Controls.Add(btnExport);
+                dialog.Controls.Add(btnClose);
+
+                dialog.ShowDialog(this);
+            }
+        }
+
+        private void CreateLogsListView(TabPage tabPage, List<CheckoutLog> logs)
+        {
+            ListView listView = new ListView
+            {
+                Dock = DockStyle.Fill,
+                View = View.Details,
+                FullRowSelect = true,
+                GridLines = true,
+                Font = new Font("Segoe UI", 10F)
+            };
+
+            listView.Columns.Add("Equipment", 200);
+            listView.Columns.Add("Quantity", 80);
+            listView.Columns.Add("Checked Out By", 150);
+            listView.Columns.Add("Check Out Date", 120);
+            listView.Columns.Add("Check Out Time", 100);
+            listView.Columns.Add("Return Date", 120);
+            listView.Columns.Add("Return Time", 100);
+            listView.Columns.Add("Duration", 100);
+            listView.Columns.Add("Status", 100);
+
+            foreach (var log in logs)
+            {
+                var item = new ListViewItem(log.EquipmentName);
+                item.SubItems.Add(log.Quantity.ToString());
+                item.SubItems.Add(log.CheckedOutBy);
+                item.SubItems.Add(log.CheckOutDate.ToString("MMM dd, yyyy"));
+                item.SubItems.Add(log.CheckOutDate.ToString("hh:mm tt"));
+
+                if (log.ActualReturnDate.HasValue)
+                {
+                    item.SubItems.Add(log.ActualReturnDate.Value.ToString("MMM dd, yyyy"));
+                    item.SubItems.Add(log.ActualReturnDate.Value.ToString("hh:mm tt"));
+                }
+                else
+                {
+                    item.SubItems.Add("-");
+                    item.SubItems.Add("-");
+                }
+
+                item.SubItems.Add(log.Duration);
+
+                if (log.Status == "Checked Out")
+                {
+                    item.SubItems.Add("⏳ Active");
+                    item.BackColor = Color.FromArgb(255, 255, 225); // Light yellow
+                }
+                else
+                {
+                    item.SubItems.Add("✅ Returned");
+                    item.BackColor = Color.FromArgb(225, 255, 225); // Light green
+                }
+
+                listView.Items.Add(item);
+            }
+
+            tabPage.Controls.Add(listView);
+        }
+
+        private void CreateSummaryView(TabPage tabPage)
+        {
+            Panel summaryPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(20),
+                BackColor = Color.White
+            };
+
+            int activeCount = checkoutLogs.Count(l => l.Status == "Checked Out");
+            int returnedCount = checkoutLogs.Count(l => l.Status == "Returned");
+            int uniqueItems = checkoutLogs.Select(l => l.EquipmentId).Distinct().Count();
+            int totalItemsOut = checkoutLogs.Where(l => l.Status == "Checked Out").Sum(l => l.Quantity);
+            int totalItemsReturned = checkoutLogs.Where(l => l.Status == "Returned").Sum(l => l.Quantity);
+
+            // Summary cards
+            int yPos = 20;
+            CreateSummaryCard(summaryPanel, "📊 Summary Statistics", 20, yPos, 600, 30, true);
+            yPos += 40;
+
+            CreateSummaryCard(summaryPanel, $"Total Transactions: {checkoutLogs.Count}", 40, yPos, 300, 60, false);
+            CreateSummaryCard(summaryPanel, $"Active Checkouts: {activeCount}", 360, yPos, 300, 60, false);
+            yPos += 70;
+
+            CreateSummaryCard(summaryPanel, $"Returned Items: {returnedCount}", 40, yPos, 300, 60, false);
+            CreateSummaryCard(summaryPanel, $"Unique Equipment Used: {uniqueItems}", 360, yPos, 300, 60, false);
+            yPos += 70;
+
+            CreateSummaryCard(summaryPanel, $"Total Items Currently Out: {totalItemsOut}", 40, yPos, 300, 60, false);
+            CreateSummaryCard(summaryPanel, $"Total Items Returned: {totalItemsReturned}", 360, yPos, 300, 60, false);
+            yPos += 80;
+
+            // Most active users
+            Label lblActiveUsers = new Label
+            {
+                Text = "👥 Most Active Users",
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                Location = new Point(40, yPos),
+                Size = new Size(300, 25),
+                ForeColor = Color.FromArgb(33, 33, 33)
+            };
+            summaryPanel.Controls.Add(lblActiveUsers);
+            yPos += 30;
+
+            var topUsers = checkoutLogs
+                .GroupBy(l => l.CheckedOutBy)
+                .Select(g => new { User = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Take(5)
+                .ToList();
+
+            foreach (var user in topUsers)
+            {
+                Label lblUser = new Label
+                {
+                    Text = $"• {user.User}: {user.Count} transactions",
+                    Font = new Font("Segoe UI", 10F),
+                    Location = new Point(60, yPos),
+                    Size = new Size(300, 25),
+                    ForeColor = Color.FromArgb(80, 80, 80)
+                };
+                summaryPanel.Controls.Add(lblUser);
+                yPos += 25;
+            }
+
+            tabPage.Controls.Add(summaryPanel);
+        }
+
+        private void CreateSummaryCard(Panel parent, string text, int x, int y, int width, int height, bool isHeader)
+        {
+            Panel card = new Panel
+            {
+                Location = new Point(x, y),
+                Size = new Size(width, height),
+                BackColor = isHeader ? Color.FromArgb(240, 240, 240) : Color.White
+            };
+
+            if (!isHeader)
+            {
+                card.Paint += (s, e) =>
+                {
+                    ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
+                        Color.FromArgb(200, 200, 200), ButtonBorderStyle.Solid);
+                };
+            }
+
+            Label label = new Label
+            {
+                Text = text,
+                Font = new Font("Segoe UI", isHeader ? 12F : 10F, isHeader ? FontStyle.Bold : FontStyle.Regular),
+                Location = new Point(10, 5),
+                Size = new Size(width - 20, height - 10),
+                ForeColor = isHeader ? primaryColor : Color.FromArgb(60, 60, 60),
+                TextAlign = isHeader ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleLeft
+            };
+
+            card.Controls.Add(label);
+            parent.Controls.Add(card);
+        }
+
+        private void ExportLogs()
+        {
+            // Create a simple text export
+            string export = "EQUIPMENT CHECKOUT LOGS\n";
+            export += "=======================\n\n";
+            export += $"Generated: {DateTime.Now:MMM dd, yyyy hh:mm tt}\n";
+            export += $"Total Transactions: {checkoutLogs.Count}\n\n";
+            export += "DETAILED LOGS:\n";
+            export += "--------------\n\n";
+
+            foreach (var log in checkoutLogs.OrderByDescending(l => l.CheckOutDate))
+            {
+                export += $"Equipment: {log.EquipmentName}\n";
+                export += $"Quantity: {log.Quantity}\n";
+                export += $"Checked Out By: {log.CheckedOutBy}\n";
+                export += $"Check Out: {log.CheckOutDate:MMM dd, yyyy hh:mm tt}\n";
+
+                if (log.ActualReturnDate.HasValue)
+                {
+                    export += $"Returned: {log.ActualReturnDate.Value:MMM dd, yyyy hh:mm tt}\n";
+                    export += $"Duration: {log.Duration}\n";
+                }
+                else
+                {
+                    export += $"Status: ACTIVE\n";
+                }
+
+                export += "-------------------\n";
+            }
+
+            string tempFile = System.IO.Path.GetTempFileName() + ".txt";
+            System.IO.File.WriteAllText(tempFile, export);
+
+            System.Diagnostics.Process.Start("notepad.exe", tempFile);
         }
 
         private void BtnEdit_Click(object sender, EventArgs e)
@@ -1276,9 +1917,12 @@ namespace cms
 
         private void ShowEditDialog(EquipmentItem item)
         {
+            bool isNewItem = item.Id == 0;
+            string dialogTitle = isNewItem ? "Add New Equipment" : $"Edit Equipment - {item.Name}";
+
             using (var dialog = new Form())
             {
-                dialog.Text = $"Edit Equipment - {item.Name}";
+                dialog.Text = dialogTitle;
                 dialog.Size = new Size(600, 550);
                 dialog.StartPosition = FormStartPosition.CenterParent;
                 dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -1312,7 +1956,10 @@ namespace cms
                     DropDownStyle = ComboBoxStyle.DropDownList
                 };
                 cboCategory.Items.AddRange(categoryList.Select(c => c.Name).ToArray());
-                cboCategory.SelectedItem = item.Category;
+                if (!string.IsNullOrEmpty(item.Category))
+                    cboCategory.SelectedItem = item.Category;
+                else if (cboCategory.Items.Count > 0)
+                    cboCategory.SelectedIndex = 0;
                 tlp.Controls.Add(cboCategory, 1, 1);
 
                 // Total Quantity
@@ -1322,7 +1969,7 @@ namespace cms
                     Font = new Font("Segoe UI", 10F),
                     Minimum = 1,
                     Maximum = 1000,
-                    Value = item.TotalQuantity,
+                    Value = item.TotalQuantity > 0 ? item.TotalQuantity : 1,
                     Width = 100
                 };
                 tlp.Controls.Add(nudTotalQty, 1, 2);
@@ -1333,8 +1980,8 @@ namespace cms
                 {
                     Font = new Font("Segoe UI", 10F),
                     Minimum = 0,
-                    Maximum = item.TotalQuantity,
-                    Value = item.AvailableQuantity,
+                    Maximum = item.TotalQuantity > 0 ? item.TotalQuantity : 1,
+                    Value = item.AvailableQuantity > 0 ? item.AvailableQuantity : 1,
                     Width = 100
                 };
                 tlp.Controls.Add(nudAvailableQty, 1, 3);
@@ -1348,7 +1995,10 @@ namespace cms
                     DropDownStyle = ComboBoxStyle.DropDownList
                 };
                 cboCondition.Items.AddRange(conditionList.Select(c => c.Name).ToArray());
-                cboCondition.SelectedItem = item.Condition;
+                if (!string.IsNullOrEmpty(item.Condition))
+                    cboCondition.SelectedItem = item.Condition;
+                else if (cboCondition.Items.Count > 0)
+                    cboCondition.SelectedIndex = 0;
                 tlp.Controls.Add(cboCondition, 1, 4);
 
                 // Location
@@ -1361,7 +2011,7 @@ namespace cms
                 DateTimePicker dtpMaintenance = new DateTimePicker
                 {
                     Font = new Font("Segoe UI", 10F),
-                    Value = item.LastMaintenance,
+                    Value = item.LastMaintenance != DateTime.MinValue ? item.LastMaintenance : DateTime.Now,
                     Width = 200
                 };
                 tlp.Controls.Add(dtpMaintenance, 1, 6);
@@ -1410,7 +2060,7 @@ namespace cms
 
                 Button btnSave = new Button
                 {
-                    Text = "Save Changes",
+                    Text = isNewItem ? "Add Equipment" : "Save Changes",
                     Size = new Size(120, 35),
                     BackColor = successColor,
                     ForeColor = Color.White,
@@ -1419,6 +2069,31 @@ namespace cms
                     Cursor = Cursors.Hand
                 };
                 btnSave.FlatAppearance.BorderSize = 0;
+
+                Button btnDelete = null;
+                if (!isNewItem)
+                {
+                    btnDelete = new Button
+                    {
+                        Text = "Delete",
+                        Size = new Size(100, 35),
+                        BackColor = dangerColor,
+                        ForeColor = Color.White,
+                        FlatStyle = FlatStyle.Flat,
+                        Font = new Font("Segoe UI", 10F),
+                        Margin = new Padding(10, 5, 0, 5),
+                        Cursor = Cursors.Hand
+                    };
+                    btnDelete.FlatAppearance.BorderSize = 0;
+                    btnPanel.Controls.Add(btnDelete);
+                }
+
+                btnPanel.Controls.Add(btnCancel);
+                btnPanel.Controls.Add(btnSave);
+                tlp.Controls.Add(btnPanel, 1, 9);
+
+                dialog.Controls.Add(tlp);
+
                 btnSave.Click += (s, args) =>
                 {
                     // Validate inputs
@@ -1442,57 +2117,167 @@ namespace cms
                         {
                             conn.Open();
 
-                            string updateQuery = @"
-                                UPDATE equipment_items 
-                                SET name = @name, category = @cat, total_quantity = @total, 
-                                    available_quantity = @available, condition_name = @cond,
-                                    location = @loc, notes = @notes, needs_maintenance = @maint,
-                                    last_maintenance = @lastMaint
-                                WHERE id = @id";
+                            if (isNewItem)
+                            {
+                                // Insert new equipment
+                                string insertQuery = @"
+                                    INSERT INTO equipment_items 
+                                    (name, category, total_quantity, available_quantity, condition_name, location, notes, needs_maintenance, last_maintenance) 
+                                    VALUES (@name, @cat, @total, @available, @cond, @loc, @notes, @maint, @lastMaint);
+                                    SELECT LAST_INSERT_ID();";
 
-                            MySqlCommand cmd = new MySqlCommand(updateQuery, conn);
-                            cmd.Parameters.AddWithValue("@name", txtName.Text);
-                            cmd.Parameters.AddWithValue("@cat", cboCategory.SelectedItem.ToString());
-                            cmd.Parameters.AddWithValue("@total", (int)nudTotalQty.Value);
-                            cmd.Parameters.AddWithValue("@available", (int)nudAvailableQty.Value);
-                            cmd.Parameters.AddWithValue("@cond", cboCondition.SelectedItem.ToString());
-                            cmd.Parameters.AddWithValue("@loc", txtLocation.Text);
-                            cmd.Parameters.AddWithValue("@notes", txtNotes.Text);
-                            cmd.Parameters.AddWithValue("@maint", chkMaintenance.Checked);
-                            cmd.Parameters.AddWithValue("@lastMaint", dtpMaintenance.Value);
-                            cmd.Parameters.AddWithValue("@id", item.Id);
-                            cmd.ExecuteNonQuery();
+                                MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
+                                cmd.Parameters.AddWithValue("@name", txtName.Text);
+                                cmd.Parameters.AddWithValue("@cat", cboCategory.SelectedItem.ToString());
+                                cmd.Parameters.AddWithValue("@total", (int)nudTotalQty.Value);
+                                cmd.Parameters.AddWithValue("@available", (int)nudAvailableQty.Value);
+                                cmd.Parameters.AddWithValue("@cond", cboCondition.SelectedItem.ToString());
+                                cmd.Parameters.AddWithValue("@loc", txtLocation.Text);
+                                cmd.Parameters.AddWithValue("@notes", txtNotes.Text);
+                                cmd.Parameters.AddWithValue("@maint", chkMaintenance.Checked);
+                                cmd.Parameters.AddWithValue("@lastMaint", dtpMaintenance.Value);
+
+                                int newId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                                // Create new item
+                                EquipmentItem newItem = new EquipmentItem
+                                {
+                                    Id = newId,
+                                    Name = txtName.Text,
+                                    Category = cboCategory.SelectedItem.ToString(),
+                                    TotalQuantity = (int)nudTotalQty.Value,
+                                    AvailableQuantity = (int)nudAvailableQty.Value,
+                                    Condition = cboCondition.SelectedItem.ToString(),
+                                    Location = txtLocation.Text,
+                                    Notes = txtNotes.Text,
+                                    NeedsMaintenance = chkMaintenance.Checked,
+                                    LastMaintenance = dtpMaintenance.Value
+                                };
+
+                                equipmentList.Add(newItem);
+
+                                // Log the addition
+                                Activitylogs.Instance.LogEquipmentActivity(currentUser, "Added", newItem.Name,
+                                    $"Category: {newItem.Category}, Quantity: {newItem.TotalQuantity}, Location: {newItem.Location}");
+
+                                MessageBox.Show("Equipment added successfully!", "Success",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                // Store old values for logging
+                                string oldName = item.Name;
+                                string oldCategory = item.Category;
+                                int oldTotal = item.TotalQuantity;
+                                int oldAvailable = item.AvailableQuantity;
+                                string oldCondition = item.Condition;
+                                string oldLocation = item.Location;
+                                bool oldMaintenance = item.NeedsMaintenance;
+
+                                // Update existing equipment
+                                string updateQuery = @"
+                                    UPDATE equipment_items 
+                                    SET name = @name, category = @cat, total_quantity = @total, 
+                                        available_quantity = @available, condition_name = @cond,
+                                        location = @loc, notes = @notes, needs_maintenance = @maint,
+                                        last_maintenance = @lastMaint
+                                    WHERE id = @id";
+
+                                MySqlCommand cmd = new MySqlCommand(updateQuery, conn);
+                                cmd.Parameters.AddWithValue("@name", txtName.Text);
+                                cmd.Parameters.AddWithValue("@cat", cboCategory.SelectedItem.ToString());
+                                cmd.Parameters.AddWithValue("@total", (int)nudTotalQty.Value);
+                                cmd.Parameters.AddWithValue("@available", (int)nudAvailableQty.Value);
+                                cmd.Parameters.AddWithValue("@cond", cboCondition.SelectedItem.ToString());
+                                cmd.Parameters.AddWithValue("@loc", txtLocation.Text);
+                                cmd.Parameters.AddWithValue("@notes", txtNotes.Text);
+                                cmd.Parameters.AddWithValue("@maint", chkMaintenance.Checked);
+                                cmd.Parameters.AddWithValue("@lastMaint", dtpMaintenance.Value);
+                                cmd.Parameters.AddWithValue("@id", item.Id);
+                                cmd.ExecuteNonQuery();
+
+                                // Update local object
+                                item.Name = txtName.Text;
+                                item.Category = cboCategory.SelectedItem.ToString();
+                                item.TotalQuantity = (int)nudTotalQty.Value;
+                                item.AvailableQuantity = (int)nudAvailableQty.Value;
+                                item.Condition = cboCondition.SelectedItem.ToString();
+                                item.Location = txtLocation.Text;
+                                item.Notes = txtNotes.Text;
+                                item.NeedsMaintenance = chkMaintenance.Checked;
+                                item.LastMaintenance = dtpMaintenance.Value;
+
+                                // Log the update
+                                string changes = "";
+                                if (oldName != item.Name) changes += $"Name: '{oldName}' → '{item.Name}' ";
+                                if (oldCategory != item.Category) changes += $"Category: '{oldCategory}' → '{item.Category}' ";
+                                if (oldTotal != item.TotalQuantity) changes += $"Total Qty: {oldTotal} → {item.TotalQuantity} ";
+                                if (oldAvailable != item.AvailableQuantity) changes += $"Available: {oldAvailable} → {item.AvailableQuantity} ";
+                                if (oldCondition != item.Condition) changes += $"Condition: '{oldCondition}' → '{item.Condition}' ";
+                                if (oldLocation != item.Location) changes += $"Location: '{oldLocation}' → '{item.Location}' ";
+                                if (oldMaintenance != item.NeedsMaintenance)
+                                    changes += $"Maintenance: {(oldMaintenance ? "Needed" : "Not needed")} → {(item.NeedsMaintenance ? "Needed" : "Not needed")} ";
+
+                                Activitylogs.Instance.LogEquipmentActivity(currentUser, "Updated", item.Name, changes);
+
+                                MessageBox.Show("Equipment updated successfully!", "Success",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
                         }
-
-                        // Update local object
-                        item.Name = txtName.Text;
-                        item.Category = cboCategory.SelectedItem.ToString();
-                        item.TotalQuantity = (int)nudTotalQty.Value;
-                        item.AvailableQuantity = (int)nudAvailableQty.Value;
-                        item.Condition = cboCondition.SelectedItem.ToString();
-                        item.Location = txtLocation.Text;
-                        item.Notes = txtNotes.Text;
-                        item.NeedsMaintenance = chkMaintenance.Checked;
-                        item.LastMaintenance = dtpMaintenance.Value;
-
-                        MessageBox.Show("Equipment updated successfully!", "Success",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                         dialog.Close();
                         DisplayEquipment();
                     }
                     catch (Exception ex)
                     {
+                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message,
+                            isNewItem ? "Error adding new equipment" : $"Error updating {item.Name}");
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 };
 
-                btnPanel.Controls.Add(btnCancel);
-                btnPanel.Controls.Add(btnSave);
-                tlp.Controls.Add(btnPanel, 1, 9);
+                if (btnDelete != null)
+                {
+                    btnDelete.Click += (s, args) =>
+                    {
+                        DialogResult result = MessageBox.Show($"Are you sure you want to delete '{item.Name}'?",
+                            "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-                dialog.Controls.Add(tlp);
+                        if (result == DialogResult.Yes)
+                        {
+                            try
+                            {
+                                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                                {
+                                    conn.Open();
+                                    string deleteQuery = "DELETE FROM equipment_items WHERE id = @id";
+                                    MySqlCommand cmd = new MySqlCommand(deleteQuery, conn);
+                                    cmd.Parameters.AddWithValue("@id", item.Id);
+                                    cmd.ExecuteNonQuery();
+                                }
+
+                                string deletedName = item.Name;
+                                equipmentList.Remove(item);
+
+                                // Log the deletion
+                                Activitylogs.Instance.LogEquipmentActivity(currentUser, "Deleted", deletedName);
+
+                                MessageBox.Show("Equipment deleted successfully!", "Success",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                dialog.Close();
+                                DisplayEquipment();
+                            }
+                            catch (Exception ex)
+                            {
+                                Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error deleting {item.Name}");
+                                MessageBox.Show($"Database error: {ex.Message}", "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    };
+                }
+
                 dialog.ShowDialog(this);
             }
         }
@@ -1575,6 +2360,13 @@ namespace cms
                     Cursor = Cursors.Hand
                 };
                 btnComplete.FlatAppearance.BorderSize = 0;
+
+                btnPanel.Controls.Add(btnCancel);
+                btnPanel.Controls.Add(btnComplete);
+                tlp.Controls.Add(btnPanel, 1, 2);
+
+                dialog.Controls.Add(tlp);
+
                 btnComplete.Click += (s, args) =>
                 {
                     try
@@ -1595,9 +2387,19 @@ namespace cms
                             cmd.ExecuteNonQuery();
                         }
 
+                        string oldCondition = item.Condition;
                         item.LastMaintenance = dtpDate.Value;
                         item.Condition = cboCondition.SelectedItem.ToString();
                         item.NeedsMaintenance = false;
+
+                        // Log the maintenance
+                        Activitylogs.Instance.LogEquipmentMaintenance(currentUser, item.Name, item.Condition);
+
+                        if (oldCondition != item.Condition)
+                        {
+                            Activitylogs.Instance.AddLogEntry(currentUser, "Equipment Condition Changed",
+                                $"Equipment '{item.Name}' condition changed from {oldCondition} to {item.Condition} after maintenance", "Info", "GameEquipment");
+                        }
 
                         MessageBox.Show($"Maintenance completed for {item.Name}.\n" +
                                       $"New condition: {item.Condition}",
@@ -1608,16 +2410,12 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
+                        Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error completing maintenance for {item.Name}");
                         MessageBox.Show($"Database error: {ex.Message}", "Error",
                             MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 };
 
-                btnPanel.Controls.Add(btnCancel);
-                btnPanel.Controls.Add(btnComplete);
-                tlp.Controls.Add(btnPanel, 1, 2);
-
-                dialog.Controls.Add(tlp);
                 dialog.ShowDialog(this);
             }
         }
@@ -1632,39 +2430,40 @@ namespace cms
             // Create new equipment
             EquipmentItem newItem = new EquipmentItem
             {
-                Id = equipmentList.Count > 0 ? equipmentList.Max(i => i.Id) + 1 : 1,
-                Name = "New Equipment",
-                Category = categoryList.First().Name,
+                Id = 0, // 0 indicates new item
+                Name = "",
+                Category = categoryList.FirstOrDefault()?.Name ?? "",
                 TotalQuantity = 1,
                 AvailableQuantity = 1,
                 Condition = "Good",
-                Location = "TBD",
+                Location = "",
                 Notes = "",
                 NeedsMaintenance = false,
                 LastMaintenance = DateTime.Now
             };
 
             ShowEditDialog(newItem);
-
-            // Add to list if saved
-            if (!equipmentList.Contains(newItem))
-            {
-                equipmentList.Add(newItem);
-            }
-
-            DisplayEquipment();
         }
 
         private void btnManageCategories_Click(object sender, EventArgs e)
         {
-            managementPanel.Visible = !managementPanel.Visible;
-            btnManageCategories.Text = managementPanel.Visible ? "Hide Categories" : "Manage Categories";
+            // Show the management overlay
+            managementOverlay.Visible = true;
+            managementOverlay.BringToFront();
+            btnManageCategories.Text = "Hide Management";
 
-            if (managementPanel.Visible)
-            {
-                LoadCategories();
-                LoadConditions();
-            }
+            // Load data
+            LoadCategories();
+            LoadConditions();
+
+            Activitylogs.Instance.AddLogEntry(currentUser, "Management View", "Opened categories and conditions management", "Info", "GameEquipment");
+        }
+
+        private void btnCloseManagement_Click(object sender, EventArgs e)
+        {
+            // Hide the management overlay
+            managementOverlay.Visible = false;
+            btnManageCategories.Text = "Manage Categories";
         }
 
         private void LoadCategories()
@@ -1806,14 +2605,174 @@ namespace cms
 
         private void btnAddCategory_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Add New Category\n\nThis would open a form to add new equipment categories.",
-                "Add Category", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            string newCategory = ShowInputDialog("Add Category", "Enter new category name:");
+            if (!string.IsNullOrWhiteSpace(newCategory))
+            {
+                if (categoryList.Any(c => c.Name.Equals(newCategory, StringComparison.OrdinalIgnoreCase)))
+                {
+                    MessageBox.Show("Category already exists!", "Duplicate",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                try
+                {
+                    using (MySqlConnection conn = new MySqlConnection(connectionString))
+                    {
+                        conn.Open();
+
+                        string insertQuery = "INSERT INTO equipment_categories (name, description, icon) VALUES (@name, @desc, @icon); SELECT LAST_INSERT_ID();";
+                        MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
+                        cmd.Parameters.AddWithValue("@name", newCategory);
+                        cmd.Parameters.AddWithValue("@desc", $"{newCategory} category");
+                        cmd.Parameters.AddWithValue("@icon", "📦");
+
+                        int newId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        categoryList.Add(new Category
+                        {
+                            Id = newId,
+                            Name = newCategory,
+                            Description = $"{newCategory} category",
+                            Icon = "📦",
+                            ItemCount = 0
+                        });
+
+                        LoadCategories();
+                    }
+
+                    // Log the addition
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Category Added", $"New category '{newCategory}' was added", "Info", "GameEquipment");
+
+                    MessageBox.Show($"Category '{newCategory}' added successfully!", "Success",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error adding category {newCategory}");
+                    MessageBox.Show($"Error adding: {ex.Message}",
+                        "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void btnAddCondition_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Add New Condition\n\nThis would open a form to add new equipment conditions.",
-                "Add Condition", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            string newCondition = ShowInputDialog("Add Condition", "Enter new condition name:");
+            if (!string.IsNullOrWhiteSpace(newCondition))
+            {
+                if (conditionList.Any(c => c.Name.Equals(newCondition, StringComparison.OrdinalIgnoreCase)))
+                {
+                    MessageBox.Show("Condition already exists!", "Duplicate",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                try
+                {
+                    using (MySqlConnection conn = new MySqlConnection(connectionString))
+                    {
+                        conn.Open();
+
+                        string insertQuery = "INSERT INTO equipment_conditions (name, color, description) VALUES (@name, @color, @desc); SELECT LAST_INSERT_ID();";
+                        MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
+                        cmd.Parameters.AddWithValue("@name", newCondition);
+                        cmd.Parameters.AddWithValue("@color", "#808080");
+                        cmd.Parameters.AddWithValue("@desc", $"{newCondition} condition");
+
+                        int newId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        conditionList.Add(new Condition
+                        {
+                            Id = newId,
+                            Name = newCondition,
+                            Color = "#808080",
+                            Description = $"{newCondition} condition"
+                        });
+
+                        LoadConditions();
+                    }
+
+                    // Log the addition
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Condition Added", $"New condition '{newCondition}' was added", "Info", "GameEquipment");
+
+                    MessageBox.Show($"Condition '{newCondition}' added successfully!", "Success",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameEquipment", ex.Message, $"Error adding condition {newCondition}");
+                    MessageBox.Show($"Error adding: {ex.Message}",
+                        "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private string ShowInputDialog(string title, string promptText)
+        {
+            using (Form inputForm = new Form())
+            {
+                inputForm.Text = title;
+                inputForm.Size = new Size(400, 180);
+                inputForm.StartPosition = FormStartPosition.CenterParent;
+                inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                inputForm.BackColor = Color.White;
+
+                Label label = new Label()
+                {
+                    Text = promptText,
+                    Left = 20,
+                    Top = 20,
+                    Width = 340,
+                    Font = new Font("Segoe UI", 10F)
+                };
+
+                TextBox textBox = new TextBox()
+                {
+                    Left = 20,
+                    Top = 50,
+                    Width = 340,
+                    Font = new Font("Segoe UI", 10F)
+                };
+
+                Button buttonOk = new Button()
+                {
+                    Text = "OK",
+                    Left = 200,
+                    Top = 90,
+                    Width = 80,
+                    Height = 30,
+                    BackColor = successColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    DialogResult = DialogResult.OK,
+                    Font = new Font("Segoe UI", 10F),
+                    Cursor = Cursors.Hand
+                };
+                buttonOk.FlatAppearance.BorderSize = 0;
+
+                Button buttonCancel = new Button()
+                {
+                    Text = "Cancel",
+                    Left = 290,
+                    Top = 90,
+                    Width = 80,
+                    Height = 30,
+                    BackColor = Color.Gray,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    DialogResult = DialogResult.Cancel,
+                    Font = new Font("Segoe UI", 10F),
+                    Cursor = Cursors.Hand
+                };
+                buttonCancel.FlatAppearance.BorderSize = 0;
+
+                inputForm.Controls.AddRange(new Control[] { label, textBox, buttonOk, buttonCancel });
+                inputForm.AcceptButton = buttonOk;
+                inputForm.CancelButton = buttonCancel;
+
+                return inputForm.ShowDialog() == DialogResult.OK ? textBox.Text : null;
+            }
         }
     }
 }
