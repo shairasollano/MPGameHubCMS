@@ -1,28 +1,32 @@
-﻿using System;
+﻿using finaluserandstaff;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-
-// Add this using directive
-using finaluserandstaff;
+using Font = System.Drawing.Font;
 
 namespace cms
 {
     public partial class Form1 : Form
     {
+        // Existing controls
         private GameRates gameRatesControl;
         private UserManagementControl userManagementControl;
         private UserControl2 dashboardControl;
-        private SETTINGS settingsControl; // Add settings control reference
-        private Activitylogs activityLogsControl; // Add Activitylogs control reference
-        private bool isSigningOut = false; // Add this flag
+        private SETTINGS settingsControl;
+        private Activitylogs activityLogsControl;
+        private bool isSigningOut = false;
 
-        // Add property to store logged in user role
+        // New controls for Game Rates & Equipment tabs
+        private TabControl gameTabControl;
+        private TabPage tabRates;
+        private TabPage tabEquipment;
+        private Panel gameContentPanel;
+
+        // ADD THIS: GameEquipment control reference
+        private GameEquipment gameEquipmentControl;
+
         public string LoggedInUserRole { get; set; }
 
         // Helper class to store original colors
@@ -32,12 +36,12 @@ namespace cms
             public Color BackColor { get; set; }
         }
 
-        // Dictionary to store original colors for each label
         private Dictionary<Label, LabelColors> originalLabelColors = new Dictionary<Label, LabelColors>();
 
         public Form1()
         {
             InitializeComponent();
+            InitializeGameTabs(); // Initialize ONCE at startup
 
             // Set all menu labels to yellow color
             SetMenuLabelsToYellow();
@@ -48,7 +52,7 @@ namespace cms
             // Show dashboard by default when form loads
             ShowDashboard();
 
-            // AFTER InitializeComponent(), connect the Sign Out label
+            // Connect the Sign Out label
             AttachSignOutEvent();
 
             // Add hover effects for menu labels
@@ -58,31 +62,83 @@ namespace cms
             SetWelcomeMessage();
         }
 
-        // New method to set the welcome message based on logged in user
+        // Initialize the tab control ONCE at startup - NOT recreated each time
+        private void InitializeGameTabs()
+        {
+            // Create the tab control (only once)
+            gameTabControl = new TabControl
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                Visible = false
+            };
+
+            // Create Rates tab
+            tabRates = new TabPage("Game Rates");
+
+            // Create Equipment tab - with placeholder (will be replaced when clicked)
+            tabEquipment = new TabPage("Game Equipment");
+
+            // Add a click event to load equipment when tab is selected
+            tabEquipment.Enter += TabEquipment_Enter;
+
+            // Initial placeholder
+            Label eqPlaceholder = new Label
+            {
+                Text = "Click to load Game Equipment",
+                Font = new Font("Segoe UI", 16F, FontStyle.Bold),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                ForeColor = Color.Gray
+            };
+            tabEquipment.Controls.Add(eqPlaceholder);
+
+            // Add tabs to tab control
+            gameTabControl.TabPages.Add(tabRates);
+            gameTabControl.TabPages.Add(tabEquipment);
+        }
+
+        // NEW: Event handler for when Equipment tab is selected
+        private void TabEquipment_Enter(object sender, EventArgs e)
+        {
+            // Load GameEquipment control only when tab is clicked
+            LoadGameEquipment();
+        }
+
+        // NEW: Method to load GameEquipment control
+        private void LoadGameEquipment()
+        {
+            // Clear the tab first
+            tabEquipment.Controls.Clear();
+
+            // Create fresh GameEquipment control
+            gameEquipmentControl = new GameEquipment();
+            gameEquipmentControl.Dock = DockStyle.Fill;
+
+            // Add to tab
+            tabEquipment.Controls.Add(gameEquipmentControl);
+        }
+
         private void SetWelcomeMessage()
         {
             if (loggedName != null)
             {
-                // Check if we have a role passed from Form2
                 if (!string.IsNullOrEmpty(LoggedInUserRole))
                 {
                     loggedName.Text = $"Welcome, {LoggedInUserRole}!";
                 }
                 else
                 {
-                    // Default fallback
                     loggedName.Text = "Welcome, Admin!";
                 }
 
-                // Optional: Change color based on role
                 if (LoggedInUserRole == "Super Admin")
                 {
-                    loggedName.ForeColor = Color.Gold; // Special color for Super Admin
+                    loggedName.ForeColor = Color.Gold;
                 }
             }
         }
 
-        // Method to pass login info from Form2
         public void SetLoggedInUser(string username)
         {
             if (username.ToUpper() == "SUPERADMIN")
@@ -99,7 +155,6 @@ namespace cms
 
         private void AttachSignOutEvent()
         {
-            // Find ALL label5 controls in the form
             var allLabels5 = this.Controls.Find("label5", true).OfType<Label>().ToList();
 
             if (allLabels5.Count > 0)
@@ -108,27 +163,16 @@ namespace cms
                 {
                     label5.Click += label5_Click;
                     label5.Cursor = Cursors.Hand;
-
-                    // Make it look clickable
                     label5.ForeColor = Color.FromArgb(40, 41, 34);
                     label5.Font = new System.Drawing.Font(label5.Font, FontStyle.Bold);
-
-                    // Also add mouse enter/leave events for hover effect
                     label5.MouseEnter += SignOut_MouseEnter;
                     label5.MouseLeave += SignOut_MouseLeave;
                 }
-            }
-            else
-            {
-                // If no label5 found, check if there's a different name for the sign out label
-                MessageBox.Show("Sign Out label not found. Please check if label5 exists in the designer.",
-                    "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
         private void AttachMenuHoverEffects()
         {
-            // Add hover effects for all menu labels
             Label[] menuLabels = { dash, label1, label2, label3 };
 
             foreach (var label in menuLabels)
@@ -137,12 +181,11 @@ namespace cms
                 {
                     label.MouseEnter += MenuLabel_MouseEnter;
                     label.MouseLeave += MenuLabel_MouseLeave;
-                    label.Cursor = Cursors.Hand; // Make them look clickable
+                    label.Cursor = Cursors.Hand;
                 }
             }
         }
 
-        // Fixed label5 click event - This should close Form1 and open Form2
         private void label5_Click(object sender, EventArgs e)
         {
             DialogResult result = MessageBox.Show("Are you sure you want to sign out?",
@@ -154,30 +197,18 @@ namespace cms
             {
                 try
                 {
-                    // Set flag to indicate we're signing out (not closing the app)
                     isSigningOut = true;
-
-                    // Show new login form FIRST
                     Form2 loginForm = new Form2();
-
-                    // IMPORTANT: Hide current form first
                     this.Hide();
 
-                    // Show the login form
                     if (loginForm.ShowDialog() == DialogResult.OK)
                     {
-                        // Get the username from Form2
                         string username = loginForm.GetLoggedInUsername();
-
-                        // Update the welcome message
                         SetLoggedInUser(username);
-
-                        // Show this form again
                         this.Show();
                     }
                     else
                     {
-                        // Login was cancelled or failed - exit application
                         Application.Exit();
                     }
                 }
@@ -185,8 +216,8 @@ namespace cms
                 {
                     MessageBox.Show($"Error opening login form: {ex.Message}",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    isSigningOut = false; // Reset flag
-                    this.Show(); // Show current form again
+                    isSigningOut = false;
+                    this.Show();
                 }
             }
         }
@@ -209,24 +240,19 @@ namespace cms
 
         private void label2_Click(object sender, EventArgs e)
         {
-            ShowGameRates();
+            ShowGameRatesAndEquipment();
             HighlightMenuItem(label2);
         }
 
-        // Activity Log click handler - UPDATED
         private void label3_Click(object sender, EventArgs e)
         {
             ShowActivityLogs();
             HighlightMenuItem(label3);
         }
 
-        // Settings click handler - UPDATED
         private void label6_Click(object sender, EventArgs e)
         {
             ShowSettings();
-
-            // Settings is not in the main menu, so we don't highlight it
-            // But we can reset all menu highlights
             ResetMenuColors();
         }
 
@@ -256,28 +282,55 @@ namespace cms
             panel2.Visible = true;
         }
 
-        private void ShowGameRates()
+        // Shows both Game Rates and Equipment in tabs
+        private void ShowGameRatesAndEquipment()
         {
             ClearPanel2();
 
-            try
-            {
-                gameRatesControl = new GameRates();
-                gameRatesControl.Dock = DockStyle.Fill;
+            // Create a fresh GameRates control
+            gameRatesControl = new GameRates();
+            gameRatesControl.Dock = DockStyle.Fill;
 
-                panel2.Controls.Add(gameRatesControl);
-                panel2.Visible = true;
-            }
-            catch (Exception)
+            // Clear the Rates tab and add the new control
+            tabRates.Controls.Clear();
+            tabRates.Controls.Add(gameRatesControl);
+
+            // Reset Equipment tab to placeholder (will load when clicked)
+            tabEquipment.Controls.Clear();
+            Label eqPlaceholder = new Label
             {
-                Label placeholder = new Label();
-                placeholder.Text = "GAME RATES\n\nFeature coming soon...";
-                placeholder.Font = new System.Drawing.Font("Segoe UI", 16, FontStyle.Bold);
-                placeholder.Dock = DockStyle.Fill;
-                placeholder.TextAlign = ContentAlignment.MiddleCenter;
-                placeholder.ForeColor = Color.Gray;
-                panel2.Controls.Add(placeholder);
+                Text = "Click to load Game Equipment",
+                Font = new Font("Segoe UI", 16F, FontStyle.Bold),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleCenter,
+                ForeColor = Color.Gray
+            };
+            tabEquipment.Controls.Add(eqPlaceholder);
+
+            // Create container panel for the tab control (if needed)
+            if (gameContentPanel == null || gameContentPanel.IsDisposed)
+            {
+                gameContentPanel = new Panel
+                {
+                    Dock = DockStyle.Fill
+                };
             }
+            else
+            {
+                gameContentPanel.Controls.Clear();
+            }
+
+            // Add the tab control to the container (ONCE)
+            if (!gameContentPanel.Controls.Contains(gameTabControl))
+            {
+                gameContentPanel.Controls.Add(gameTabControl);
+            }
+
+            gameTabControl.Visible = true;
+
+            // Add the container to panel2
+            panel2.Controls.Add(gameContentPanel);
+            panel2.Visible = true;
         }
 
         private void ShowActivityLogs()
@@ -294,7 +347,6 @@ namespace cms
             }
             catch (Exception ex)
             {
-                // Fallback in case of error
                 MessageBox.Show($"Error loading Activity Logs: {ex.Message}",
                               "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
@@ -319,39 +371,74 @@ namespace cms
             panel2.Visible = true;
         }
 
+        // ClearPanel2 - DON'T dispose the tab control, just remove it from view
         private void ClearPanel2()
         {
-            // Dispose existing controls if needed
-            if (dashboardControl != null)
+            // Dispose existing controls (but NOT the tab control)
+            if (dashboardControl != null && !dashboardControl.IsDisposed)
             {
                 dashboardControl.Dispose();
                 dashboardControl = null;
             }
 
-            if (userManagementControl != null)
+            if (userManagementControl != null && !userManagementControl.IsDisposed)
             {
                 userManagementControl.Dispose();
                 userManagementControl = null;
             }
 
-            if (gameRatesControl != null)
+            if (gameRatesControl != null && !gameRatesControl.IsDisposed)
             {
                 gameRatesControl.Dispose();
                 gameRatesControl = null;
             }
 
-            if (settingsControl != null)
+            // ADD THIS: Dispose GameEquipment control
+            if (gameEquipmentControl != null && !gameEquipmentControl.IsDisposed)
+            {
+                gameEquipmentControl.Dispose();
+                gameEquipmentControl = null;
+            }
+
+            if (settingsControl != null && !settingsControl.IsDisposed)
             {
                 settingsControl.Dispose();
                 settingsControl = null;
             }
 
-            if (activityLogsControl != null)
+            if (activityLogsControl != null && !activityLogsControl.IsDisposed)
             {
                 activityLogsControl.Dispose();
                 activityLogsControl = null;
             }
 
+            // Clear the Rates tab (but keep the tab control itself)
+            if (tabRates != null && !tabRates.IsDisposed)
+            {
+                tabRates.Controls.Clear();
+            }
+
+            // Clear Equipment tab (will be reloaded when clicked)
+            if (tabEquipment != null && !tabEquipment.IsDisposed)
+            {
+                tabEquipment.Controls.Clear();
+            }
+
+            // Remove the tab control from view but DON'T dispose it
+            if (gameContentPanel != null && !gameContentPanel.IsDisposed)
+            {
+                gameContentPanel.Controls.Clear(); // Remove tab control from view
+                gameContentPanel.Dispose();
+                gameContentPanel = null;
+            }
+
+            // Hide the tab control
+            if (gameTabControl != null && !gameTabControl.IsDisposed)
+            {
+                gameTabControl.Visible = false;
+            }
+
+            // Clear panel2
             panel2.Controls.Clear();
         }
 
@@ -361,46 +448,30 @@ namespace cms
 
         private void SetMenuLabelsToYellow()
         {
-            Color yellowColor = Color.FromArgb(228, 186, 94); // Your yellow color
+            Color yellowColor = Color.FromArgb(228, 186, 94);
 
             if (dash != null)
             {
                 dash.ForeColor = yellowColor;
-                originalLabelColors[dash] = new LabelColors
-                {
-                    ForeColor = yellowColor,
-                    BackColor = dash.BackColor
-                };
+                originalLabelColors[dash] = new LabelColors { ForeColor = yellowColor, BackColor = dash.BackColor };
             }
 
             if (label1 != null)
             {
                 label1.ForeColor = yellowColor;
-                originalLabelColors[label1] = new LabelColors
-                {
-                    ForeColor = yellowColor,
-                    BackColor = label1.BackColor
-                };
+                originalLabelColors[label1] = new LabelColors { ForeColor = yellowColor, BackColor = label1.BackColor };
             }
 
             if (label2 != null)
             {
                 label2.ForeColor = yellowColor;
-                originalLabelColors[label2] = new LabelColors
-                {
-                    ForeColor = yellowColor,
-                    BackColor = label2.BackColor
-                };
+                originalLabelColors[label2] = new LabelColors { ForeColor = yellowColor, BackColor = label2.BackColor };
             }
 
             if (label3 != null)
             {
                 label3.ForeColor = yellowColor;
-                originalLabelColors[label3] = new LabelColors
-                {
-                    ForeColor = yellowColor,
-                    BackColor = label3.BackColor
-                };
+                originalLabelColors[label3] = new LabelColors { ForeColor = yellowColor, BackColor = label3.BackColor };
             }
         }
 
@@ -410,23 +481,18 @@ namespace cms
 
         private void HighlightMenuItem(Label clickedLabel)
         {
-            // Store original colors for all labels before resetting
             StoreOriginalColors();
-
-            // Reset all menu items to default colors first
             ResetMenuColors();
 
-            // Highlight the clicked menu item with full width
             if (clickedLabel != null)
             {
-                clickedLabel.BackColor = Color.FromArgb(40, 50, 60); // Dark blue highlight color
+                clickedLabel.BackColor = Color.FromArgb(40, 50, 60);
                 clickedLabel.ForeColor = Color.White;
             }
         }
 
         private void StoreOriginalColors()
         {
-            // Store original colors for menu labels
             Label[] menuLabels = { dash, label1, label2, label3 };
 
             foreach (var label in menuLabels)
@@ -444,10 +510,9 @@ namespace cms
 
         private void ResetMenuColors()
         {
-            Color yellowColor = Color.FromArgb(228, 186, 94); // Yellow color
+            Color yellowColor = Color.FromArgb(228, 186, 94);
             Color defaultBackColor = Color.Transparent;
 
-            // Reset all menu labels
             if (dash != null)
             {
                 if (originalLabelColors.ContainsKey(dash))
@@ -509,15 +574,12 @@ namespace cms
         // HOVER EFFECT METHODS
         // ==============================================
 
-        // HOVER EFFECTS FOR MENU LABELS (dash, label1, label2, label3)
         private void MenuLabel_MouseEnter(object sender, EventArgs e)
         {
             if (sender is Label label)
             {
-                // Only change color if not currently highlighted
                 if (label.BackColor != Color.FromArgb(40, 50, 60))
                 {
-                    // Store original colors for this specific label
                     if (!originalLabelColors.ContainsKey(label))
                     {
                         originalLabelColors[label] = new LabelColors
@@ -527,9 +589,8 @@ namespace cms
                         };
                     }
 
-                    // Change to hover colors
                     label.ForeColor = Color.White;
-                    label.BackColor = Color.FromArgb(60, 70, 80); // Slightly lighter dark gray for hover
+                    label.BackColor = Color.FromArgb(60, 70, 80);
                 }
             }
         }
@@ -538,10 +599,8 @@ namespace cms
         {
             if (sender is Label label)
             {
-                // Only restore original colors if not highlighted
                 if (label.BackColor != Color.FromArgb(40, 50, 60))
                 {
-                    // Restore to original colors
                     if (originalLabelColors.ContainsKey(label))
                     {
                         label.ForeColor = originalLabelColors[label].ForeColor;
@@ -549,15 +608,13 @@ namespace cms
                     }
                     else
                     {
-                        // Fallback to default colors
-                        label.ForeColor = Color.FromArgb(228, 186, 94); // Yellow
+                        label.ForeColor = Color.FromArgb(228, 186, 94);
                         label.BackColor = Color.Transparent;
                     }
                 }
             }
         }
 
-        // HOVER EFFECTS FOR SIGN OUT LABEL
         private void SignOut_MouseEnter(object sender, EventArgs e)
         {
             if (sender is Label label)
@@ -574,7 +631,6 @@ namespace cms
             }
         }
 
-        // HOVER EFFECTS FOR SETTINGS LABEL
         private void Settings_MouseEnter(object sender, EventArgs e)
         {
             if (sender is Label label)
@@ -595,19 +651,15 @@ namespace cms
         // FORM EVENT HANDLERS
         // ==============================================
 
-        // Handle Form1 closing to ensure proper application exit
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // Check if we're signing out - if yes, just close without asking
             if (isSigningOut)
             {
-                return; // Just close the form, don't ask about exiting application
+                return;
             }
 
-            // Only ask about exiting if user is closing the form directly (not signing out)
             if (e.CloseReason == CloseReason.UserClosing)
             {
-                // Ask if user wants to exit the entire application
                 DialogResult result = MessageBox.Show("Do you want to exit the application?",
                     "Exit Application",
                     MessageBoxButtons.YesNo,
@@ -624,91 +676,31 @@ namespace cms
             }
         }
 
-        // ==============================================
-        // ADDITIONAL HELPER METHODS
-        // ==============================================
-
-        // Method to get current active control (useful for debugging)
-        public string GetCurrentControl()
-        {
-            if (panel2.Controls.Count > 0)
-            {
-                return panel2.Controls[0].GetType().Name;
-            }
-            return "None";
-        }
-
-        // Method to refresh all controls (if needed)
-        public void RefreshAllControls()
-        {
-            if (dashboardControl != null && dashboardControl.Visible)
-            {
-                // Refresh dashboard if needed
-            }
-
-            if (userManagementControl != null && userManagementControl.Visible)
-            {
-                userManagementControl.Refresh(); // If you have a refresh method
-            }
-
-            if (gameRatesControl != null && gameRatesControl.Visible)
-            {
-                gameRatesControl.Refresh(); // If you have a refresh method
-            }
-
-            if (settingsControl != null && settingsControl.Visible)
-            {
-                // Settings might need to reload from file
-            }
-
-            if (activityLogsControl != null && activityLogsControl.Visible)
-            {
-                // Activity logs might need to refresh data
-                activityLogsControl.Refresh();
-            }
-        }
-
         private void Form1_Load(object sender, EventArgs e)
         {
-
+            // Your existing Form1_Load code
         }
 
         private void date_Click(object sender, EventArgs e)
         {
-            // Get current date and time
             DateTime currentDate = DateTime.Now;
-
-            // Format options:
             string formattedDate = currentDate.ToString("dddd, MMMM dd, yyyy");
-            // or: currentDate.ToString("MM/dd/yyyy")
-            // or: currentDate.ToString("dd-MMM-yyyy")
-            // or: currentDate.ToString("yyyy-MM-dd")
 
-            // Show the date
             MessageBox.Show($"Current date and time:\n{formattedDate}\n{currentDate.ToString("hh:mm:ss tt")}",
                             "Date Information",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Information);
 
-            // If you have a label or textbox to display the date, update it:
-            // For example, if you have a label named "dateLabel":
-            // dateLabel.Text = formattedDate;
-
-            // If the sender is a control that shows the date, update it:
             if (sender is Label dateLabel)
             {
                 dateLabel.Text = formattedDate;
-                dateLabel.ForeColor = Color.Blue; // Optional: change color to indicate it's updated
-            }
-            else if (sender is Button dateButton)
-            {
-                dateButton.Text = formattedDate;
+                dateLabel.ForeColor = Color.Blue;
             }
         }
 
         private void label8_Click(object sender, EventArgs e)
         {
-
+            // Your existing label8_Click code
         }
     }
 }

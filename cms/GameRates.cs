@@ -2,28 +2,135 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.Drawing.Drawing2D;
+using System.IO;
 using System.Windows.Forms;
+using System.Linq;
+using Font = System.Drawing.Font;
 
 namespace cms
 {
     public partial class GameRates : UserControl
     {
-        private bool _isAddingNew;
-        private int _currentRowIndex;
-        private List<string> _courtTypes;
-        private List<string> _gameTypes;
+        // Modern color scheme
+        private readonly Color primaryColor = Color.FromArgb(79, 70, 229); // Indigo
+        private readonly Color successColor = Color.FromArgb(16, 185, 129); // Emerald
+        private readonly Color dangerColor = Color.FromArgb(239, 68, 68); // Red
+        private readonly Color warningColor = Color.FromArgb(245, 158, 11); // Amber
+        private readonly Color infoColor = Color.FromArgb(59, 130, 246); // Blue
+        private readonly Color cardBgColor = Color.White;
+        private readonly Color hoverColor = Color.FromArgb(249, 250, 251);
+
+        private List<GameRate> gameRates;
+        private List<CourtType> courtTypes;
+        private List<GameType> gameTypesList;
+        private Dictionary<int, byte[]> _imageCache;
+
+        // Current user (you should set this from your login system)
+        private string currentUser = "admin";
 
         // Database connection string for XAMPP MySQL
-        private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;Allow User Variables=True;";
+        private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
         private MySqlConnection connection;
+
+        // Model classes matching your database structure
+        private class GameRate
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
+            public string CourtType { get; set; }
+            public string GameType { get; set; }
+            public decimal Rate { get; set; }
+            public string Description { get; set; }
+            public string Status { get; set; } // 'Enabled' or 'Disabled'
+            public byte[] ImageData { get; set; }
+            public Image Image { get; set; }
+
+            public bool IsEnabled => Status == "Enabled";
+        }
+
+        private class CourtType
+        {
+            public int Id { get; set; }
+            public string CourtName { get; set; }
+            public string Description { get; set; }
+
+            // For compatibility with UI
+            public string Name => CourtName;
+        }
+
+        private class GameType
+        {
+            public int Id { get; set; }
+            public string GameName { get; set; }
+            public string Description { get; set; }
+
+            // For compatibility with UI
+            public string Name => GameName;
+        }
+
+        // Create a placeholder image
+        private Image CreatePlaceholderImage()
+        {
+            Bitmap placeholder = new Bitmap(100, 100);
+            using (Graphics g = Graphics.FromImage(placeholder))
+            {
+                g.Clear(Color.FromArgb(249, 250, 251));
+                using (Pen pen = new Pen(Color.FromArgb(209, 213, 219), 2))
+                {
+                    g.DrawRectangle(pen, 1, 1, 98, 98);
+                }
+                using (Font font = new Font("Segoe UI", 10, FontStyle.Regular))
+                using (Brush brush = new SolidBrush(Color.FromArgb(156, 163, 175)))
+                {
+                    StringFormat sf = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center
+                    };
+                    g.DrawString("No Image", font, brush, new Rectangle(0, 0, 100, 100), sf);
+                }
+            }
+            return placeholder;
+        }
 
         public GameRates()
         {
             InitializeComponent();
-            _courtTypes = new List<string>();
-            _gameTypes = new List<string>();
+            gameRates = new List<GameRate>();
+            courtTypes = new List<CourtType>();
+            gameTypesList = new List<GameType>();
+            _imageCache = new Dictionary<int, byte[]>();
+
+            // Style buttons
+            StyleButton(btnAddNew, successColor);
+            StyleButton(btnManage, primaryColor);
+            StyleButton(btnAddCourt, successColor);
+            StyleButton(btnAddGameType, successColor);
+            StyleButton(btnCloseManagement, dangerColor);
+
+            // Initialize database and load data
             InitializeDatabase();
             InitializeControls();
+
+            // Log that GameRates module was opened
+            Activitylogs.Instance.AddLogEntry(currentUser, "Module Opened", "Game Rates management module was opened", "Info", "GameRates");
+        }
+
+        private void StyleButton(Button btn, Color backColor)
+        {
+            btn.BackColor = backColor;
+            btn.FlatAppearance.BorderSize = 0;
+            btn.FlatStyle = FlatStyle.Flat;
+            btn.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btn.ForeColor = Color.White;
+            btn.Cursor = Cursors.Hand;
+            btn.Height = 32;
+
+            // Hover effect
+            btn.MouseEnter += (s, e) => btn.BackColor = ControlPaint.Light(backColor, 0.2f);
+            btn.MouseLeave += (s, e) => btn.BackColor = backColor;
         }
 
         private void InitializeDatabase()
@@ -44,6 +151,7 @@ namespace cms
             }
             catch (Exception ex)
             {
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Database initialization error");
                 MessageBox.Show($"Database initialization error: {ex.Message}\n\nUsing default sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeDefaultOptions();
@@ -78,7 +186,7 @@ namespace cms
             {
                 connection.Open();
 
-                // Create court_types table
+                // Create court_types table with your structure
                 string createCourtTypesTable = @"
                     CREATE TABLE IF NOT EXISTS court_types (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -89,7 +197,7 @@ namespace cms
                 MySqlCommand cmd1 = new MySqlCommand(createCourtTypesTable, connection);
                 cmd1.ExecuteNonQuery();
 
-                // Create game_types table
+                // Create game_types table with your structure
                 string createGameTypesTable = @"
                     CREATE TABLE IF NOT EXISTS game_types (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -100,23 +208,58 @@ namespace cms
                 MySqlCommand cmd2 = new MySqlCommand(createGameTypesTable, connection);
                 cmd2.ExecuteNonQuery();
 
-                // Create game_rates table
-                string createGameRatesTable = @"
-                    CREATE TABLE IF NOT EXISTS game_rates (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        name VARCHAR(200) NOT NULL,
-                        court_type VARCHAR(100) NOT NULL,
-                        game_type VARCHAR(100) NOT NULL,
-                        rate DECIMAL(10,2) NOT NULL,
-                        description TEXT,
-                        status ENUM('Enabled', 'Disabled') DEFAULT 'Enabled',
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                        FOREIGN KEY (court_type) REFERENCES court_types(court_name) ON DELETE RESTRICT,
-                        FOREIGN KEY (game_type) REFERENCES game_types(game_name) ON DELETE RESTRICT
-                    )";
-                MySqlCommand cmd3 = new MySqlCommand(createGameRatesTable, connection);
-                cmd3.ExecuteNonQuery();
+                // Check if game_rates table exists
+                string checkTableQuery = @"
+                    SELECT COUNT(*) 
+                    FROM information_schema.tables 
+                    WHERE table_schema = 'matchpoint_db' 
+                    AND table_name = 'game_rates'";
+
+                MySqlCommand checkTableCmd = new MySqlCommand(checkTableQuery, connection);
+                int tableExists = Convert.ToInt32(checkTableCmd.ExecuteScalar());
+
+                if (tableExists == 0)
+                {
+                    // Create game_rates table with your structure
+                    string createGameRatesTable = @"
+                        CREATE TABLE game_rates (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            name VARCHAR(200) NOT NULL,
+                            court_type VARCHAR(100) NOT NULL,
+                            game_type VARCHAR(100) NOT NULL,
+                            rate DECIMAL(10,2) NOT NULL,
+                            description TEXT,
+                            image LONGBLOB,
+                            status ENUM('Enabled', 'Disabled') DEFAULT 'Enabled',
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                            FOREIGN KEY (court_type) REFERENCES court_types(court_name) ON DELETE RESTRICT,
+                            FOREIGN KEY (game_type) REFERENCES game_types(game_name) ON DELETE RESTRICT
+                        )";
+                    MySqlCommand cmd3 = new MySqlCommand(createGameRatesTable, connection);
+                    cmd3.ExecuteNonQuery();
+                }
+                else
+                {
+                    // Check if image column exists in game_rates table
+                    string checkColumnQuery = @"
+                        SELECT COUNT(*) 
+                        FROM information_schema.columns 
+                        WHERE table_schema = 'matchpoint_db' 
+                        AND table_name = 'game_rates' 
+                        AND column_name = 'image'";
+
+                    MySqlCommand checkColumnCmd = new MySqlCommand(checkColumnQuery, connection);
+                    int columnExists = Convert.ToInt32(checkColumnCmd.ExecuteScalar());
+
+                    if (columnExists == 0)
+                    {
+                        // Add image column to existing table
+                        string addColumnQuery = "ALTER TABLE game_rates ADD COLUMN image LONGBLOB AFTER description";
+                        MySqlCommand addColumnCmd = new MySqlCommand(addColumnQuery, connection);
+                        addColumnCmd.ExecuteNonQuery();
+                    }
+                }
 
                 // Check if tables are empty and insert default data if needed
                 CheckAndInsertDefaultData();
@@ -141,6 +284,8 @@ namespace cms
                     insertCmd.Parameters.AddWithValue("@desc", $"Court type for {court} games");
                     insertCmd.ExecuteNonQuery();
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default court types were created", "Info", "GameRates");
             }
 
             // Check game_types
@@ -159,6 +304,8 @@ namespace cms
                     insertCmd.Parameters.AddWithValue("@desc", $"{game} game type");
                     insertCmd.ExecuteNonQuery();
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game types were created", "Info", "GameRates");
             }
 
             // Check game_rates
@@ -177,6 +324,8 @@ namespace cms
                     ('Volleyball Court', 'Outdoor', 'Volleyball', 600, 'Beach sand court, net included, lights available', 'Enabled')";
                 MySqlCommand insertRatesCmd = new MySqlCommand(insertRate, connection);
                 insertRatesCmd.ExecuteNonQuery();
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game rates were created", "Info", "GameRates");
             }
         }
 
@@ -189,36 +338,49 @@ namespace cms
                     connection.Open();
 
                     // Load court types
-                    _courtTypes.Clear();
-                    string courtQuery = "SELECT court_name FROM court_types ORDER BY court_name";
+                    courtTypes.Clear();
+                    string courtQuery = "SELECT id, court_name, description FROM court_types ORDER BY court_name";
                     MySqlCommand courtCmd = new MySqlCommand(courtQuery, connection);
                     using (MySqlDataReader reader = courtCmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            _courtTypes.Add(reader["court_name"].ToString());
+                            courtTypes.Add(new CourtType
+                            {
+                                Id = Convert.ToInt32(reader["id"]),
+                                CourtName = reader["court_name"].ToString(),
+                                Description = reader["description"]?.ToString() ?? ""
+                            });
                         }
                     }
 
                     // Load game types
-                    _gameTypes.Clear();
-                    string gameQuery = "SELECT game_name FROM game_types ORDER BY game_name";
+                    gameTypesList.Clear();
+                    string gameQuery = "SELECT id, game_name, description FROM game_types ORDER BY game_name";
                     MySqlCommand gameCmd = new MySqlCommand(gameQuery, connection);
                     using (MySqlDataReader reader = gameCmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            _gameTypes.Add(reader["game_name"].ToString());
+                            gameTypesList.Add(new GameType
+                            {
+                                Id = Convert.ToInt32(reader["id"]),
+                                GameName = reader["game_name"].ToString(),
+                                Description = reader["description"]?.ToString() ?? ""
+                            });
                         }
                     }
 
-                    // Load game rates into DataGridView
+                    // Load game rates
                     LoadGameRatesFromDatabase();
                 }
+
+                Activitylogs.Instance.AddLogEntry(currentUser, "Data Loaded", $"Loaded {gameRates.Count} game rates from database", "Info", "GameRates");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading data from database: {ex.Message}",
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading data from database");
+                MessageBox.Show($"Error loading data from database: {ex.Message}\nUsing sample data instead.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeDefaultOptions();
             }
@@ -228,778 +390,881 @@ namespace cms
         {
             try
             {
-                dgvGameRates.Rows.Clear();
+                gameRates.Clear();
+                _imageCache.Clear();
 
-                string query = "SELECT status, name, court_type, game_type, rate, description FROM game_rates ORDER BY name";
+                if (ratesFlowPanel.InvokeRequired)
+                {
+                    ratesFlowPanel.Invoke(new MethodInvoker(() => ratesFlowPanel.Controls.Clear()));
+                }
+                else
+                {
+                    ratesFlowPanel.Controls.Clear();
+                }
+
+                string query = "SELECT id, status, name, court_type, game_type, rate, description, image FROM game_rates ORDER BY name";
                 MySqlCommand cmd = new MySqlCommand(query, connection);
 
                 using (MySqlDataReader reader = cmd.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        dgvGameRates.Rows.Add(
-                            reader["status"].ToString(),
-                            reader["name"].ToString(),
-                            reader["court_type"].ToString(),
-                            reader["game_type"].ToString(),
-                            reader["rate"].ToString(),
-                            reader["description"].ToString()
-                        );
+                        int id = Convert.ToInt32(reader["id"]);
+                        byte[] imageData = reader["image"] as byte[];
+                        Image image = null;
+
+                        if (imageData != null && imageData.Length > 0)
+                        {
+                            try
+                            {
+                                image = GetImageFromBytes(imageData);
+                                if (image != null)
+                                {
+                                    _imageCache[id] = imageData;
+                                }
+                            }
+                            catch
+                            {
+                                image = null;
+                            }
+                        }
+
+                        gameRates.Add(new GameRate
+                        {
+                            Id = id,
+                            Name = reader["name"].ToString(),
+                            CourtType = reader["court_type"].ToString(),
+                            GameType = reader["game_type"].ToString(),
+                            Rate = Convert.ToDecimal(reader["rate"]),
+                            Description = reader["description"]?.ToString() ?? "",
+                            Status = reader["status"].ToString(),
+                            Image = image,
+                            ImageData = imageData
+                        });
                     }
                 }
 
-                StyleStatusCells();
+                DisplayGameRates();
+                UpdateStatistics();
+                LoadCourtCards();
+                LoadGameTypeCards();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading game rates: {ex.Message}",
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading game rates");
+                MessageBox.Show($"Error loading game rates: {ex.Message}\nUsing sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 AddSampleData();
             }
         }
 
+        private Image GetImageFromBytes(byte[] imageData)
+        {
+            if (imageData == null || imageData.Length == 0)
+                return null;
+
+            try
+            {
+                using (MemoryStream ms = new MemoryStream(imageData))
+                {
+                    return Image.FromStream(ms);
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private byte[] GetBytesFromImage(Image image)
+        {
+            if (image == null)
+                return null;
+
+            try
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    image.Save(ms, ImageFormat.Jpeg);
+                    return ms.ToArray();
+                }
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private void InitializeControls()
         {
-            // Setup event handlers
-            btnAddNew.Click += BtnAddNew_Click;
-            btnManage.Click += BtnManage_Click;
-            dgvGameRates.CellContentClick += DgvGameRates_CellContentClick;
-
-            // Setup status filter
-            cboFilterStatus.SelectedIndexChanged += CboFilterStatus_SelectedIndexChanged;
-
-            // Setup management panel event handlers
-            btnAddCourt.Click += BtnAddCourt_Click;
-            btnAddGameType.Click += BtnAddGameType_Click;
-            btnCloseCourts.Click += BtnCloseManagement_Click;
-            btnCloseGameTypes.Click += BtnCloseManagement_Click;
-
-            // Setup DataGridView events for management
-            dgvCourts.CellContentClick += DgvCourts_CellContentClick;
-            dgvGameTypes.CellContentClick += DgvGameTypes_CellContentClick;
-
-            // Load data into management grids
-            LoadCourtsData();
-            LoadGameTypesData();
-
-            // Initially hide management panel
-            panelManagement.Visible = false;
-
-            // Set default filter to "All"
-            cboFilterStatus.SelectedIndex = 0;
+            if (filterCombo.InvokeRequired)
+            {
+                filterCombo.Invoke(new MethodInvoker(() => {
+                    filterCombo.SelectedIndex = 0;
+                    managementOverlay.Visible = false;
+                }));
+            }
+            else
+            {
+                filterCombo.SelectedIndex = 0;
+                managementOverlay.Visible = false;
+            }
+            UpdateStatistics();
         }
 
         private void InitializeDefaultOptions()
         {
             // Initialize default court types
-            _courtTypes.AddRange(new[] { "Indoor", "Outdoor", "Hard Court", "Clay Court", "Grass Court", "Synthetic" });
+            courtTypes.Clear();
+            string[] defaultCourts = { "Indoor", "Outdoor", "Hard Court", "Clay Court", "Grass Court", "Synthetic" };
+            for (int i = 0; i < defaultCourts.Length; i++)
+            {
+                courtTypes.Add(new CourtType
+                {
+                    Id = i + 1,
+                    CourtName = defaultCourts[i],
+                    Description = $"Court type for {defaultCourts[i]} games"
+                });
+            }
 
             // Initialize default game types
-            _gameTypes.AddRange(new[] { "Badminton", "Tennis", "Basketball", "Volleyball", "Squash", "Table Tennis", "Futsal" });
+            gameTypesList.Clear();
+            string[] defaultGames = { "Badminton", "Tennis", "Basketball", "Volleyball", "Squash", "Table Tennis", "Futsal" };
+            for (int i = 0; i < defaultGames.Length; i++)
+            {
+                gameTypesList.Add(new GameType
+                {
+                    Id = i + 1,
+                    GameName = defaultGames[i],
+                    Description = $"{defaultGames[i]} game type"
+                });
+            }
 
-            // Load data into management grids
-            LoadCourtsData();
-            LoadGameTypesData();
-
-            // Add sample data to main grid
+            // Add sample data
             AddSampleData();
-        }
 
-        private void LoadCourtsData()
-        {
-            dgvCourts.Rows.Clear();
-            for (int i = 0; i < _courtTypes.Count; i++)
-            {
-                dgvCourts.Rows.Add(i + 1, _courtTypes[i], $"Court type for {_courtTypes[i]} games");
-            }
-        }
-
-        private void LoadGameTypesData()
-        {
-            dgvGameTypes.Rows.Clear();
-            for (int i = 0; i < _gameTypes.Count; i++)
-            {
-                dgvGameTypes.Rows.Add(i + 1, _gameTypes[i], $"{_gameTypes[i]} game type");
-            }
+            // Load management grids
+            LoadCourtCards();
+            LoadGameTypeCards();
         }
 
         private void AddSampleData()
         {
-            // Clear existing data
-            dgvGameRates.Rows.Clear();
+            gameRates.Clear();
 
-            // Add sample data with status (Enabled/Disabled)
-            dgvGameRates.Rows.Add("Enabled", "Badminton Court 1", "Indoor", "Badminton", "500", "Professional indoor court, shuttlecock provided");
-            dgvGameRates.Rows.Add("Enabled", "Tennis Court A", "Outdoor", "Tennis", "800", "Floodlit court, racket rental available");
-            dgvGameRates.Rows.Add("Disabled", "Basketball Court", "Indoor", "Basketball", "700", "Full court with spectators area, glass backboards");
-            dgvGameRates.Rows.Add("Enabled", "Volleyball Court", "Outdoor", "Volleyball", "600", "Beach sand court, net included, lights available");
+            gameRates.Add(new GameRate
+            {
+                Id = 1,
+                Name = "Badminton Court 1",
+                CourtType = "Indoor",
+                GameType = "Badminton",
+                Rate = 500,
+                Description = "Professional indoor court, shuttlecock provided",
+                Status = "Enabled"
+            });
 
-            // Style the status cells
-            StyleStatusCells();
+            gameRates.Add(new GameRate
+            {
+                Id = 2,
+                Name = "Tennis Court A",
+                CourtType = "Outdoor",
+                GameType = "Tennis",
+                Rate = 800,
+                Description = "Floodlit court, racket rental available",
+                Status = "Enabled"
+            });
+
+            gameRates.Add(new GameRate
+            {
+                Id = 3,
+                Name = "Basketball Court",
+                CourtType = "Indoor",
+                GameType = "Basketball",
+                Rate = 700,
+                Description = "Full court with spectators area, glass backboards",
+                Status = "Disabled"
+            });
+
+            gameRates.Add(new GameRate
+            {
+                Id = 4,
+                Name = "Volleyball Court",
+                CourtType = "Outdoor",
+                GameType = "Volleyball",
+                Rate = 600,
+                Description = "Beach sand court, net included, lights available",
+                Status = "Enabled"
+            });
+
+            DisplayGameRates();
+            UpdateStatistics();
         }
 
-        private void StyleStatusCells()
+        private void LoadCourtCards()
         {
-            foreach (DataGridViewRow row in dgvGameRates.Rows)
+            if (courtsFlowPanel.InvokeRequired)
             {
-                if (row.IsNewRow) continue;
+                courtsFlowPanel.Invoke(new MethodInvoker(() => LoadCourtCards()));
+                return;
+            }
 
-                string status = row.Cells["colStatus"].Value?.ToString() ?? "Disabled";
-                if (status == "Enabled")
-                {
-                    row.Cells["colStatus"].Style.BackColor = Color.FromArgb(40, 167, 69);
-                    row.Cells["colStatus"].Style.ForeColor = Color.White;
-                    row.Cells["colStatus"].Style.SelectionBackColor = Color.FromArgb(40, 167, 69);
-                    row.Cells["colStatus"].Style.SelectionForeColor = Color.White;
-                }
-                else
-                {
-                    row.Cells["colStatus"].Style.BackColor = Color.FromArgb(220, 53, 69);
-                    row.Cells["colStatus"].Style.ForeColor = Color.White;
-                    row.Cells["colStatus"].Style.SelectionBackColor = Color.FromArgb(220, 53, 69);
-                    row.Cells["colStatus"].Style.SelectionForeColor = Color.White;
-                }
+            courtsFlowPanel.Controls.Clear();
+            foreach (var court in courtTypes)
+            {
+                var card = CreateCourtCard(court);
+                courtsFlowPanel.Controls.Add(card);
             }
         }
 
-        private void LoadCourtTypes(ComboBox cbo)
+        private Panel CreateCourtCard(CourtType court)
         {
-            cbo.Items.Clear();
-            foreach (var courtType in _courtTypes)
-                cbo.Items.Add(courtType);
-            if (cbo.Items.Count > 0) cbo.SelectedIndex = 0;
+            Panel card = new Panel
+            {
+                Width = 280,
+                Height = 100,
+                BackColor = cardBgColor,
+                Margin = new Padding(10),
+                Tag = court
+            };
+
+            // Modern card styling
+            card.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(Color.FromArgb(229, 231, 235), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+                }
+
+                using (Pen shadowPen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
+                {
+                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
+                }
+            };
+
+            Label lblName = new Label
+            {
+                Text = court.CourtName,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                Location = new Point(15, 15),
+                Size = new Size(250, 25),
+                ForeColor = Color.FromArgb(17, 24, 39)
+            };
+
+            Label lblDesc = new Label
+            {
+                Text = court.Description,
+                Font = new Font("Segoe UI", 9F),
+                Location = new Point(15, 40),
+                Size = new Size(250, 20),
+                ForeColor = Color.FromArgb(107, 114, 128)
+            };
+
+            Button btnDelete = new Button
+            {
+                Text = "Delete",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = dangerColor,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Size = new Size(70, 28),
+                Location = new Point(190, 62),
+                Tag = court,
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
+            };
+
+            // Hover effect
+            btnDelete.MouseEnter += (s, e) => btnDelete.BackColor = ControlPaint.Light(dangerColor, 0.2f);
+            btnDelete.MouseLeave += (s, e) => btnDelete.BackColor = dangerColor;
+            btnDelete.Click += BtnDeleteCourt_Click;
+
+            card.Controls.AddRange(new Control[] { lblName, lblDesc, btnDelete });
+            return card;
         }
 
-        private void LoadGameTypes(ComboBox cbo)
+        private void LoadGameTypeCards()
         {
-            cbo.Items.Clear();
-            foreach (var gameType in _gameTypes)
-                cbo.Items.Add(gameType);
-            if (cbo.Items.Count > 0) cbo.SelectedIndex = 0;
+            if (gameTypesFlowPanel.InvokeRequired)
+            {
+                gameTypesFlowPanel.Invoke(new MethodInvoker(() => LoadGameTypeCards()));
+                return;
+            }
+
+            gameTypesFlowPanel.Controls.Clear();
+            foreach (var gameType in gameTypesList)
+            {
+                var card = CreateGameTypeCard(gameType);
+                gameTypesFlowPanel.Controls.Add(card);
+            }
         }
 
-        private bool IsCourtTypeUsed(string courtType)
+        private Panel CreateGameTypeCard(GameType gameType)
+        {
+            Panel card = new Panel
+            {
+                Width = 280,
+                Height = 100,
+                BackColor = cardBgColor,
+                Margin = new Padding(10),
+                Tag = gameType
+            };
+
+            card.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(Color.FromArgb(229, 231, 235), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+                }
+                using (Pen shadowPen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
+                {
+                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
+                }
+            };
+
+            Label lblName = new Label
+            {
+                Text = gameType.GameName,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                Location = new Point(15, 15),
+                Size = new Size(250, 25),
+                ForeColor = Color.FromArgb(17, 24, 39)
+            };
+
+            Label lblDesc = new Label
+            {
+                Text = gameType.Description,
+                Font = new Font("Segoe UI", 9F),
+                Location = new Point(15, 40),
+                Size = new Size(250, 20),
+                ForeColor = Color.FromArgb(107, 114, 128)
+            };
+
+            Button btnDelete = new Button
+            {
+                Text = "Delete",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = dangerColor,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Size = new Size(70, 28),
+                Location = new Point(190, 62),
+                Tag = gameType,
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
+            };
+
+            btnDelete.MouseEnter += (s, e) => btnDelete.BackColor = ControlPaint.Light(dangerColor, 0.2f);
+            btnDelete.MouseLeave += (s, e) => btnDelete.BackColor = dangerColor;
+            btnDelete.Click += BtnDeleteGameType_Click;
+
+            card.Controls.AddRange(new Control[] { lblName, lblDesc, btnDelete });
+            return card;
+        }
+
+        private void DisplayGameRates()
+        {
+            if (ratesFlowPanel.InvokeRequired)
+            {
+                ratesFlowPanel.Invoke(new MethodInvoker(() => DisplayGameRates()));
+                return;
+            }
+
+            ratesFlowPanel.Controls.Clear();
+
+            string filter = filterCombo.SelectedItem?.ToString() ?? "All Rates";
+            var filteredRates = gameRates.Where(r =>
+                filter == "All Rates" ||
+                (filter == "Active Only" && r.Status == "Enabled") ||
+                (filter == "Inactive Only" && r.Status == "Disabled")
+            ).ToList();
+
+            foreach (var rate in filteredRates)
+            {
+                var card = CreateGameRateCard(rate);
+                ratesFlowPanel.Controls.Add(card);
+            }
+        }
+
+        private Image ResizeImage(Image image, int maxWidth, int maxHeight)
+        {
+            var ratioX = (double)maxWidth / image.Width;
+            var ratioY = (double)maxHeight / image.Height;
+            var ratio = Math.Min(ratioX, ratioY);
+
+            var newWidth = (int)(image.Width * ratio);
+            var newHeight = (int)(image.Height * ratio);
+
+            Bitmap newImage = new Bitmap(newWidth, newHeight);
+            using (Graphics g = Graphics.FromImage(newImage))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(image, 0, 0, newWidth, newHeight);
+            }
+            return newImage;
+        }
+
+        private Panel CreateGameRateCard(GameRate rate)
+        {
+            Panel card = new Panel
+            {
+                Width = 350,
+                Height = 280,
+                BackColor = cardBgColor,
+                Margin = new Padding(12),
+                Tag = rate
+            };
+
+            card.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(Color.FromArgb(229, 231, 235), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
+                }
+
+                using (Pen shadowPen = new Pen(Color.FromArgb(30, 0, 0, 0), 2))
+                {
+                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
+                }
+            };
+
+            Panel statusBar = new Panel
+            {
+                Height = 6,
+                Dock = DockStyle.Top,
+                BackColor = rate.Status == "Enabled" ? successColor : dangerColor
+            };
+
+            Panel imagePanel = new Panel
+            {
+                Size = new Size(100, 100),
+                Location = new Point(16, 22),
+                BackColor = Color.FromArgb(249, 250, 251),
+                BorderStyle = BorderStyle.None
+            };
+
+            imagePanel.Paint += (s, e) =>
+            {
+                using (Pen pen = new Pen(Color.FromArgb(209, 213, 219), 1))
+                {
+                    e.Graphics.DrawRectangle(pen, 0, 0, imagePanel.Width - 1, imagePanel.Height - 1);
+                }
+            };
+
+            PictureBox pb = new PictureBox
+            {
+                Size = new Size(94, 94),
+                Location = new Point(3, 3),
+                SizeMode = PictureBoxSizeMode.Zoom,
+                Image = rate.Image ?? CreatePlaceholderImage(),
+                BackColor = Color.Transparent
+            };
+            imagePanel.Controls.Add(pb);
+
+            Label lblName = new Label
+            {
+                Text = rate.Name,
+                Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                Location = new Point(130, 22),
+                Size = new Size(200, 25),
+                ForeColor = Color.FromArgb(17, 24, 39)
+            };
+
+            Label lblType = new Label
+            {
+                Text = $"🏟️ {rate.CourtType}  •  🎮 {rate.GameType}",
+                Font = new Font("Segoe UI", 10F),
+                Location = new Point(130, 47),
+                Size = new Size(200, 20),
+                ForeColor = Color.FromArgb(107, 114, 128)
+            };
+
+            Label lblRate = new Label
+            {
+                Text = $"₱{rate.Rate:N0}/hr",
+                Font = new Font("Segoe UI", 18F, FontStyle.Bold),
+                Location = new Point(130, 70),
+                Size = new Size(200, 30),
+                ForeColor = primaryColor
+            };
+
+            Label lblDesc = new Label
+            {
+                Text = rate.Description,
+                Font = new Font("Segoe UI", 9F),
+                Location = new Point(16, 135),
+                Size = new Size(320, 40),
+                ForeColor = Color.FromArgb(75, 85, 99)
+            };
+
+            Button btnToggle = new Button
+            {
+                Text = rate.Status == "Enabled" ? "Disable" : "Enable",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = rate.Status == "Enabled" ? warningColor : successColor,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Size = new Size(75, 32),
+                Location = new Point(180, 185),
+                Tag = rate,
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
+            };
+
+            btnToggle.MouseEnter += (s, e) => btnToggle.BackColor = ControlPaint.Light(rate.Status == "Enabled" ? warningColor : successColor, 0.2f);
+            btnToggle.MouseLeave += (s, e) => btnToggle.BackColor = rate.Status == "Enabled" ? warningColor : successColor;
+            btnToggle.Click += BtnToggle_Click;
+
+            Button btnEdit = new Button
+            {
+                Text = "Edit",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = primaryColor,
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Size = new Size(75, 32),
+                Location = new Point(260, 185),
+                Tag = rate,
+                Cursor = Cursors.Hand,
+                FlatAppearance = { BorderSize = 0 }
+            };
+
+            btnEdit.MouseEnter += (s, e) => btnEdit.BackColor = ControlPaint.Light(primaryColor, 0.2f);
+            btnEdit.MouseLeave += (s, e) => btnEdit.BackColor = primaryColor;
+            btnEdit.Click += BtnEdit_Click;
+
+            card.Controls.AddRange(new Control[] {
+                statusBar, imagePanel, lblName, lblType,
+                lblRate, lblDesc, btnToggle, btnEdit
+            });
+
+            card.MouseEnter += (s, e) => card.BackColor = hoverColor;
+            card.MouseLeave += (s, e) => card.BackColor = cardBgColor;
+
+            return card;
+        }
+
+        private void UpdateStatistics()
         {
             try
             {
-                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                if (this.InvokeRequired)
                 {
-                    conn.Open();
-                    string query = "SELECT COUNT(*) FROM game_rates WHERE court_type = @courtType";
-                    MySqlCommand cmd = new MySqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@courtType", courtType);
-                    int count = Convert.ToInt32(cmd.ExecuteScalar());
-                    return count > 0;
+                    this.Invoke(new MethodInvoker(() => UpdateStatistics()));
+                    return;
                 }
-            }
-            catch
-            {
-                // Fallback to checking DataGridView
-                foreach (DataGridViewRow row in dgvGameRates.Rows)
+
+                int totalRates = gameRates.Count;
+                int activeCount = gameRates.Count(r => r.Status == "Enabled");
+                int inactiveCount = gameRates.Count(r => r.Status == "Disabled");
+
+                decimal avgRate = 0;
+                if (gameRates.Count > 0)
                 {
-                    if (row.Cells["colCourtType"].Value?.ToString() == courtType)
-                        return true;
+                    avgRate = gameRates.Average(r => r.Rate);
                 }
-                return false;
-            }
-        }
 
-        private bool IsGameTypeUsed(string gameType)
-        {
-            try
-            {
-                using (MySqlConnection conn = new MySqlConnection(connectionString))
-                {
-                    conn.Open();
-                    string query = "SELECT COUNT(*) FROM game_rates WHERE game_type = @gameType";
-                    MySqlCommand cmd = new MySqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@gameType", gameType);
-                    int count = Convert.ToInt32(cmd.ExecuteScalar());
-                    return count > 0;
-                }
-            }
-            catch
-            {
-                // Fallback to checking DataGridView
-                foreach (DataGridViewRow row in dgvGameRates.Rows)
-                {
-                    if (row.Cells["colGameType"].Value?.ToString() == gameType)
-                        return true;
-                }
-                return false;
-            }
-        }
+                lblStatsValue1.Text = totalRates.ToString();
+                lblStatsValue2.Text = activeCount.ToString();
+                lblStatsValue3.Text = inactiveCount.ToString();
+                lblStatsValue4.Text = $"₱{avgRate:F0}";
 
-        private string ShowInputDialog(string title, string promptText)
-        {
-            Form inputForm = new Form();
-            Label label = new Label();
-            TextBox textBox = new TextBox();
-            Button buttonOk = new Button();
-            Button buttonCancel = new Button();
-
-            inputForm.Text = title;
-            label.Text = promptText;
-            textBox.Text = "";
-
-            buttonOk.Text = "OK";
-            buttonCancel.Text = "Cancel";
-            buttonOk.DialogResult = DialogResult.OK;
-            buttonCancel.DialogResult = DialogResult.Cancel;
-
-            label.SetBounds(9, 20, 372, 13);
-            textBox.SetBounds(12, 36, 372, 20);
-            buttonOk.SetBounds(228, 72, 75, 23);
-            buttonCancel.SetBounds(309, 72, 75, 23);
-
-            label.AutoSize = true;
-            textBox.Anchor = textBox.Anchor | AnchorStyles.Right;
-            buttonOk.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            buttonCancel.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-
-            inputForm.ClientSize = new Size(396, 107);
-            inputForm.Controls.AddRange(new Control[] { label, textBox, buttonOk, buttonCancel });
-            inputForm.ClientSize = new Size(Math.Max(300, label.Right + 10), inputForm.ClientSize.Height);
-            inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-            inputForm.StartPosition = FormStartPosition.CenterParent;
-            inputForm.MinimizeBox = false;
-            inputForm.MaximizeBox = false;
-            inputForm.AcceptButton = buttonOk;
-            inputForm.CancelButton = buttonCancel;
-
-            DialogResult dialogResult = inputForm.ShowDialog(this);
-            return dialogResult == DialogResult.OK ? textBox.Text : null;
-        }
-
-        private void BtnManage_Click(object sender, EventArgs e)
-        {
-            // Toggle the management panel visibility
-            panelManagement.Visible = !panelManagement.Visible;
-
-            // Refresh the data when showing
-            if (panelManagement.Visible)
-            {
-                RefreshDataFromDatabase();
-            }
-        }
-
-        private void RefreshDataFromDatabase()
-        {
-            try
-            {
-                using (connection = new MySqlConnection(connectionString))
-                {
-                    connection.Open();
-
-                    // Reload court types
-                    _courtTypes.Clear();
-                    string courtQuery = "SELECT court_name FROM court_types ORDER BY court_name";
-                    MySqlCommand courtCmd = new MySqlCommand(courtQuery, connection);
-                    using (MySqlDataReader reader = courtCmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            _courtTypes.Add(reader["court_name"].ToString());
-                        }
-                    }
-
-                    // Reload game types
-                    _gameTypes.Clear();
-                    string gameQuery = "SELECT game_name FROM game_types ORDER BY game_name";
-                    MySqlCommand gameCmd = new MySqlCommand(gameQuery, connection);
-                    using (MySqlDataReader reader = gameCmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            _gameTypes.Add(reader["game_name"].ToString());
-                        }
-                    }
-
-                    // Reload game rates
-                    LoadGameRatesFromDatabase();
-
-                    // Update management grids
-                    LoadCourtsData();
-                    LoadGameTypesData();
-                }
+                lblStatsSub1.Text = totalRates == 1 ? "total rate" : "total rates";
+                lblStatsSub2.Text = activeCount == 1 ? "active" : "active";
+                lblStatsSub3.Text = inactiveCount == 1 ? "inactive" : "inactive";
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error refreshing data: {ex.Message}",
-                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error updating statistics");
             }
         }
 
-        private void BtnAddNew_Click(object sender, EventArgs e)
+        private void BtnToggle_Click(object sender, EventArgs e)
         {
-            ShowAddRateDialog();
-        }
+            Button btn = (Button)sender;
+            GameRate rate = (GameRate)btn.Tag;
 
-        private void ShowAddRateDialog()
-        {
-            using (var addRateDialog = new Form())
-            {
-                addRateDialog.Text = "Add New Game Rate";
-                addRateDialog.Size = new Size(550, 550);
-                addRateDialog.StartPosition = FormStartPosition.CenterParent;
-                addRateDialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-                addRateDialog.MaximizeBox = false;
-                addRateDialog.MinimizeBox = false;
-                addRateDialog.BackColor = Color.White;
-
-                // Create controls with proper font initialization
-                System.Drawing.Font regularFont = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Regular);
-                System.Drawing.Font semiboldFont = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
-
-                Label lblName = new Label { Text = "Name:", Left = 30, Top = 30, Width = 100, Font = regularFont };
-                TextBox txtName = new TextBox { Left = 150, Top = 27, Width = 320, Font = regularFont };
-
-                // Court Type 
-                Label lblCourtType = new Label { Text = "Court Type:", Left = 30, Top = 80, Width = 100, Font = regularFont };
-                ComboBox cboCourtType = new ComboBox
-                {
-                    Left = 150,
-                    Top = 77,
-                    Width = 320,
-                    DropDownStyle = ComboBoxStyle.DropDownList,
-                    Font = regularFont
-                };
-
-                // Game Type 
-                Label lblGameType = new Label { Text = "Game Type:", Left = 30, Top = 130, Width = 100, Font = regularFont };
-                ComboBox cboGameType = new ComboBox
-                {
-                    Left = 150,
-                    Top = 127,
-                    Width = 320,
-                    DropDownStyle = ComboBoxStyle.DropDownList,
-                    Font = regularFont
-                };
-
-                // Load initial data
-                LoadCourtTypes(cboCourtType);
-                LoadGameTypes(cboGameType);
-
-                Label lblRate = new Label { Text = "Rate per hour:", Left = 30, Top = 180, Width = 100, Font = regularFont };
-                TextBox txtRate = new TextBox { Left = 150, Top = 177, Width = 320, Font = regularFont };
-
-                Label lblDescription = new Label { Text = "Description:", Left = 30, Top = 230, Width = 100, Font = regularFont };
-                TextBox txtDescription = new TextBox
-                {
-                    Left = 150,
-                    Top = 227,
-                    Width = 320,
-                    Height = 80,
-                    Multiline = true,
-                    Font = regularFont,
-                    Text = "e.g., Fast-paced 5v5, indoor court, includes referee",
-                    ForeColor = Color.Gray
-                };
-
-                // Status selection
-                Label lblStatus = new Label { Text = "Initial Status:", Left = 30, Top = 320, Width = 100, Font = regularFont };
-                ComboBox cboStatus = new ComboBox
-                {
-                    Left = 150,
-                    Top = 317,
-                    Width = 320,
-                    DropDownStyle = ComboBoxStyle.DropDownList,
-                    Font = regularFont
-                };
-                cboStatus.Items.AddRange(new object[] { "Enabled", "Disabled" });
-                cboStatus.SelectedIndex = 0;
-
-                // Placeholder events
-                txtDescription.GotFocus += (s, args) =>
-                {
-                    if (txtDescription.Text == "e.g., Fast-paced 5v5, indoor court, includes referee")
-                    {
-                        txtDescription.Text = "";
-                        txtDescription.ForeColor = Color.Black;
-                    }
-                };
-
-                txtDescription.LostFocus += (s, args) =>
-                {
-                    if (string.IsNullOrWhiteSpace(txtDescription.Text))
-                    {
-                        txtDescription.Text = "e.g., Fast-paced 5v5, indoor court, includes referee";
-                        txtDescription.ForeColor = Color.Gray;
-                    }
-                };
-
-                Button btnAdd = new Button
-                {
-                    Text = "Add Rate",
-                    Left = 150,
-                    Top = 380,
-                    Width = 120,
-                    Height = 40,
-                    BackColor = Color.FromArgb(40, 167, 69),
-                    FlatStyle = FlatStyle.Flat,
-                    Font = semiboldFont,
-                    ForeColor = Color.White
-                };
-                btnAdd.FlatAppearance.BorderSize = 0;
-
-                Button btnCancel = new Button
-                {
-                    Text = "Cancel",
-                    Left = 280,
-                    Top = 380,
-                    Width = 120,
-                    Height = 40,
-                    BackColor = Color.FromArgb(108, 117, 125),
-                    FlatStyle = FlatStyle.Flat,
-                    Font = regularFont,
-                    ForeColor = Color.White
-                };
-                btnCancel.FlatAppearance.BorderSize = 0;
-
-                // Add click event
-                btnAdd.Click += (s, args) =>
-                {
-                    // Validate inputs
-                    if (string.IsNullOrWhiteSpace(txtName.Text))
-                    {
-                        MessageBox.Show("Please enter a name.", "Validation Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    if (cboCourtType.SelectedItem == null)
-                    {
-                        MessageBox.Show("Please select a court type.", "Validation Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    if (cboGameType.SelectedItem == null)
-                    {
-                        MessageBox.Show("Please select a game type.", "Validation Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    if (string.IsNullOrWhiteSpace(txtRate.Text) || !decimal.TryParse(txtRate.Text, out decimal rate) || rate <= 0)
-                    {
-                        MessageBox.Show("Please enter a valid rate (positive number).", "Validation Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    try
-                    {
-                        using (MySqlConnection conn = new MySqlConnection(connectionString))
-                        {
-                            conn.Open();
-
-                            string description = txtDescription.Text;
-                            if (description == "e.g., Fast-paced 5v5, indoor court, includes referee")
-                                description = "";
-
-                            string insertQuery = @"
-                                INSERT INTO game_rates (name, court_type, game_type, rate, description, status) 
-                                VALUES (@name, @courtType, @gameType, @rate, @description, @status)";
-
-                            MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
-                            cmd.Parameters.AddWithValue("@name", txtName.Text.Trim());
-                            cmd.Parameters.AddWithValue("@courtType", cboCourtType.Text);
-                            cmd.Parameters.AddWithValue("@gameType", cboGameType.Text);
-                            cmd.Parameters.AddWithValue("@rate", rate);
-                            cmd.Parameters.AddWithValue("@description", description);
-                            cmd.Parameters.AddWithValue("@status", cboStatus.Text);
-
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        // Refresh the grid
-                        RefreshDataFromDatabase();
-
-                        MessageBox.Show("Game rate added successfully to database!", "Success",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        addRateDialog.DialogResult = DialogResult.OK;
-                        addRateDialog.Close();
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error saving to database: {ex.Message}",
-                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                };
-
-                btnCancel.Click += (s, args) =>
-                {
-                    addRateDialog.DialogResult = DialogResult.Cancel;
-                    addRateDialog.Close();
-                };
-
-                // Add controls to form
-                addRateDialog.Controls.AddRange(new Control[] {
-                    lblName, txtName,
-                    lblCourtType, cboCourtType,
-                    lblGameType, cboGameType,
-                    lblRate, txtRate,
-                    lblDescription, txtDescription,
-                    lblStatus, cboStatus,
-                    btnAdd, btnCancel
-                });
-
-                addRateDialog.AcceptButton = btnAdd;
-                addRateDialog.CancelButton = btnCancel;
-
-                addRateDialog.ShowDialog(this);
-            }
-        }
-
-        private void DgvGameRates_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-
-            // Handle Status toggle
-            if (e.ColumnIndex == dgvGameRates.Columns["colStatus"].Index)
-            {
-                ToggleStatus(e.RowIndex);
-            }
-            // Handle Edit button
-            else if (e.ColumnIndex == dgvGameRates.Columns["colEdit"].Index)
-            {
-                ShowEditDialog(e.RowIndex);
-            }
-        }
-
-        private void ToggleStatus(int rowIndex)
-        {
-            var currentValue = dgvGameRates.Rows[rowIndex].Cells["colStatus"].Value?.ToString() ?? "Disabled";
-            string newStatus = currentValue == "Enabled" ? "Disabled" : "Enabled";
-
-            string name = dgvGameRates.Rows[rowIndex].Cells["colName"].Value?.ToString() ?? "";
+            string oldStatus = rate.Status;
+            string newStatus = rate.Status == "Enabled" ? "Disabled" : "Enabled";
 
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string updateQuery = "UPDATE game_rates SET status = @status WHERE name = @name";
+                    string updateQuery = "UPDATE game_rates SET status = @status WHERE id = @id";
                     MySqlCommand cmd = new MySqlCommand(updateQuery, conn);
                     cmd.Parameters.AddWithValue("@status", newStatus);
-                    cmd.Parameters.AddWithValue("@name", name);
+                    cmd.Parameters.AddWithValue("@id", rate.Id);
                     cmd.ExecuteNonQuery();
                 }
 
-                // Update status in grid
-                dgvGameRates.Rows[rowIndex].Cells["colStatus"].Value = newStatus;
+                rate.Status = newStatus;
+                DisplayGameRates();
+                UpdateStatistics();
 
-                // Update styling
-                if (newStatus == "Enabled")
-                {
-                    dgvGameRates.Rows[rowIndex].Cells["colStatus"].Style.BackColor = Color.FromArgb(40, 167, 69);
-                    dgvGameRates.Rows[rowIndex].Cells["colStatus"].Style.ForeColor = Color.White;
-                    dgvGameRates.Rows[rowIndex].Cells["colStatus"].Style.SelectionBackColor = Color.FromArgb(40, 167, 69);
-                    dgvGameRates.Rows[rowIndex].Cells["colStatus"].Style.SelectionForeColor = Color.White;
-                }
-                else
-                {
-                    dgvGameRates.Rows[rowIndex].Cells["colStatus"].Style.BackColor = Color.FromArgb(220, 53, 69);
-                    dgvGameRates.Rows[rowIndex].Cells["colStatus"].Style.ForeColor = Color.White;
-                    dgvGameRates.Rows[rowIndex].Cells["colStatus"].Style.SelectionBackColor = Color.FromArgb(220, 53, 69);
-                    dgvGameRates.Rows[rowIndex].Cells["colStatus"].Style.SelectionForeColor = Color.White;
-                }
+                Activitylogs.Instance.LogGameRateActivity(currentUser, "Status Changed", rate.Name, $"Changed from {oldStatus} to {newStatus}");
 
-                // Re-apply filter based on current selection
-                if (cboFilterStatus.SelectedItem != null)
-                {
-                    ApplyStatusFilter(cboFilterStatus.SelectedItem.ToString());
-                }
-
-                MessageBox.Show($"Game rate {newStatus.ToLower()} in database!", "Status Changed",
+                MessageBox.Show($"Game rate {newStatus.ToLower()}!", "Status Changed",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
+                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error changing status for {rate.Name}");
                 MessageBox.Show($"Error updating status: {ex.Message}",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void CboFilterStatus_SelectedIndexChanged(object sender, EventArgs e)
+        private void BtnEdit_Click(object sender, EventArgs e)
         {
-            string filter = cboFilterStatus.SelectedItem?.ToString() ?? "All";
-            ApplyStatusFilter(filter);
+            Button btn = (Button)sender;
+            GameRate rate = (GameRate)btn.Tag;
+            ShowEditDialog(rate);
         }
 
-        private void ApplyStatusFilter(string filter)
+        private void ShowEditDialog(GameRate rate)
         {
-            foreach (DataGridViewRow row in dgvGameRates.Rows)
-            {
-                if (row.IsNewRow) continue;
-
-                string status = row.Cells["colStatus"].Value?.ToString() ?? "Disabled";
-                bool showRow = filter == "All" ||
-                              (filter == "Enabled Only" && status == "Enabled") ||
-                              (filter == "Disabled Only" && status == "Disabled");
-
-                row.Visible = showRow;
-            }
-        }
-
-        private void ShowEditDialog(int rowIndex)
-        {
-            if (rowIndex < 0 || rowIndex >= dgvGameRates.Rows.Count)
-                return;
-
-            DataGridViewRow row = dgvGameRates.Rows[rowIndex];
-
-            string status = row.Cells["colStatus"].Value?.ToString() ?? "Enabled";
-            string name = row.Cells["colName"].Value?.ToString() ?? "";
-            string courtType = row.Cells["colCourtType"].Value?.ToString() ?? "";
-            string gameType = row.Cells["colGameType"].Value?.ToString() ?? "";
-            string rate = row.Cells["colRate"].Value?.ToString() ?? "";
-            string description = row.Cells["colDescription"].Value?.ToString() ?? "";
-            string originalName = name; // Store original name for database update
-
-            // Create edit dialog
             using (var editDialog = new Form())
             {
                 editDialog.Text = "Edit Game Rate";
-                editDialog.Size = new Size(550, 550);
+                editDialog.Size = new Size(700, 700);
                 editDialog.StartPosition = FormStartPosition.CenterParent;
                 editDialog.FormBorderStyle = FormBorderStyle.FixedDialog;
                 editDialog.MaximizeBox = false;
                 editDialog.MinimizeBox = false;
                 editDialog.BackColor = Color.White;
 
-                // Create controls with proper font initialization
-                System.Drawing.Font regularFont = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Regular);
-                System.Drawing.Font semiboldFont = new System.Drawing.Font("Segoe UI", 10F, FontStyle.Bold);
+                Font regularFont = new Font("Segoe UI", 10F, FontStyle.Regular);
+                Font semiboldFont = new Font("Segoe UI", 10F, FontStyle.Bold);
 
-                Label lblName = new Label { Text = "Name:", Left = 30, Top = 30, Width = 100, Font = regularFont };
-                TextBox txtNameEdit = new TextBox { Left = 150, Top = 27, Width = 320, Font = regularFont, Text = name };
+                TableLayoutPanel tlp = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    ColumnCount = 2,
+                    RowCount = 8,
+                    Padding = new Padding(20),
+                    AutoSize = true
+                };
+                tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+                tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+                // Name
+                tlp.Controls.Add(new Label { Text = "Name:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 0);
+                TextBox txtNameEdit = new TextBox { Font = regularFont, Dock = DockStyle.Fill, Text = rate.Name };
+                tlp.Controls.Add(txtNameEdit, 1, 0);
 
                 // Court Type
-                Label lblCourtType = new Label { Text = "Court Type:", Left = 30, Top = 80, Width = 100, Font = regularFont };
+                tlp.Controls.Add(new Label { Text = "Court Type:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 1);
                 ComboBox cboCourtTypeEdit = new ComboBox
                 {
-                    Left = 150,
-                    Top = 77,
-                    Width = 320,
-                    DropDownStyle = ComboBoxStyle.DropDownList,
-                    Font = regularFont
+                    Font = regularFont,
+                    Dock = DockStyle.Fill,
+                    DropDownStyle = ComboBoxStyle.DropDownList
                 };
-
-                // Load court types
-                LoadCourtTypes(cboCourtTypeEdit);
-                if (!string.IsNullOrEmpty(courtType))
-                    cboCourtTypeEdit.SelectedItem = courtType;
+                cboCourtTypeEdit.Items.AddRange(courtTypes.Select(c => c.CourtName).ToArray());
+                if (!string.IsNullOrEmpty(rate.CourtType))
+                    cboCourtTypeEdit.SelectedItem = rate.CourtType;
+                tlp.Controls.Add(cboCourtTypeEdit, 1, 1);
 
                 // Game Type
-                Label lblGameType = new Label { Text = "Game Type:", Left = 30, Top = 130, Width = 100, Font = regularFont };
+                tlp.Controls.Add(new Label { Text = "Game Type:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 2);
                 ComboBox cboGameTypeEdit = new ComboBox
                 {
-                    Left = 150,
-                    Top = 127,
-                    Width = 320,
-                    DropDownStyle = ComboBoxStyle.DropDownList,
-                    Font = regularFont
+                    Font = regularFont,
+                    Dock = DockStyle.Fill,
+                    DropDownStyle = ComboBoxStyle.DropDownList
+                };
+                cboGameTypeEdit.Items.AddRange(gameTypesList.Select(g => g.GameName).ToArray());
+                if (!string.IsNullOrEmpty(rate.GameType))
+                    cboGameTypeEdit.SelectedItem = rate.GameType;
+                tlp.Controls.Add(cboGameTypeEdit, 1, 2);
+
+                // Rate
+                tlp.Controls.Add(new Label { Text = "Rate per hour:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 3);
+                TextBox txtRateEdit = new TextBox { Font = regularFont, Dock = DockStyle.Fill, Text = rate.Rate.ToString() };
+                tlp.Controls.Add(txtRateEdit, 1, 3);
+
+                // Image
+                tlp.Controls.Add(new Label { Text = "Image:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 4);
+
+                Panel imagePanel = new Panel { Height = 120, Dock = DockStyle.Fill };
+                PictureBox pbPreview = new PictureBox
+                {
+                    Size = new Size(100, 100),
+                    Location = new Point(0, 0),
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    BackColor = Color.LightGray,
+                    Image = rate.Image ?? CreatePlaceholderImage()
                 };
 
-                // Load game types
-                LoadGameTypes(cboGameTypeEdit);
-                if (!string.IsNullOrEmpty(gameType))
-                    cboGameTypeEdit.SelectedItem = gameType;
+                Button btnBrowse = new Button
+                {
+                    Text = "Browse...",
+                    Location = new Point(110, 20),
+                    Size = new Size(100, 30),
+                    Font = regularFont,
+                    BackColor = primaryColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand
+                };
+                btnBrowse.FlatAppearance.BorderSize = 0;
 
-                Label lblRate = new Label { Text = "Rate per hour:", Left = 30, Top = 180, Width = 100, Font = regularFont };
-                TextBox txtRateEdit = new TextBox { Left = 150, Top = 177, Width = 320, Font = regularFont, Text = rate };
+                Button btnRemoveImage = new Button
+                {
+                    Text = "Remove",
+                    Location = new Point(110, 60),
+                    Size = new Size(100, 30),
+                    Font = regularFont,
+                    BackColor = dangerColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Visible = rate.Image != null,
+                    Cursor = Cursors.Hand
+                };
+                btnRemoveImage.FlatAppearance.BorderSize = 0;
 
-                Label lblDescription = new Label { Text = "Description:", Left = 30, Top = 230, Width = 100, Font = regularFont };
+                Label lblImageName = new Label
+                {
+                    Location = new Point(220, 40),
+                    Size = new Size(200, 60),
+                    Font = regularFont,
+                    ForeColor = rate.Image != null ? Color.Black : Color.Gray,
+                    Text = rate.Image != null ? "Image loaded" : "No image selected"
+                };
+
+                byte[] selectedImageBytes = rate.ImageData;
+                bool imageChanged = false;
+
+                btnBrowse.Click += (s, args) =>
+                {
+                    using (OpenFileDialog ofd = new OpenFileDialog())
+                    {
+                        ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
+                        ofd.Title = "Select an image";
+
+                        if (ofd.ShowDialog() == DialogResult.OK)
+                        {
+                            try
+                            {
+                                using (Image img = Image.FromFile(ofd.FileName))
+                                {
+                                    Image resizedImg = ResizeImage(img, 300, 300);
+                                    pbPreview.Image = resizedImg;
+                                    selectedImageBytes = GetBytesFromImage(resizedImg);
+                                    lblImageName.Text = Path.GetFileName(ofd.FileName);
+                                    lblImageName.ForeColor = Color.Black;
+                                    btnRemoveImage.Visible = true;
+                                    imageChanged = true;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show($"Error loading image: {ex.Message}", "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                };
+
+                btnRemoveImage.Click += (s, args) =>
+                {
+                    pbPreview.Image = CreatePlaceholderImage();
+                    selectedImageBytes = null;
+                    lblImageName.Text = "No image selected";
+                    lblImageName.ForeColor = Color.Gray;
+                    btnRemoveImage.Visible = false;
+                    imageChanged = true;
+                };
+
+                imagePanel.Controls.Add(pbPreview);
+                imagePanel.Controls.Add(btnBrowse);
+                imagePanel.Controls.Add(btnRemoveImage);
+                imagePanel.Controls.Add(lblImageName);
+                tlp.Controls.Add(imagePanel, 1, 4);
+
+                // Description
+                tlp.Controls.Add(new Label { Text = "Description:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 5);
                 TextBox txtDescriptionEdit = new TextBox
                 {
-                    Left = 150,
-                    Top = 227,
-                    Width = 320,
-                    Height = 80,
-                    Multiline = true,
                     Font = regularFont,
-                    Text = string.IsNullOrEmpty(description) ? "e.g., Fast-paced 5v5, indoor court, includes referee" : description,
-                    ForeColor = string.IsNullOrEmpty(description) ? Color.Gray : Color.Black
+                    Dock = DockStyle.Fill,
+                    Multiline = true,
+                    Height = 80,
+                    Text = rate.Description
                 };
+                tlp.Controls.Add(txtDescriptionEdit, 1, 5);
 
                 // Status
-                Label lblStatus = new Label { Text = "Status:", Left = 30, Top = 320, Width = 100, Font = regularFont };
+                tlp.Controls.Add(new Label { Text = "Status:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 6);
                 ComboBox cboStatusEdit = new ComboBox
                 {
-                    Left = 150,
-                    Top = 317,
-                    Width = 320,
-                    DropDownStyle = ComboBoxStyle.DropDownList,
-                    Font = regularFont
+                    Font = regularFont,
+                    Dock = DockStyle.Fill,
+                    DropDownStyle = ComboBoxStyle.DropDownList
                 };
                 cboStatusEdit.Items.AddRange(new object[] { "Enabled", "Disabled" });
-                cboStatusEdit.SelectedItem = status;
+                cboStatusEdit.SelectedItem = rate.Status;
+                tlp.Controls.Add(cboStatusEdit, 1, 6);
 
-                // Placeholder events
-                txtDescriptionEdit.GotFocus += (s, args) =>
+                // Buttons panel
+                FlowLayoutPanel buttonPanel = new FlowLayoutPanel
                 {
-                    if (txtDescriptionEdit.Text == "e.g., Fast-paced 5v5, indoor court, includes referee")
-                    {
-                        txtDescriptionEdit.Text = "";
-                        txtDescriptionEdit.ForeColor = Color.Black;
-                    }
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Dock = DockStyle.Fill,
+                    Height = 50,
+                    Padding = new Padding(0),
+                    Margin = new Padding(0),
+                    WrapContents = false
                 };
 
-                txtDescriptionEdit.LostFocus += (s, args) =>
+                Button btnCancel = new Button
                 {
-                    if (string.IsNullOrWhiteSpace(txtDescriptionEdit.Text))
-                    {
-                        txtDescriptionEdit.Text = "e.g., Fast-paced 5v5, indoor court, includes referee";
-                        txtDescriptionEdit.ForeColor = Color.Gray;
-                    }
+                    Text = "Cancel",
+                    Size = new Size(100, 40),
+                    Font = regularFont,
+                    BackColor = Color.Gray,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Margin = new Padding(10, 5, 0, 5),
+                    Cursor = Cursors.Hand
                 };
+                btnCancel.FlatAppearance.BorderSize = 0;
 
                 Button btnSave = new Button
                 {
                     Text = "Save Changes",
-                    Left = 150,
-                    Top = 380,
-                    Width = 120,
-                    Height = 40,
-                    BackColor = Color.FromArgb(40, 167, 69),
-                    FlatStyle = FlatStyle.Flat,
+                    Size = new Size(120, 40),
                     Font = semiboldFont,
-                    ForeColor = Color.White
+                    BackColor = successColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Margin = new Padding(10, 5, 0, 5),
+                    Cursor = Cursors.Hand
                 };
                 btnSave.FlatAppearance.BorderSize = 0;
 
                 Button btnDelete = new Button
                 {
                     Text = "Delete",
-                    Left = 30,
-                    Top = 380,
-                    Width = 100,
-                    Height = 40,
-                    BackColor = Color.FromArgb(220, 53, 69),
-                    FlatStyle = FlatStyle.Flat,
+                    Size = new Size(100, 40),
                     Font = regularFont,
-                    ForeColor = Color.White
+                    BackColor = dangerColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Margin = new Padding(10, 5, 0, 5),
+                    Cursor = Cursors.Hand
                 };
                 btnDelete.FlatAppearance.BorderSize = 0;
 
-                Button btnCancel = new Button
-                {
-                    Text = "Cancel",
-                    Left = 280,
-                    Top = 380,
-                    Width = 120,
-                    Height = 40,
-                    BackColor = Color.FromArgb(108, 117, 125),
-                    FlatStyle = FlatStyle.Flat,
-                    Font = regularFont,
-                    ForeColor = Color.White
-                };
-                btnCancel.FlatAppearance.BorderSize = 0;
+                buttonPanel.Controls.Add(btnCancel);
+                buttonPanel.Controls.Add(btnDelete);
+                buttonPanel.Controls.Add(btnSave);
+                tlp.Controls.Add(buttonPanel, 1, 7);
 
-                // Save click
+                editDialog.Controls.Add(tlp);
+
                 btnSave.Click += (s, args) =>
                 {
                     if (string.IsNullOrWhiteSpace(txtNameEdit.Text))
@@ -1036,48 +1301,74 @@ namespace cms
                         {
                             conn.Open();
 
-                            string newDescription = txtDescriptionEdit.Text;
-                            if (newDescription == "e.g., Fast-paced 5v5, indoor court, includes referee")
-                                newDescription = "";
-
                             string updateQuery = @"
                                 UPDATE game_rates 
                                 SET name = @newName, court_type = @courtType, game_type = @gameType, 
-                                    rate = @rate, description = @description, status = @status
-                                WHERE name = @originalName";
+                                    rate = @rate, description = @description, image = @image, status = @status
+                                WHERE id = @id";
 
                             MySqlCommand cmd = new MySqlCommand(updateQuery, conn);
                             cmd.Parameters.AddWithValue("@newName", txtNameEdit.Text.Trim());
                             cmd.Parameters.AddWithValue("@courtType", cboCourtTypeEdit.Text);
                             cmd.Parameters.AddWithValue("@gameType", cboGameTypeEdit.Text);
                             cmd.Parameters.AddWithValue("@rate", rateVal);
-                            cmd.Parameters.AddWithValue("@description", newDescription);
+                            cmd.Parameters.AddWithValue("@description", txtDescriptionEdit.Text);
+                            cmd.Parameters.AddWithValue("@image", selectedImageBytes ?? (object)DBNull.Value);
                             cmd.Parameters.AddWithValue("@status", cboStatusEdit.Text);
-                            cmd.Parameters.AddWithValue("@originalName", originalName);
+                            cmd.Parameters.AddWithValue("@id", rate.Id);
 
                             cmd.ExecuteNonQuery();
                         }
 
-                        // Refresh the grid
-                        RefreshDataFromDatabase();
+                        string oldName = rate.Name;
+                        string oldCourtType = rate.CourtType;
+                        string oldGameType = rate.GameType;
+                        decimal oldRate = rate.Rate;
 
-                        MessageBox.Show("Game rate updated successfully in database!", "Success",
+                        rate.Name = txtNameEdit.Text.Trim();
+                        rate.CourtType = cboCourtTypeEdit.Text;
+                        rate.GameType = cboGameTypeEdit.Text;
+                        rate.Rate = rateVal;
+                        rate.Description = txtDescriptionEdit.Text;
+                        rate.Status = cboStatusEdit.Text;
+                        rate.ImageData = selectedImageBytes;
+                        if (selectedImageBytes != null)
+                        {
+                            rate.Image = GetImageFromBytes(selectedImageBytes);
+                        }
+                        else
+                        {
+                            rate.Image = null;
+                        }
+
+                        DisplayGameRates();
+                        UpdateStatistics();
+
+                        string changes = "";
+                        if (oldName != rate.Name) changes += $"Name: '{oldName}' → '{rate.Name}' ";
+                        if (oldCourtType != rate.CourtType) changes += $"Court: '{oldCourtType}' → '{rate.CourtType}' ";
+                        if (oldGameType != rate.GameType) changes += $"Game: '{oldGameType}' → '{rate.GameType}' ";
+                        if (oldRate != rate.Rate) changes += $"Rate: ₱{oldRate} → ₱{rate.Rate} ";
+                        if (imageChanged) changes += "Image updated ";
+
+                        Activitylogs.Instance.LogGameRateActivity(currentUser, "Updated", rate.Name, changes);
+
+                        MessageBox.Show("Game rate updated successfully!", "Success",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        editDialog.DialogResult = DialogResult.OK;
                         editDialog.Close();
                     }
                     catch (Exception ex)
                     {
+                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error updating {rate.Name}");
                         MessageBox.Show($"Error updating database: {ex.Message}",
                             "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 };
 
-                // Delete click
                 btnDelete.Click += (s, args) =>
                 {
-                    DialogResult result = MessageBox.Show("Are you sure you want to delete this game rate from database?",
+                    DialogResult result = MessageBox.Show($"Are you sure you want to delete '{rate.Name}'?",
                         "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                     if (result == DialogResult.Yes)
@@ -1087,254 +1378,649 @@ namespace cms
                             using (MySqlConnection conn = new MySqlConnection(connectionString))
                             {
                                 conn.Open();
-                                string deleteQuery = "DELETE FROM game_rates WHERE name = @name";
+                                string deleteQuery = "DELETE FROM game_rates WHERE id = @id";
                                 MySqlCommand cmd = new MySqlCommand(deleteQuery, conn);
-                                cmd.Parameters.AddWithValue("@name", originalName);
+                                cmd.Parameters.AddWithValue("@id", rate.Id);
                                 cmd.ExecuteNonQuery();
                             }
 
-                            // Refresh the grid
-                            RefreshDataFromDatabase();
+                            string deletedName = rate.Name;
+                            gameRates.Remove(rate);
+                            DisplayGameRates();
+                            UpdateStatistics();
 
-                            MessageBox.Show("Game rate deleted successfully from database!", "Success",
+                            Activitylogs.Instance.LogGameRateActivity(currentUser, "Deleted", deletedName);
+
+                            MessageBox.Show("Game rate deleted successfully!", "Success",
                                 MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            editDialog.DialogResult = DialogResult.OK;
                             editDialog.Close();
                         }
                         catch (Exception ex)
                         {
-                            MessageBox.Show($"Error deleting from database: {ex.Message}",
+                            Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting {rate.Name}");
+                            MessageBox.Show($"Error deleting: {ex.Message}",
                                 "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                 };
 
-                btnCancel.Click += (s, args) =>
-                {
-                    editDialog.DialogResult = DialogResult.Cancel;
-                    editDialog.Close();
-                };
-
-                // Add controls
-                editDialog.Controls.AddRange(new Control[] {
-                    lblName, txtNameEdit,
-                    lblCourtType, cboCourtTypeEdit,
-                    lblGameType, cboGameTypeEdit,
-                    lblRate, txtRateEdit,
-                    lblDescription, txtDescriptionEdit,
-                    lblStatus, cboStatusEdit,
-                    btnSave, btnDelete, btnCancel
-                });
-
-                editDialog.AcceptButton = btnSave;
-                editDialog.CancelButton = btnCancel;
-
                 editDialog.ShowDialog(this);
             }
         }
 
-        #region Management Panel Event Handlers
-
-        private void BtnAddCourt_Click(object sender, EventArgs e)
+        private void ShowAddRateDialog()
         {
-            string newCourtType = ShowInputDialog("Add Court Type", "Enter new court type:");
-            if (!string.IsNullOrWhiteSpace(newCourtType))
+            using (var addRateDialog = new Form())
+            {
+                addRateDialog.Text = "Add New Game Rate";
+                addRateDialog.Size = new Size(700, 700);
+                addRateDialog.StartPosition = FormStartPosition.CenterParent;
+                addRateDialog.FormBorderStyle = FormBorderStyle.FixedDialog;
+                addRateDialog.MaximizeBox = false;
+                addRateDialog.MinimizeBox = false;
+                addRateDialog.BackColor = Color.White;
+
+                Font regularFont = new Font("Segoe UI", 10F, FontStyle.Regular);
+                Font semiboldFont = new Font("Segoe UI", 10F, FontStyle.Bold);
+
+                TableLayoutPanel tlp = new TableLayoutPanel
+                {
+                    Dock = DockStyle.Fill,
+                    ColumnCount = 2,
+                    RowCount = 8,
+                    Padding = new Padding(20),
+                    AutoSize = true
+                };
+                tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+                tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+                // Name
+                tlp.Controls.Add(new Label { Text = "Name:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 0);
+                TextBox txtName = new TextBox { Font = regularFont, Dock = DockStyle.Fill };
+                tlp.Controls.Add(txtName, 1, 0);
+
+                // Court Type
+                tlp.Controls.Add(new Label { Text = "Court Type:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 1);
+                ComboBox cboCourtType = new ComboBox
+                {
+                    Font = regularFont,
+                    Dock = DockStyle.Fill,
+                    DropDownStyle = ComboBoxStyle.DropDownList
+                };
+                cboCourtType.Items.AddRange(courtTypes.Select(c => c.CourtName).ToArray());
+                if (cboCourtType.Items.Count > 0) cboCourtType.SelectedIndex = 0;
+                tlp.Controls.Add(cboCourtType, 1, 1);
+
+                // Game Type
+                tlp.Controls.Add(new Label { Text = "Game Type:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 2);
+                ComboBox cboGameType = new ComboBox
+                {
+                    Font = regularFont,
+                    Dock = DockStyle.Fill,
+                    DropDownStyle = ComboBoxStyle.DropDownList
+                };
+                cboGameType.Items.AddRange(gameTypesList.Select(g => g.GameName).ToArray());
+                if (cboGameType.Items.Count > 0) cboGameType.SelectedIndex = 0;
+                tlp.Controls.Add(cboGameType, 1, 2);
+
+                // Rate
+                tlp.Controls.Add(new Label { Text = "Rate per hour:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 3);
+                TextBox txtRate = new TextBox { Font = regularFont, Dock = DockStyle.Fill };
+                tlp.Controls.Add(txtRate, 1, 3);
+
+                // Image
+                tlp.Controls.Add(new Label { Text = "Image:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 4);
+
+                Panel imagePanel = new Panel { Height = 120, Dock = DockStyle.Fill };
+                PictureBox pbPreview = new PictureBox
+                {
+                    Size = new Size(100, 100),
+                    Location = new Point(0, 0),
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    BorderStyle = BorderStyle.FixedSingle,
+                    BackColor = Color.LightGray,
+                    Image = CreatePlaceholderImage()
+                };
+                Button btnBrowse = new Button
+                {
+                    Text = "Browse...",
+                    Location = new Point(110, 20),
+                    Size = new Size(100, 30),
+                    Font = regularFont,
+                    BackColor = primaryColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Cursor = Cursors.Hand
+                };
+                btnBrowse.FlatAppearance.BorderSize = 0;
+
+                Button btnRemoveImage = new Button
+                {
+                    Text = "Remove",
+                    Location = new Point(110, 60),
+                    Size = new Size(100, 30),
+                    Font = regularFont,
+                    BackColor = dangerColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Visible = false,
+                    Cursor = Cursors.Hand
+                };
+                btnRemoveImage.FlatAppearance.BorderSize = 0;
+
+                Label lblImageName = new Label
+                {
+                    Location = new Point(220, 40),
+                    Size = new Size(200, 60),
+                    Font = regularFont,
+                    ForeColor = Color.Gray,
+                    Text = "No image selected"
+                };
+
+                byte[] selectedImageBytes = null;
+
+                btnBrowse.Click += (s, args) =>
+                {
+                    using (OpenFileDialog ofd = new OpenFileDialog())
+                    {
+                        ofd.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
+                        ofd.Title = "Select an image";
+
+                        if (ofd.ShowDialog() == DialogResult.OK)
+                        {
+                            try
+                            {
+                                using (Image img = Image.FromFile(ofd.FileName))
+                                {
+                                    Image resizedImg = ResizeImage(img, 300, 300);
+                                    pbPreview.Image = resizedImg;
+                                    selectedImageBytes = GetBytesFromImage(resizedImg);
+                                    lblImageName.Text = Path.GetFileName(ofd.FileName);
+                                    lblImageName.ForeColor = Color.Black;
+                                    btnRemoveImage.Visible = true;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show($"Error loading image: {ex.Message}", "Error",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                    }
+                };
+
+                btnRemoveImage.Click += (s, args) =>
+                {
+                    pbPreview.Image = CreatePlaceholderImage();
+                    selectedImageBytes = null;
+                    lblImageName.Text = "No image selected";
+                    lblImageName.ForeColor = Color.Gray;
+                    btnRemoveImage.Visible = false;
+                };
+
+                imagePanel.Controls.Add(pbPreview);
+                imagePanel.Controls.Add(btnBrowse);
+                imagePanel.Controls.Add(btnRemoveImage);
+                imagePanel.Controls.Add(lblImageName);
+                tlp.Controls.Add(imagePanel, 1, 4);
+
+                // Description
+                tlp.Controls.Add(new Label { Text = "Description:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 5);
+                TextBox txtDescription = new TextBox
+                {
+                    Font = regularFont,
+                    Dock = DockStyle.Fill,
+                    Multiline = true,
+                    Height = 80
+                };
+                tlp.Controls.Add(txtDescription, 1, 5);
+
+                // Status
+                tlp.Controls.Add(new Label { Text = "Status:", Font = regularFont, Anchor = AnchorStyles.Left }, 0, 6);
+                ComboBox cboStatus = new ComboBox
+                {
+                    Font = regularFont,
+                    Dock = DockStyle.Fill,
+                    DropDownStyle = ComboBoxStyle.DropDownList
+                };
+                cboStatus.Items.AddRange(new object[] { "Enabled", "Disabled" });
+                cboStatus.SelectedIndex = 0;
+                tlp.Controls.Add(cboStatus, 1, 6);
+
+                // Buttons panel
+                FlowLayoutPanel buttonPanel = new FlowLayoutPanel
+                {
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Dock = DockStyle.Fill,
+                    Height = 50,
+                    Padding = new Padding(0),
+                    Margin = new Padding(0),
+                    WrapContents = false
+                };
+
+                Button btnCancel = new Button
+                {
+                    Text = "Cancel",
+                    Size = new Size(100, 40),
+                    Font = regularFont,
+                    BackColor = Color.Gray,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Margin = new Padding(10, 5, 0, 5),
+                    Cursor = Cursors.Hand
+                };
+                btnCancel.FlatAppearance.BorderSize = 0;
+
+                Button btnAdd = new Button
+                {
+                    Text = "Add Rate",
+                    Size = new Size(120, 40),
+                    Font = semiboldFont,
+                    BackColor = successColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Margin = new Padding(10, 5, 0, 5),
+                    Cursor = Cursors.Hand
+                };
+                btnAdd.FlatAppearance.BorderSize = 0;
+
+                buttonPanel.Controls.Add(btnCancel);
+                buttonPanel.Controls.Add(btnAdd);
+                tlp.Controls.Add(buttonPanel, 1, 7);
+
+                addRateDialog.Controls.Add(tlp);
+
+                btnAdd.Click += (s, args) =>
+                {
+                    if (string.IsNullOrWhiteSpace(txtName.Text))
+                    {
+                        MessageBox.Show("Please enter a name.", "Validation Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    if (cboCourtType.SelectedItem == null)
+                    {
+                        MessageBox.Show("Please select a court type.", "Validation Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    if (cboGameType.SelectedItem == null)
+                    {
+                        MessageBox.Show("Please select a game type.", "Validation Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(txtRate.Text) || !decimal.TryParse(txtRate.Text, out decimal rate) || rate <= 0)
+                    {
+                        MessageBox.Show("Please enter a valid rate.", "Validation Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    try
+                    {
+                        using (MySqlConnection conn = new MySqlConnection(connectionString))
+                        {
+                            conn.Open();
+
+                            string insertQuery = @"
+                                INSERT INTO game_rates (name, court_type, game_type, rate, description, image, status) 
+                                VALUES (@name, @courtType, @gameType, @rate, @description, @image, @status);
+                                SELECT LAST_INSERT_ID();";
+
+                            MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
+                            cmd.Parameters.AddWithValue("@name", txtName.Text.Trim());
+                            cmd.Parameters.AddWithValue("@courtType", cboCourtType.Text);
+                            cmd.Parameters.AddWithValue("@gameType", cboGameType.Text);
+                            cmd.Parameters.AddWithValue("@rate", rate);
+                            cmd.Parameters.AddWithValue("@description", txtDescription.Text);
+                            cmd.Parameters.AddWithValue("@image", selectedImageBytes ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@status", cboStatus.Text);
+
+                            int newId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                            var newRate = new GameRate
+                            {
+                                Id = newId,
+                                Name = txtName.Text.Trim(),
+                                CourtType = cboCourtType.Text,
+                                GameType = cboGameType.Text,
+                                Rate = rate,
+                                Description = txtDescription.Text,
+                                Status = cboStatus.Text,
+                                ImageData = selectedImageBytes
+                            };
+
+                            if (selectedImageBytes != null)
+                            {
+                                newRate.Image = GetImageFromBytes(selectedImageBytes);
+                            }
+
+                            gameRates.Add(newRate);
+                            DisplayGameRates();
+                            UpdateStatistics();
+                        }
+
+                        Activitylogs.Instance.LogGameRateActivity(currentUser, "Added", txtName.Text.Trim(),
+                            $"Court: {cboCourtType.Text}, Game: {cboGameType.Text}, Rate: ₱{rate}");
+
+                        MessageBox.Show("Game rate added successfully!", "Success",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        addRateDialog.Close();
+                    }
+                    catch (Exception ex)
+                    {
+                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error adding new game rate");
+                        MessageBox.Show($"Error saving: {ex.Message}",
+                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                };
+
+                addRateDialog.ShowDialog(this);
+            }
+        }
+
+        private bool IsCourtTypeUsed(string courtName)
+        {
+            return gameRates.Any(r => r.CourtType == courtName);
+        }
+
+        private bool IsGameTypeUsed(string gameName)
+        {
+            return gameRates.Any(r => r.GameType == gameName);
+        }
+
+        private void BtnDeleteCourt_Click(object sender, EventArgs e)
+        {
+            Button btn = (Button)sender;
+            CourtType court = (CourtType)btn.Tag;
+
+            if (IsCourtTypeUsed(court.CourtName))
+            {
+                MessageBox.Show($"Cannot delete '{court.CourtName}' because it's used in existing rates.",
+                    "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Delete court type '{court.CourtName}'?", "Confirm",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
             {
                 try
                 {
                     using (MySqlConnection conn = new MySqlConnection(connectionString))
                     {
                         conn.Open();
-
-                        // Check if exists
-                        string checkQuery = "SELECT COUNT(*) FROM court_types WHERE court_name = @name";
-                        MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn);
-                        checkCmd.Parameters.AddWithValue("@name", newCourtType);
-                        int exists = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-                        if (exists > 0)
-                        {
-                            MessageBox.Show("Court type already exists in database!", "Duplicate",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-
-                        // Insert new court type
-                        string insertQuery = "INSERT INTO court_types (court_name, description) VALUES (@name, @desc)";
-                        MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn);
-                        insertCmd.Parameters.AddWithValue("@name", newCourtType);
-                        insertCmd.Parameters.AddWithValue("@desc", $"Court type for {newCourtType} games");
-                        insertCmd.ExecuteNonQuery();
+                        string deleteQuery = "DELETE FROM court_types WHERE id = @id";
+                        MySqlCommand cmd = new MySqlCommand(deleteQuery, conn);
+                        cmd.Parameters.AddWithValue("@id", court.Id);
+                        cmd.ExecuteNonQuery();
                     }
 
-                    // Refresh data
-                    RefreshDataFromDatabase();
+                    string deletedCourt = court.CourtName;
+                    courtTypes.Remove(court);
+                    LoadCourtCards();
 
-                    MessageBox.Show($"Court type '{newCourtType}' added successfully to database!", "Success",
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Deleted", $"Court type '{deletedCourt}' was deleted", "Info", "GameRates");
+
+                    MessageBox.Show($"Court type '{deletedCourt}' deleted successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error adding to database: {ex.Message}",
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting court type {court.CourtName}");
+                    MessageBox.Show($"Error deleting: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        private void BtnAddGameType_Click(object sender, EventArgs e)
+        private void BtnDeleteGameType_Click(object sender, EventArgs e)
         {
-            string newGameType = ShowInputDialog("Add Game Type", "Enter new game type:");
-            if (!string.IsNullOrWhiteSpace(newGameType))
+            Button btn = (Button)sender;
+            GameType gameType = (GameType)btn.Tag;
+
+            if (IsGameTypeUsed(gameType.GameName))
+            {
+                MessageBox.Show($"Cannot delete '{gameType.GameName}' because it's used in existing rates.",
+                    "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Delete game type '{gameType.GameName}'?", "Confirm",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
             {
                 try
                 {
                     using (MySqlConnection conn = new MySqlConnection(connectionString))
                     {
                         conn.Open();
-
-                        // Check if exists
-                        string checkQuery = "SELECT COUNT(*) FROM game_types WHERE game_name = @name";
-                        MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn);
-                        checkCmd.Parameters.AddWithValue("@name", newGameType);
-                        int exists = Convert.ToInt32(checkCmd.ExecuteScalar());
-
-                        if (exists > 0)
-                        {
-                            MessageBox.Show("Game type already exists in database!", "Duplicate",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-
-                        // Insert new game type
-                        string insertQuery = "INSERT INTO game_types (game_name, description) VALUES (@name, @desc)";
-                        MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn);
-                        insertCmd.Parameters.AddWithValue("@name", newGameType);
-                        insertCmd.Parameters.AddWithValue("@desc", $"{newGameType} game type");
-                        insertCmd.ExecuteNonQuery();
+                        string deleteQuery = "DELETE FROM game_types WHERE id = @id";
+                        MySqlCommand cmd = new MySqlCommand(deleteQuery, conn);
+                        cmd.Parameters.AddWithValue("@id", gameType.Id);
+                        cmd.ExecuteNonQuery();
                     }
 
-                    // Refresh data
-                    RefreshDataFromDatabase();
+                    string deletedGame = gameType.GameName;
+                    gameTypesList.Remove(gameType);
+                    LoadGameTypeCards();
 
-                    MessageBox.Show($"Game type '{newGameType}' added successfully to database!", "Success",
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Deleted", $"Game type '{deletedGame}' was deleted", "Info", "GameRates");
+
+                    MessageBox.Show($"Game type '{deletedGame}' deleted successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error adding to database: {ex.Message}",
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting game type {gameType.GameName}");
+                    MessageBox.Show($"Error deleting: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        private void BtnCloseManagement_Click(object sender, EventArgs e)
+        // ADD COURT BUTTON CLICK HANDLER
+        private void btnAddCourt_Click(object sender, EventArgs e)
         {
-            // Hide the management panel when closing
-            panelManagement.Visible = false;
-        }
-
-        private void DgvCourts_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            // Handle court management actions (edit/delete)
-            if (e.RowIndex >= 0 && e.ColumnIndex == dgvCourts.Columns["colCourtActions"].Index)
+            string newCourtName = ShowInputDialog("Add Court Type", "Enter new court type:");
+            if (!string.IsNullOrWhiteSpace(newCourtName))
             {
-                string courtName = dgvCourts.Rows[e.RowIndex].Cells["colCourtName"].Value?.ToString() ?? "";
-
-                // Check if court type is used before allowing delete
-                if (IsCourtTypeUsed(courtName))
+                if (courtTypes.Any(c => c.CourtName.Equals(newCourtName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    MessageBox.Show($"Cannot delete '{courtName}' because it's used in existing rates.",
-                        "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Court type already exists!", "Duplicate",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                var result = MessageBox.Show($"Do you want to delete '{courtName}' from database?", "Confirm Delete",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                try
                 {
-                    try
+                    using (MySqlConnection conn = new MySqlConnection(connectionString))
                     {
-                        using (MySqlConnection conn = new MySqlConnection(connectionString))
+                        conn.Open();
+
+                        string insertQuery = "INSERT INTO court_types (court_name, description) VALUES (@name, @desc); SELECT LAST_INSERT_ID();";
+                        MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
+                        cmd.Parameters.AddWithValue("@name", newCourtName);
+                        cmd.Parameters.AddWithValue("@desc", $"Court type for {newCourtName} games");
+
+                        int newId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        courtTypes.Add(new CourtType
                         {
-                            conn.Open();
-                            string deleteQuery = "DELETE FROM court_types WHERE court_name = @name";
-                            MySqlCommand cmd = new MySqlCommand(deleteQuery, conn);
-                            cmd.Parameters.AddWithValue("@name", courtName);
-                            cmd.ExecuteNonQuery();
-                        }
+                            Id = newId,
+                            CourtName = newCourtName,
+                            Description = $"Court type for {newCourtName} games"
+                        });
 
-                        // Refresh data
-                        RefreshDataFromDatabase();
+                        LoadCourtCards();
+                    }
 
-                        MessageBox.Show("Court type deleted successfully from database!", "Success",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error deleting from database: {ex.Message}",
-                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Added", $"New court type '{newCourtName}' was added", "Info", "GameRates");
+
+                    MessageBox.Show($"Court type '{newCourtName}' added successfully!", "Success",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding court type {newCourtName}");
+                    MessageBox.Show($"Error adding: {ex.Message}",
+                        "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        private void DgvGameTypes_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        // ADD GAME TYPE BUTTON CLICK HANDLER
+        private void btnAddGameType_Click(object sender, EventArgs e)
         {
-            // Handle game type management actions (edit/delete)
-            if (e.RowIndex >= 0 && e.ColumnIndex == dgvGameTypes.Columns["colGameTypeActions"].Index)
+            string newGameName = ShowInputDialog("Add Game Type", "Enter new game type:");
+            if (!string.IsNullOrWhiteSpace(newGameName))
             {
-                string gameTypeName = dgvGameTypes.Rows[e.RowIndex].Cells["colGameTypeName"].Value?.ToString() ?? "";
-
-                // Check if game type is used before allowing delete
-                if (IsGameTypeUsed(gameTypeName))
+                if (gameTypesList.Any(g => g.GameName.Equals(newGameName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    MessageBox.Show($"Cannot delete '{gameTypeName}' because it's used in existing rates.",
-                        "Cannot Delete", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Game type already exists!", "Duplicate",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                var result = MessageBox.Show($"Do you want to delete '{gameTypeName}' from database?", "Confirm Delete",
-                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-                if (result == DialogResult.Yes)
+                try
                 {
-                    try
+                    using (MySqlConnection conn = new MySqlConnection(connectionString))
                     {
-                        using (MySqlConnection conn = new MySqlConnection(connectionString))
+                        conn.Open();
+
+                        string insertQuery = "INSERT INTO game_types (game_name, description) VALUES (@name, @desc); SELECT LAST_INSERT_ID();";
+                        MySqlCommand cmd = new MySqlCommand(insertQuery, conn);
+                        cmd.Parameters.AddWithValue("@name", newGameName);
+                        cmd.Parameters.AddWithValue("@desc", $"{newGameName} game type");
+
+                        int newId = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        gameTypesList.Add(new GameType
                         {
-                            conn.Open();
-                            string deleteQuery = "DELETE FROM game_types WHERE game_name = @name";
-                            MySqlCommand cmd = new MySqlCommand(deleteQuery, conn);
-                            cmd.Parameters.AddWithValue("@name", gameTypeName);
-                            cmd.ExecuteNonQuery();
-                        }
+                            Id = newId,
+                            GameName = newGameName,
+                            Description = $"{newGameName} game type"
+                        });
 
-                        // Refresh data
-                        RefreshDataFromDatabase();
+                        LoadGameTypeCards();
+                    }
 
-                        MessageBox.Show("Game type deleted successfully from database!", "Success",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error deleting from database: {ex.Message}",
-                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Added", $"New game type '{newGameName}' was added", "Info", "GameRates");
+
+                    MessageBox.Show($"Game type '{newGameName}' added successfully!", "Success",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding game type {newGameName}");
+                    MessageBox.Show($"Error adding: {ex.Message}",
+                        "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        #endregion
-
-        private void btnAddNew_Click_1(object sender, EventArgs e)
+        private void btnManage_Click(object sender, EventArgs e)
         {
+            // Show the management overlay
+            managementOverlay.Visible = true;
+            managementOverlay.BringToFront();
+            btnManage.Text = "Hide Management";
 
+            LoadCourtCards();
+            LoadGameTypeCards();
+
+            Activitylogs.Instance.AddLogEntry(currentUser, "Management View", "Opened court and game type management", "Info", "GameRates");
         }
 
-        private void btnManage_Click_1(object sender, EventArgs e)
+        private void btnCloseManagement_Click(object sender, EventArgs e)
         {
+            // Hide the management overlay
+            managementOverlay.Visible = false;
+            btnManage.Text = "Manage Courts/Types";
+        }
 
+        private void btnAddNew_Click(object sender, EventArgs e)
+        {
+            ShowAddRateDialog();
+        }
+
+        private void filterCombo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            DisplayGameRates();
+        }
+
+        private string ShowInputDialog(string title, string promptText)
+        {
+            using (Form inputForm = new Form())
+            {
+                inputForm.Text = title;
+                inputForm.Size = new Size(400, 180);
+                inputForm.StartPosition = FormStartPosition.CenterParent;
+                inputForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+                inputForm.BackColor = Color.White;
+
+                Label label = new Label()
+                {
+                    Text = promptText,
+                    Left = 20,
+                    Top = 20,
+                    Width = 340,
+                    Font = new Font("Segoe UI", 10F)
+                };
+
+                TextBox textBox = new TextBox()
+                {
+                    Left = 20,
+                    Top = 50,
+                    Width = 340,
+                    Font = new Font("Segoe UI", 10F)
+                };
+
+                Button buttonOk = new Button()
+                {
+                    Text = "OK",
+                    Left = 200,
+                    Top = 90,
+                    Width = 80,
+                    Height = 30,
+                    BackColor = successColor,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    DialogResult = DialogResult.OK,
+                    Font = new Font("Segoe UI", 10F),
+                    Cursor = Cursors.Hand
+                };
+                buttonOk.FlatAppearance.BorderSize = 0;
+
+                Button buttonCancel = new Button()
+                {
+                    Text = "Cancel",
+                    Left = 290,
+                    Top = 90,
+                    Width = 80,
+                    Height = 30,
+                    BackColor = Color.Gray,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    DialogResult = DialogResult.Cancel,
+                    Font = new Font("Segoe UI", 10F),
+                    Cursor = Cursors.Hand
+                };
+                buttonCancel.FlatAppearance.BorderSize = 0;
+
+                inputForm.Controls.AddRange(new Control[] { label, textBox, buttonOk, buttonCancel });
+                inputForm.AcceptButton = buttonOk;
+                inputForm.CancelButton = buttonCancel;
+
+                return inputForm.ShowDialog() == DialogResult.OK ? textBox.Text : null;
+            }
         }
     }
 }

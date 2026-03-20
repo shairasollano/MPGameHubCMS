@@ -87,7 +87,7 @@ namespace cms
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(387, 50);
             this.label2.TabIndex = 2;
-            this.label2.Text = "GAME RATES";
+            this.label2.Text = "RATES AND GEARS";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.label2.Click += new System.EventHandler(this.label2_Click);
             this.label2.MouseEnter += new System.EventHandler(this.MenuLabel_MouseEnter);
@@ -176,7 +176,7 @@ namespace cms
             this.date.AutoSize = true;
             this.date.Font = new System.Drawing.Font("Microsoft Sans Serif", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.date.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(89)))), ((int)(((byte)(91)))), ((int)(((byte)(86)))));
-            this.date.Location = new System.Drawing.Point(1070, 67);
+            this.date.Location = new System.Drawing.Point(1180, 67);
             this.date.Name = "date";
             this.date.Size = new System.Drawing.Size(40, 29);
             this.date.TabIndex = 8;
