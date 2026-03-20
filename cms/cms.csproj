@@ -155,6 +155,12 @@
     <Compile Include="UserControl2.Designer.cs">
       <DependentUpon>UserControl2.cs</DependentUpon>
     </Compile>
+    <Compile Include="UserSuperAdminSide.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserSuperAdminSide.Designer.cs">
+      <DependentUpon>UserSuperAdminSide.cs</DependentUpon>
+    </Compile>
     <Compile Include="USERSMAINFORM.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -188,6 +194,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="USERSMAINFORM.resx">
       <DependentUpon>USERSMAINFORM.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserSuperAdminSide.resx">
+      <DependentUpon>UserSuperAdminSide.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
