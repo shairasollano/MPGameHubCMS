@@ -450,7 +450,7 @@ namespace cms
             this.managementOverlay.TabIndex = 1;
             this.managementOverlay.Visible = false;
 
-            // managementTabs
+            // managementTabs - REMOVED DrawItem code
             this.managementTabs.Controls.Add(this.tabCourts);
             this.managementTabs.Controls.Add(this.tabGameTypes);
             this.managementTabs.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -460,20 +460,6 @@ namespace cms
             this.managementTabs.SelectedIndex = 0;
             this.managementTabs.Size = new System.Drawing.Size(1824, 744);
             this.managementTabs.TabIndex = 0;
-
-            // Style the tabs
-            this.managementTabs.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
-            this.managementTabs.DrawItem += (s, e) => {
-                System.Drawing.Rectangle tabRect = this.managementTabs.GetTabRect(e.Index);
-                using (System.Drawing.Brush brush = new System.Drawing.SolidBrush(e.Index == this.managementTabs.SelectedIndex ? primaryColor : System.Drawing.Color.FromArgb(243, 244, 246)))
-                using (System.Drawing.Brush textBrush = new System.Drawing.SolidBrush(e.Index == this.managementTabs.SelectedIndex ? System.Drawing.Color.White : System.Drawing.Color.FromArgb(75, 85, 99)))
-                {
-                    e.Graphics.FillRectangle(brush, tabRect);
-                    string tabText = this.managementTabs.TabPages[e.Index].Text;
-                    System.Drawing.StringFormat sf = new System.Drawing.StringFormat { Alignment = System.Drawing.StringAlignment.Center, LineAlignment = System.Drawing.StringAlignment.Center };
-                    e.Graphics.DrawString(tabText, e.Font, textBrush, tabRect, sf);
-                }
-            };
 
             // tabCourts
             this.tabCourts.BackColor = Color.White;
@@ -485,7 +471,7 @@ namespace cms
             this.tabCourts.TabIndex = 0;
             this.tabCourts.Text = "Courts";
 
-            // courtsPanel - NEW: Panel to hold flow panel and button
+            // courtsPanel
             this.courtsPanel.BackColor = Color.White;
             this.courtsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.courtsPanel.Location = new System.Drawing.Point(20, 20);
@@ -533,7 +519,7 @@ namespace cms
             this.tabGameTypes.TabIndex = 1;
             this.tabGameTypes.Text = "Game Types";
 
-            // gameTypesPanel - NEW: Panel to hold flow panel and button
+            // gameTypesPanel
             this.gameTypesPanel.BackColor = Color.White;
             this.gameTypesPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gameTypesPanel.Location = new System.Drawing.Point(20, 20);

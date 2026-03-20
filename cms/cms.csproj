@@ -167,6 +167,9 @@
     <EmbeddedResource Include="Form2.resx">
       <DependentUpon>Form2.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="GameEquipment.resx">
+      <DependentUpon>GameEquipment.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="GameRates.resx">
       <DependentUpon>GameRates.cs</DependentUpon>
     </EmbeddedResource>

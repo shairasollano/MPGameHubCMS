@@ -119,6 +119,9 @@ namespace cms
         {
             InitializeComponent();
 
+            // Style the tabs
+            StyleTabs();
+
             // Set up the initial UI state
             InitializeUI();
 
@@ -159,6 +162,28 @@ namespace cms
                 Activitylogs.Instance?.AddLogEntry(currentUser, "Module Opened", "Game Equipment management module was opened", "Info", "GameEquipment");
             }
             catch { }
+        }
+
+        private void StyleTabs()
+        {
+            if (managementTabs != null)
+            {
+                managementTabs.DrawMode = TabDrawMode.OwnerDrawFixed;
+                managementTabs.DrawItem += (s, e) =>
+                {
+                    Color tabPrimaryColor = Color.FromArgb(79, 70, 229);
+                    Rectangle tabRect = managementTabs.GetTabRect(e.Index);
+
+                    using (Brush brush = new SolidBrush(e.Index == managementTabs.SelectedIndex ? tabPrimaryColor : Color.FromArgb(243, 244, 246)))
+                    using (Brush textBrush = new SolidBrush(e.Index == managementTabs.SelectedIndex ? Color.White : Color.FromArgb(75, 85, 99)))
+                    {
+                        e.Graphics.FillRectangle(brush, tabRect);
+                        string tabText = managementTabs.TabPages[e.Index].Text;
+                        StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                        e.Graphics.DrawString(tabText, e.Font, textBrush, tabRect, sf);
+                    }
+                };
+            }
         }
 
         private void InitializeUI()
@@ -830,6 +855,7 @@ namespace cms
                 StyleButton(btnCloseManagement, dangerColor);
             if (btnViewLogs != null)
                 StyleButton(btnViewLogs, infoColor);
+            // btnAddCondition removed as requested
         }
 
         private void StyleButton(Button btn, Color backColor)
@@ -2749,21 +2775,21 @@ namespace cms
                 }
             };
 
-            // Icon with background (left side) - FIXED positioning
+            // Icon with background (left side)
             Panel iconPanel = new Panel
             {
                 Width = 60,
                 Height = 60,
-                Location = new Point(15, 35), // Centered vertically (130/2 - 60/2 = 35)
+                Location = new Point(15, 35),
                 BackColor = Color.FromArgb(239, 246, 255)
             };
 
-            // FIXED: Center the icon within the panel
+            // Center the icon within the panel
             Label lblIcon = new Label
             {
                 Text = category.Icon ?? "📦",
                 Font = new Font("Segoe UI", 28F),
-                Location = new Point(10, 10), // Center in 60x60 panel (60/2 - 40/2 = 10)
+                Location = new Point(10, 10),
                 Size = new Size(40, 40),
                 TextAlign = ContentAlignment.MiddleCenter,
                 ForeColor = primaryColor
