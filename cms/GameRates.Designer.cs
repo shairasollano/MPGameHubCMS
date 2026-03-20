@@ -1,16 +1,11 @@
-﻿namespace cms
+﻿using System.Drawing;
+
+namespace cms
 {
     partial class GameRates
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -20,641 +15,646 @@
             base.Dispose(disposing);
         }
 
-        #region Component Designer generated code
+        [System.Runtime.InteropServices.DllImport("Gdi32.dll", EntryPoint = "CreateRoundRectRgn")]
+        private static extern System.IntPtr CreateRoundRectRgn
+        (
+            int nLeftRect,
+            int nTopRect,
+            int nRightRect,
+            int nBottomRect,
+            int nWidthEllipse,
+            int nHeightEllipse
+        );
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle14 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle15 = new System.Windows.Forms.DataGridViewCellStyle();
-            this.mainTableLayout = new System.Windows.Forms.TableLayoutPanel();
-            this.dataPanel = new System.Windows.Forms.Panel();
-            this.dgvGameRates = new System.Windows.Forms.DataGridView();
-            this.colStatus = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.colName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colCourtType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colGameType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colDescription = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colEdit = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.panelHeader = new System.Windows.Forms.Panel();
+            this.mainContainer = new System.Windows.Forms.TableLayoutPanel();
+            this.headerPanel = new System.Windows.Forms.Panel();
+            this.headerControlsPanel = new System.Windows.Forms.Panel();
             this.lblTitle = new System.Windows.Forms.Label();
-            this.lblFilterStatus = new System.Windows.Forms.Label();
-            this.cboFilterStatus = new System.Windows.Forms.ComboBox();
-            this.btnManage = new System.Windows.Forms.Button();
+            this.filterCombo = new System.Windows.Forms.ComboBox();
             this.btnAddNew = new System.Windows.Forms.Button();
-            this.panelManagement = new System.Windows.Forms.Panel();
-            this.tabControlManagement = new System.Windows.Forms.TabControl();
-            this.tabPageCourts = new System.Windows.Forms.TabPage();
-            this.dgvCourts = new System.Windows.Forms.DataGridView();
-            this.colCourtId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colCourtName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colCourtDescription = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colCourtActions = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.panelCourtButtons = new System.Windows.Forms.Panel();
+            this.btnManage = new System.Windows.Forms.Button();
+            this.statsPanel = new System.Windows.Forms.Panel();
+            this.contentPanel = new System.Windows.Forms.Panel();
+            this.ratesFlowPanel = new System.Windows.Forms.FlowLayoutPanel();
+            this.managementOverlay = new System.Windows.Forms.Panel();
+            this.managementTabs = new System.Windows.Forms.TabControl();
+            this.tabCourts = new System.Windows.Forms.TabPage();
+            this.courtsPanel = new System.Windows.Forms.Panel();
+            this.courtsFlowPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.btnAddCourt = new System.Windows.Forms.Button();
-            this.btnCloseCourts = new System.Windows.Forms.Button();
-            this.tabPageGameTypes = new System.Windows.Forms.TabPage();
-            this.dgvGameTypes = new System.Windows.Forms.DataGridView();
-            this.colGameTypeId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colGameTypeName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colGameTypeDescription = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colGameTypeActions = new System.Windows.Forms.DataGridViewButtonColumn();
-            this.panelGameTypeButtons = new System.Windows.Forms.Panel();
+            this.tabGameTypes = new System.Windows.Forms.TabPage();
+            this.gameTypesPanel = new System.Windows.Forms.Panel();
+            this.gameTypesFlowPanel = new System.Windows.Forms.FlowLayoutPanel();
             this.btnAddGameType = new System.Windows.Forms.Button();
-            this.btnCloseGameTypes = new System.Windows.Forms.Button();
-            this.mainTableLayout.SuspendLayout();
-            this.dataPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvGameRates)).BeginInit();
-            this.panelHeader.SuspendLayout();
-            this.panelManagement.SuspendLayout();
-            this.tabControlManagement.SuspendLayout();
-            this.tabPageCourts.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvCourts)).BeginInit();
-            this.panelCourtButtons.SuspendLayout();
-            this.tabPageGameTypes.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvGameTypes)).BeginInit();
-            this.panelGameTypeButtons.SuspendLayout();
+            this.btnCloseManagement = new System.Windows.Forms.Button();
+
+            // Stats panel controls
+            this.statsCard1 = new System.Windows.Forms.Panel();
+            this.statsIcon1 = new System.Windows.Forms.Label();
+            this.lblStatsTitle1 = new System.Windows.Forms.Label();
+            this.lblStatsValue1 = new System.Windows.Forms.Label();
+            this.lblStatsSub1 = new System.Windows.Forms.Label();
+
+            this.statsCard2 = new System.Windows.Forms.Panel();
+            this.statsIcon2 = new System.Windows.Forms.Label();
+            this.lblStatsTitle2 = new System.Windows.Forms.Label();
+            this.lblStatsValue2 = new System.Windows.Forms.Label();
+            this.lblStatsSub2 = new System.Windows.Forms.Label();
+
+            this.statsCard3 = new System.Windows.Forms.Panel();
+            this.statsIcon3 = new System.Windows.Forms.Label();
+            this.lblStatsTitle3 = new System.Windows.Forms.Label();
+            this.lblStatsValue3 = new System.Windows.Forms.Label();
+            this.lblStatsSub3 = new System.Windows.Forms.Label();
+
+            this.statsCard4 = new System.Windows.Forms.Panel();
+            this.statsIcon4 = new System.Windows.Forms.Label();
+            this.lblStatsTitle4 = new System.Windows.Forms.Label();
+            this.lblStatsValue4 = new System.Windows.Forms.Label();
+            this.lblStatsSub4 = new System.Windows.Forms.Label();
+
+            this.mainContainer.SuspendLayout();
+            this.headerPanel.SuspendLayout();
+            this.headerControlsPanel.SuspendLayout();
+            this.statsPanel.SuspendLayout();
+            this.contentPanel.SuspendLayout();
+            this.managementOverlay.SuspendLayout();
+            this.managementTabs.SuspendLayout();
+            this.tabCourts.SuspendLayout();
+            this.courtsPanel.SuspendLayout();
+            this.tabGameTypes.SuspendLayout();
+            this.gameTypesPanel.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // mainTableLayout
-            // 
-            this.mainTableLayout.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
-            this.mainTableLayout.ColumnCount = 1;
-            this.mainTableLayout.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.mainTableLayout.Controls.Add(this.dataPanel, 0, 0);
-            this.mainTableLayout.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mainTableLayout.Location = new System.Drawing.Point(0, 0);
-            this.mainTableLayout.Name = "mainTableLayout";
-            this.mainTableLayout.RowCount = 1;
-            this.mainTableLayout.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.mainTableLayout.Size = new System.Drawing.Size(1920, 1080);
-            this.mainTableLayout.TabIndex = 0;
-            // 
-            // dataPanel
-            // 
-            this.dataPanel.BackColor = System.Drawing.Color.Transparent;
-            this.dataPanel.Controls.Add(this.dgvGameRates);
-            this.dataPanel.Controls.Add(this.panelHeader);
-            this.dataPanel.Controls.Add(this.panelManagement);
-            this.dataPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataPanel.Location = new System.Drawing.Point(0, 0);
-            this.dataPanel.Margin = new System.Windows.Forms.Padding(0);
-            this.dataPanel.Name = "dataPanel";
-            this.dataPanel.Size = new System.Drawing.Size(1920, 1080);
-            this.dataPanel.TabIndex = 0;
-            // 
-            // dgvGameRates
-            // 
-            this.dgvGameRates.AllowUserToAddRows = false;
-            this.dgvGameRates.AllowUserToDeleteRows = false;
-            this.dgvGameRates.AllowUserToResizeRows = false;
-            this.dgvGameRates.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dgvGameRates.BackgroundColor = System.Drawing.Color.White;
-            this.dgvGameRates.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.dgvGameRates.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
-            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle11.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            dataGridViewCellStyle11.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle11.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            dataGridViewCellStyle11.Padding = new System.Windows.Forms.Padding(0, 10, 0, 10);
-            dataGridViewCellStyle11.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            dataGridViewCellStyle11.SelectionForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            dataGridViewCellStyle11.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvGameRates.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle11;
-            this.dgvGameRates.ColumnHeadersHeight = 50;
-            this.dgvGameRates.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this.dgvGameRates.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colStatus,
-            this.colName,
-            this.colCourtType,
-            this.colGameType,
-            this.colRate,
-            this.colDescription,
-            this.colEdit});
-            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle12.BackColor = System.Drawing.Color.White;
-            dataGridViewCellStyle12.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle12.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
-            dataGridViewCellStyle12.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
-            dataGridViewCellStyle12.SelectionForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
-            dataGridViewCellStyle12.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvGameRates.DefaultCellStyle = dataGridViewCellStyle12;
-            this.dgvGameRates.EnableHeadersVisualStyles = false;
-            this.dgvGameRates.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(233)))), ((int)(((byte)(236)))), ((int)(((byte)(239)))));
-            this.dgvGameRates.Location = new System.Drawing.Point(0, 70);
-            this.dgvGameRates.Name = "dgvGameRates";
-            this.dgvGameRates.ReadOnly = true;
-            this.dgvGameRates.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
-            this.dgvGameRates.RowHeadersVisible = false;
-            this.dgvGameRates.RowHeadersWidth = 51;
-            dataGridViewCellStyle13.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle13.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
-            dataGridViewCellStyle13.Padding = new System.Windows.Forms.Padding(0, 5, 0, 5);
-            dataGridViewCellStyle13.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
-            dataGridViewCellStyle13.SelectionForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
-            this.dgvGameRates.RowsDefaultCellStyle = dataGridViewCellStyle13;
-            this.dgvGameRates.RowTemplate.Height = 50;
-            this.dgvGameRates.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvGameRates.Size = new System.Drawing.Size(1920, 650);
-            this.dgvGameRates.TabIndex = 1;
-            // 
-            // colStatus
-            // 
-            this.colStatus.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.colStatus.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.colStatus.HeaderText = "Status";
-            this.colStatus.MinimumWidth = 80;
-            this.colStatus.Name = "colStatus";
-            this.colStatus.ReadOnly = true;
-            this.colStatus.Text = "Enable";
-            this.colStatus.Width = 80;
-            // 
-            // colName
-            // 
-            this.colName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colName.FillWeight = 18F;
-            this.colName.HeaderText = "Name";
-            this.colName.MinimumWidth = 150;
-            this.colName.Name = "colName";
-            this.colName.ReadOnly = true;
-            // 
-            // colCourtType
-            // 
-            this.colCourtType.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colCourtType.FillWeight = 12F;
-            this.colCourtType.HeaderText = "Court Type";
-            this.colCourtType.MinimumWidth = 120;
-            this.colCourtType.Name = "colCourtType";
-            this.colCourtType.ReadOnly = true;
-            // 
-            // colGameType
-            // 
-            this.colGameType.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colGameType.FillWeight = 12F;
-            this.colGameType.HeaderText = "Game Type";
-            this.colGameType.MinimumWidth = 120;
-            this.colGameType.Name = "colGameType";
-            this.colGameType.ReadOnly = true;
-            // 
-            // colRate
-            // 
-            this.colRate.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colRate.FillWeight = 12F;
-            this.colRate.HeaderText = "Rate per hour";
-            this.colRate.MinimumWidth = 100;
-            this.colRate.Name = "colRate";
-            this.colRate.ReadOnly = true;
-            // 
-            // colDescription
-            // 
-            this.colDescription.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colDescription.FillWeight = 30F;
-            this.colDescription.HeaderText = "Description";
-            this.colDescription.MinimumWidth = 200;
-            this.colDescription.Name = "colDescription";
-            this.colDescription.ReadOnly = true;
-            // 
-            // colEdit
-            // 
-            this.colEdit.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
-            this.colEdit.FillWeight = 5F;
-            this.colEdit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.colEdit.HeaderText = "";
-            this.colEdit.MinimumWidth = 80;
-            this.colEdit.Name = "colEdit";
-            this.colEdit.ReadOnly = true;
-            this.colEdit.Text = "Edit";
-            this.colEdit.UseColumnTextForButtonValue = true;
-            this.colEdit.Width = 80;
-            // 
-            // panelHeader
-            // 
-            this.panelHeader.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panelHeader.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.panelHeader.Controls.Add(this.lblTitle);
-            this.panelHeader.Controls.Add(this.lblFilterStatus);
-            this.panelHeader.Controls.Add(this.cboFilterStatus);
-            this.panelHeader.Controls.Add(this.btnManage);
-            this.panelHeader.Controls.Add(this.btnAddNew);
-            this.panelHeader.Location = new System.Drawing.Point(0, 0);
-            this.panelHeader.Margin = new System.Windows.Forms.Padding(0);
-            this.panelHeader.Name = "panelHeader";
-            this.panelHeader.Size = new System.Drawing.Size(1920, 70);
-            this.panelHeader.TabIndex = 2;
-            // 
+
+            // Modern color scheme
+            Color bgColor = Color.FromArgb(248, 250, 252);
+            Color primaryColor = Color.FromArgb(79, 70, 229); // Indigo
+            Color successColor = Color.FromArgb(16, 185, 129); // Emerald
+            Color dangerColor = Color.FromArgb(239, 68, 68); // Red
+            Color warningColor = Color.FromArgb(245, 158, 11); // Amber
+            Color infoColor = Color.FromArgb(59, 130, 246); // Blue
+            Color textColor = Color.FromArgb(17, 24, 39);
+            Color cardBgColor = Color.White;
+            Color borderColor = Color.FromArgb(229, 231, 235);
+
+            // mainContainer
+            this.mainContainer.BackColor = bgColor;
+            this.mainContainer.ColumnCount = 1;
+            this.mainContainer.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.mainContainer.Controls.Add(this.headerPanel, 0, 0);
+            this.mainContainer.Controls.Add(this.statsPanel, 0, 1);
+            this.mainContainer.Controls.Add(this.contentPanel, 0, 2);
+            this.mainContainer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.mainContainer.Location = new System.Drawing.Point(0, 0);
+            this.mainContainer.Name = "mainContainer";
+            this.mainContainer.Padding = new System.Windows.Forms.Padding(24);
+            this.mainContainer.RowCount = 3;
+            this.mainContainer.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 80F));
+            this.mainContainer.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 120F));
+            this.mainContainer.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.mainContainer.Size = new System.Drawing.Size(1920, 1080);
+            this.mainContainer.TabIndex = 0;
+
+            // headerPanel
+            this.headerPanel.BackColor = Color.White;
+            this.headerPanel.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.headerPanel.Controls.Add(this.headerControlsPanel);
+            this.headerPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.headerPanel.Location = new System.Drawing.Point(24, 24);
+            this.headerPanel.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
+            this.headerPanel.Name = "headerPanel";
+            this.headerPanel.Padding = new System.Windows.Forms.Padding(16);
+            this.headerPanel.Size = new System.Drawing.Size(1872, 64);
+            this.headerPanel.TabIndex = 0;
+
+            // headerControlsPanel
+            this.headerControlsPanel.BackColor = Color.White;
+            this.headerControlsPanel.Controls.Add(this.lblTitle);
+            this.headerControlsPanel.Controls.Add(this.filterCombo);
+            this.headerControlsPanel.Controls.Add(this.btnAddNew);
+            this.headerControlsPanel.Controls.Add(this.btnManage);
+            this.headerControlsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.headerControlsPanel.Location = new System.Drawing.Point(16, 16);
+            this.headerControlsPanel.Name = "headerControlsPanel";
+            this.headerControlsPanel.Size = new System.Drawing.Size(1840, 32);
+            this.headerControlsPanel.TabIndex = 0;
+
             // lblTitle
-            // 
-            this.lblTitle.Anchor = System.Windows.Forms.AnchorStyles.Left;
             this.lblTitle.AutoSize = true;
-            this.lblTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.lblTitle.Location = new System.Drawing.Point(20, 19);
+            this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 20F, System.Drawing.FontStyle.Bold);
+            this.lblTitle.ForeColor = textColor;
+            this.lblTitle.Location = new System.Drawing.Point(0, 2);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(145, 32);
-            this.lblTitle.TabIndex = 2;
-            this.lblTitle.Text = "Game Rates";
-            // 
-            // lblFilterStatus
-            // 
-            this.lblFilterStatus.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.lblFilterStatus.AutoSize = true;
-            this.lblFilterStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.lblFilterStatus.ForeColor = System.Drawing.Color.White;
-            this.lblFilterStatus.Location = new System.Drawing.Point(1137, 28);
-            this.lblFilterStatus.Name = "lblFilterStatus";
-            this.lblFilterStatus.Size = new System.Drawing.Size(106, 23);
-            this.lblFilterStatus.TabIndex = 5;
-            this.lblFilterStatus.Text = "Show Status:";
-            // 
-            // cboFilterStatus
-            // 
-            this.cboFilterStatus.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.cboFilterStatus.BackColor = System.Drawing.Color.White;
-            this.cboFilterStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboFilterStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.cboFilterStatus.FormattingEnabled = true;
-            this.cboFilterStatus.Items.AddRange(new object[] {
-            "All",
-            "Enabled Only",
-            "Disabled Only"});
-            this.cboFilterStatus.Location = new System.Drawing.Point(1263, 23);
-            this.cboFilterStatus.Name = "cboFilterStatus";
-            this.cboFilterStatus.Size = new System.Drawing.Size(180, 31);
-            this.cboFilterStatus.TabIndex = 4;
-            // 
-            // btnManage
-            // 
-            this.btnManage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnManage.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(123)))), ((int)(((byte)(255)))));
-            this.btnManage.FlatAppearance.BorderSize = 0;
-            this.btnManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnManage.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnManage.ForeColor = System.Drawing.Color.White;
-            this.btnManage.Location = new System.Drawing.Point(1471, 15);
-            this.btnManage.Name = "btnManage";
-            this.btnManage.Size = new System.Drawing.Size(200, 44);
-            this.btnManage.TabIndex = 3;
-            this.btnManage.Text = "Manage Courts";
-            this.btnManage.UseVisualStyleBackColor = false;
-            this.btnManage.Click += new System.EventHandler(this.btnManage_Click_1);
-            // 
+            this.lblTitle.Size = new System.Drawing.Size(312, 37);
+            this.lblTitle.TabIndex = 0;
+            this.lblTitle.Text = "Game Rates Management";
+            this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+            // filterCombo
+            this.filterCombo.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.filterCombo.BackColor = Color.White;
+            this.filterCombo.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.filterCombo.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.filterCombo.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.filterCombo.ForeColor = textColor;
+            this.filterCombo.FormattingEnabled = true;
+            this.filterCombo.Items.AddRange(new object[] {
+            "All Rates",
+            "Active Only",
+            "Inactive Only"});
+            this.filterCombo.Location = new System.Drawing.Point(1150, 4);
+            this.filterCombo.Name = "filterCombo";
+            this.filterCombo.Size = new System.Drawing.Size(180, 25);
+            this.filterCombo.TabIndex = 1;
+            this.filterCombo.SelectedIndexChanged += new System.EventHandler(this.filterCombo_SelectedIndexChanged);
+
             // btnAddNew
-            // 
-            this.btnAddNew.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnAddNew.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(167)))), ((int)(((byte)(69)))));
+            this.btnAddNew.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.btnAddNew.BackColor = successColor;
             this.btnAddNew.FlatAppearance.BorderSize = 0;
             this.btnAddNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAddNew.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAddNew.ForeColor = System.Drawing.Color.White;
-            this.btnAddNew.Location = new System.Drawing.Point(1689, 15);
+            this.btnAddNew.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
+            this.btnAddNew.ForeColor = Color.White;
+            this.btnAddNew.Location = new System.Drawing.Point(1340, 0);
             this.btnAddNew.Name = "btnAddNew";
-            this.btnAddNew.Size = new System.Drawing.Size(200, 44);
-            this.btnAddNew.TabIndex = 0;
-            this.btnAddNew.Text = "Add New Rate";
+            this.btnAddNew.Size = new System.Drawing.Size(130, 32);
+            this.btnAddNew.TabIndex = 2;
+            this.btnAddNew.Text = "+ New Rate";
             this.btnAddNew.UseVisualStyleBackColor = false;
-            this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click_1);
-            // 
-            // panelManagement
-            // 
-            this.panelManagement.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panelManagement.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
-            this.panelManagement.Controls.Add(this.tabControlManagement);
-            this.panelManagement.Location = new System.Drawing.Point(0, 720);
-            this.panelManagement.Margin = new System.Windows.Forms.Padding(0);
-            this.panelManagement.Name = "panelManagement";
-            this.panelManagement.Size = new System.Drawing.Size(1920, 360);
-            this.panelManagement.TabIndex = 3;
-            this.panelManagement.Visible = false;
-            // 
-            // tabControlManagement
-            // 
-            this.tabControlManagement.Controls.Add(this.tabPageCourts);
-            this.tabControlManagement.Controls.Add(this.tabPageGameTypes);
-            this.tabControlManagement.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControlManagement.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.tabControlManagement.Location = new System.Drawing.Point(0, 0);
-            this.tabControlManagement.Margin = new System.Windows.Forms.Padding(0);
-            this.tabControlManagement.Name = "tabControlManagement";
-            this.tabControlManagement.Padding = new System.Drawing.Point(10, 10);
-            this.tabControlManagement.SelectedIndex = 0;
-            this.tabControlManagement.Size = new System.Drawing.Size(1920, 360);
-            this.tabControlManagement.TabIndex = 0;
-            // 
-            // tabPageCourts
-            // 
-            this.tabPageCourts.BackColor = System.Drawing.Color.White;
-            this.tabPageCourts.Controls.Add(this.dgvCourts);
-            this.tabPageCourts.Controls.Add(this.panelCourtButtons);
-            this.tabPageCourts.Location = new System.Drawing.Point(4, 46);
-            this.tabPageCourts.Margin = new System.Windows.Forms.Padding(0);
-            this.tabPageCourts.Name = "tabPageCourts";
-            this.tabPageCourts.Size = new System.Drawing.Size(1912, 310);
-            this.tabPageCourts.TabIndex = 0;
-            this.tabPageCourts.Text = "Manage Courts";
-            this.tabPageCourts.UseVisualStyleBackColor = true;
-            // 
-            // dgvCourts
-            // 
-            this.dgvCourts.AllowUserToAddRows = false;
-            this.dgvCourts.AllowUserToDeleteRows = false;
-            this.dgvCourts.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dgvCourts.BackgroundColor = System.Drawing.Color.White;
-            this.dgvCourts.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.dgvCourts.ColumnHeadersHeight = 40;
-            this.dgvCourts.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colCourtId,
-            this.colCourtName,
-            this.colCourtDescription,
-            this.colCourtActions});
-            dataGridViewCellStyle14.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle14.BackColor = System.Drawing.Color.White;
-            dataGridViewCellStyle14.Font = new System.Drawing.Font("Segoe UI", 10F);
-            dataGridViewCellStyle14.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
-            dataGridViewCellStyle14.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
-            dataGridViewCellStyle14.SelectionForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
-            dataGridViewCellStyle14.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvCourts.DefaultCellStyle = dataGridViewCellStyle14;
-            this.dgvCourts.Location = new System.Drawing.Point(0, 0);
-            this.dgvCourts.Name = "dgvCourts";
-            this.dgvCourts.ReadOnly = true;
-            this.dgvCourts.RowHeadersVisible = false;
-            this.dgvCourts.RowHeadersWidth = 51;
-            this.dgvCourts.RowTemplate.Height = 40;
-            this.dgvCourts.Size = new System.Drawing.Size(1912, 260);
-            this.dgvCourts.TabIndex = 0;
-            // 
-            // colCourtId
-            // 
-            this.colCourtId.HeaderText = "ID";
-            this.colCourtId.MinimumWidth = 6;
-            this.colCourtId.Name = "colCourtId";
-            this.colCourtId.ReadOnly = true;
-            this.colCourtId.Width = 50;
-            // 
-            // colCourtName
-            // 
-            this.colCourtName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colCourtName.HeaderText = "Court Name";
-            this.colCourtName.MinimumWidth = 6;
-            this.colCourtName.Name = "colCourtName";
-            this.colCourtName.ReadOnly = true;
-            // 
-            // colCourtDescription
-            // 
-            this.colCourtDescription.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colCourtDescription.HeaderText = "Description";
-            this.colCourtDescription.MinimumWidth = 6;
-            this.colCourtDescription.Name = "colCourtDescription";
-            this.colCourtDescription.ReadOnly = true;
-            // 
-            // colCourtActions
-            // 
-            this.colCourtActions.HeaderText = "Actions";
-            this.colCourtActions.MinimumWidth = 6;
-            this.colCourtActions.Name = "colCourtActions";
-            this.colCourtActions.ReadOnly = true;
-            this.colCourtActions.Text = "Delete";
-            this.colCourtActions.UseColumnTextForButtonValue = true;
-            this.colCourtActions.Width = 120;
-            // 
-            // panelCourtButtons
-            // 
-            this.panelCourtButtons.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panelCourtButtons.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
-            this.panelCourtButtons.Controls.Add(this.btnAddCourt);
-            this.panelCourtButtons.Controls.Add(this.btnCloseCourts);
-            this.panelCourtButtons.Location = new System.Drawing.Point(0, 260);
-            this.panelCourtButtons.Margin = new System.Windows.Forms.Padding(0);
-            this.panelCourtButtons.Name = "panelCourtButtons";
-            this.panelCourtButtons.Size = new System.Drawing.Size(1912, 60);
-            this.panelCourtButtons.TabIndex = 1;
-            // 
+            this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click);
+            this.btnAddNew.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnAddNew.Width, this.btnAddNew.Height, 8, 8));
+
+            // btnManage
+            this.btnManage.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.btnManage.BackColor = primaryColor;
+            this.btnManage.FlatAppearance.BorderSize = 0;
+            this.btnManage.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnManage.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
+            this.btnManage.ForeColor = Color.White;
+            this.btnManage.Location = new System.Drawing.Point(1480, 0);
+            this.btnManage.Name = "btnManage";
+            this.btnManage.Size = new System.Drawing.Size(170, 32);
+            this.btnManage.TabIndex = 3;
+            this.btnManage.Text = "Manage Courts/Types";
+            this.btnManage.UseVisualStyleBackColor = false;
+            this.btnManage.Click += new System.EventHandler(this.btnManage_Click);
+            this.btnManage.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnManage.Width, this.btnManage.Height, 8, 8));
+
+            // statsPanel
+            this.statsPanel.BackColor = Color.Transparent;
+            this.statsPanel.Controls.Add(this.statsCard1);
+            this.statsPanel.Controls.Add(this.statsCard2);
+            this.statsPanel.Controls.Add(this.statsCard3);
+            this.statsPanel.Controls.Add(this.statsCard4);
+            this.statsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.statsPanel.Location = new System.Drawing.Point(24, 104);
+            this.statsPanel.Margin = new System.Windows.Forms.Padding(0, 0, 0, 16);
+            this.statsPanel.Name = "statsPanel";
+            this.statsPanel.Size = new System.Drawing.Size(1872, 104);
+            this.statsPanel.TabIndex = 2;
+
+            // Stats Card 1 - Total Rates
+            this.statsCard1.BackColor = Color.White;
+            this.statsCard1.Location = new System.Drawing.Point(0, 0);
+            this.statsCard1.Name = "statsCard1";
+            this.statsCard1.Size = new System.Drawing.Size(280, 104);
+            this.statsCard1.TabIndex = 0;
+
+            this.statsIcon1.AutoSize = false;
+            this.statsIcon1.BackColor = Color.FromArgb(239, 246, 255);
+            this.statsIcon1.Font = new System.Drawing.Font("Segoe UI", 20F);
+            this.statsIcon1.ForeColor = primaryColor;
+            this.statsIcon1.Location = new System.Drawing.Point(16, 24);
+            this.statsIcon1.Name = "statsIcon1";
+            this.statsIcon1.Size = new System.Drawing.Size(56, 56);
+            this.statsIcon1.TabIndex = 0;
+            this.statsIcon1.Text = "📊";
+            this.statsIcon1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
+            this.lblStatsTitle1.AutoSize = true;
+            this.lblStatsTitle1.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
+            this.lblStatsTitle1.ForeColor = Color.FromArgb(107, 114, 128);
+            this.lblStatsTitle1.Location = new System.Drawing.Point(88, 24);
+            this.lblStatsTitle1.Name = "lblStatsTitle1";
+            this.lblStatsTitle1.Size = new System.Drawing.Size(72, 19);
+            this.lblStatsTitle1.TabIndex = 1;
+            this.lblStatsTitle1.Text = "Total Rates";
+
+            this.lblStatsValue1.AutoSize = true;
+            this.lblStatsValue1.Font = new System.Drawing.Font("Segoe UI", 28F, System.Drawing.FontStyle.Bold);
+            this.lblStatsValue1.ForeColor = textColor;
+            this.lblStatsValue1.Location = new System.Drawing.Point(88, 44);
+            this.lblStatsValue1.Name = "lblStatsValue1";
+            this.lblStatsValue1.Size = new System.Drawing.Size(42, 50);
+            this.lblStatsValue1.TabIndex = 2;
+            this.lblStatsValue1.Text = "0";
+
+            this.lblStatsSub1.AutoSize = true;
+            this.lblStatsSub1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
+            this.lblStatsSub1.ForeColor = Color.FromArgb(156, 163, 175);
+            this.lblStatsSub1.Location = new System.Drawing.Point(160, 70);
+            this.lblStatsSub1.Name = "lblStatsSub1";
+            this.lblStatsSub1.Size = new System.Drawing.Size(63, 15);
+            this.lblStatsSub1.TabIndex = 3;
+            this.lblStatsSub1.Text = "total rates";
+
+            this.statsCard1.Controls.Add(this.statsIcon1);
+            this.statsCard1.Controls.Add(this.lblStatsTitle1);
+            this.statsCard1.Controls.Add(this.lblStatsValue1);
+            this.statsCard1.Controls.Add(this.lblStatsSub1);
+
+            // Stats Card 2 - Active
+            this.statsCard2.BackColor = Color.White;
+            this.statsCard2.Location = new System.Drawing.Point(300, 0);
+            this.statsCard2.Name = "statsCard2";
+            this.statsCard2.Size = new System.Drawing.Size(280, 104);
+            this.statsCard2.TabIndex = 1;
+
+            this.statsIcon2.AutoSize = false;
+            this.statsIcon2.BackColor = Color.FromArgb(236, 253, 245);
+            this.statsIcon2.Font = new System.Drawing.Font("Segoe UI", 20F);
+            this.statsIcon2.ForeColor = successColor;
+            this.statsIcon2.Location = new System.Drawing.Point(16, 24);
+            this.statsIcon2.Name = "statsIcon2";
+            this.statsIcon2.Size = new System.Drawing.Size(56, 56);
+            this.statsIcon2.TabIndex = 0;
+            this.statsIcon2.Text = "✅";
+            this.statsIcon2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
+            this.lblStatsTitle2.AutoSize = true;
+            this.lblStatsTitle2.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
+            this.lblStatsTitle2.ForeColor = Color.FromArgb(107, 114, 128);
+            this.lblStatsTitle2.Location = new System.Drawing.Point(88, 24);
+            this.lblStatsTitle2.Name = "lblStatsTitle2";
+            this.lblStatsTitle2.Size = new System.Drawing.Size(46, 19);
+            this.lblStatsTitle2.TabIndex = 1;
+            this.lblStatsTitle2.Text = "Active";
+
+            this.lblStatsValue2.AutoSize = true;
+            this.lblStatsValue2.Font = new System.Drawing.Font("Segoe UI", 28F, System.Drawing.FontStyle.Bold);
+            this.lblStatsValue2.ForeColor = textColor;
+            this.lblStatsValue2.Location = new System.Drawing.Point(88, 44);
+            this.lblStatsValue2.Name = "lblStatsValue2";
+            this.lblStatsValue2.Size = new System.Drawing.Size(42, 50);
+            this.lblStatsValue2.TabIndex = 2;
+            this.lblStatsValue2.Text = "0";
+
+            this.lblStatsSub2.AutoSize = true;
+            this.lblStatsSub2.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
+            this.lblStatsSub2.ForeColor = Color.FromArgb(156, 163, 175);
+            this.lblStatsSub2.Location = new System.Drawing.Point(160, 70);
+            this.lblStatsSub2.Name = "lblStatsSub2";
+            this.lblStatsSub2.Size = new System.Drawing.Size(40, 15);
+            this.lblStatsSub2.TabIndex = 3;
+            this.lblStatsSub2.Text = "active";
+
+            this.statsCard2.Controls.Add(this.statsIcon2);
+            this.statsCard2.Controls.Add(this.lblStatsTitle2);
+            this.statsCard2.Controls.Add(this.lblStatsValue2);
+            this.statsCard2.Controls.Add(this.lblStatsSub2);
+
+            // Stats Card 3 - Inactive
+            this.statsCard3.BackColor = Color.White;
+            this.statsCard3.Location = new System.Drawing.Point(600, 0);
+            this.statsCard3.Name = "statsCard3";
+            this.statsCard3.Size = new System.Drawing.Size(280, 104);
+            this.statsCard3.TabIndex = 2;
+
+            this.statsIcon3.AutoSize = false;
+            this.statsIcon3.BackColor = Color.FromArgb(254, 242, 242);
+            this.statsIcon3.Font = new System.Drawing.Font("Segoe UI", 20F);
+            this.statsIcon3.ForeColor = dangerColor;
+            this.statsIcon3.Location = new System.Drawing.Point(16, 24);
+            this.statsIcon3.Name = "statsIcon3";
+            this.statsIcon3.Size = new System.Drawing.Size(56, 56);
+            this.statsIcon3.TabIndex = 0;
+            this.statsIcon3.Text = "❌";
+            this.statsIcon3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
+            this.lblStatsTitle3.AutoSize = true;
+            this.lblStatsTitle3.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
+            this.lblStatsTitle3.ForeColor = Color.FromArgb(107, 114, 128);
+            this.lblStatsTitle3.Location = new System.Drawing.Point(88, 24);
+            this.lblStatsTitle3.Name = "lblStatsTitle3";
+            this.lblStatsTitle3.Size = new System.Drawing.Size(57, 19);
+            this.lblStatsTitle3.TabIndex = 1;
+            this.lblStatsTitle3.Text = "Inactive";
+
+            this.lblStatsValue3.AutoSize = true;
+            this.lblStatsValue3.Font = new System.Drawing.Font("Segoe UI", 28F, System.Drawing.FontStyle.Bold);
+            this.lblStatsValue3.ForeColor = textColor;
+            this.lblStatsValue3.Location = new System.Drawing.Point(88, 44);
+            this.lblStatsValue3.Name = "lblStatsValue3";
+            this.lblStatsValue3.Size = new System.Drawing.Size(42, 50);
+            this.lblStatsValue3.TabIndex = 2;
+            this.lblStatsValue3.Text = "0";
+
+            this.lblStatsSub3.AutoSize = true;
+            this.lblStatsSub3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
+            this.lblStatsSub3.ForeColor = Color.FromArgb(156, 163, 175);
+            this.lblStatsSub3.Location = new System.Drawing.Point(160, 70);
+            this.lblStatsSub3.Name = "lblStatsSub3";
+            this.lblStatsSub3.Size = new System.Drawing.Size(47, 15);
+            this.lblStatsSub3.TabIndex = 3;
+            this.lblStatsSub3.Text = "inactive";
+
+            this.statsCard3.Controls.Add(this.statsIcon3);
+            this.statsCard3.Controls.Add(this.lblStatsTitle3);
+            this.statsCard3.Controls.Add(this.lblStatsValue3);
+            this.statsCard3.Controls.Add(this.lblStatsSub3);
+
+            // Stats Card 4 - Average Rate
+            this.statsCard4.BackColor = Color.White;
+            this.statsCard4.Location = new System.Drawing.Point(900, 0);
+            this.statsCard4.Name = "statsCard4";
+            this.statsCard4.Size = new System.Drawing.Size(280, 104);
+            this.statsCard4.TabIndex = 3;
+
+            this.statsIcon4.AutoSize = false;
+            this.statsIcon4.BackColor = Color.FromArgb(239, 246, 255);
+            this.statsIcon4.Font = new System.Drawing.Font("Segoe UI", 20F);
+            this.statsIcon4.ForeColor = primaryColor;
+            this.statsIcon4.Location = new System.Drawing.Point(16, 24);
+            this.statsIcon4.Name = "statsIcon4";
+            this.statsIcon4.Size = new System.Drawing.Size(56, 56);
+            this.statsIcon4.TabIndex = 0;
+            this.statsIcon4.Text = "💰";
+            this.statsIcon4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
+            this.lblStatsTitle4.AutoSize = true;
+            this.lblStatsTitle4.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
+            this.lblStatsTitle4.ForeColor = Color.FromArgb(107, 114, 128);
+            this.lblStatsTitle4.Location = new System.Drawing.Point(88, 24);
+            this.lblStatsTitle4.Name = "lblStatsTitle4";
+            this.lblStatsTitle4.Size = new System.Drawing.Size(88, 19);
+            this.lblStatsTitle4.TabIndex = 1;
+            this.lblStatsTitle4.Text = "Average Rate";
+
+            this.lblStatsValue4.AutoSize = true;
+            this.lblStatsValue4.Font = new System.Drawing.Font("Segoe UI", 28F, System.Drawing.FontStyle.Bold);
+            this.lblStatsValue4.ForeColor = textColor;
+            this.lblStatsValue4.Location = new System.Drawing.Point(88, 44);
+            this.lblStatsValue4.Name = "lblStatsValue4";
+            this.lblStatsValue4.Size = new System.Drawing.Size(98, 50);
+            this.lblStatsValue4.TabIndex = 2;
+            this.lblStatsValue4.Text = "₱650";
+
+            this.lblStatsSub4.AutoSize = true;
+            this.lblStatsSub4.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
+            this.lblStatsSub4.ForeColor = Color.FromArgb(156, 163, 175);
+            this.lblStatsSub4.Location = new System.Drawing.Point(190, 70);
+            this.lblStatsSub4.Name = "lblStatsSub4";
+            this.lblStatsSub4.Size = new System.Drawing.Size(50, 15);
+            this.lblStatsSub4.TabIndex = 3;
+            this.lblStatsSub4.Text = "avg / hr";
+
+            this.statsCard4.Controls.Add(this.statsIcon4);
+            this.statsCard4.Controls.Add(this.lblStatsTitle4);
+            this.statsCard4.Controls.Add(this.lblStatsValue4);
+            this.statsCard4.Controls.Add(this.lblStatsSub4);
+
+            // contentPanel
+            this.contentPanel.BackColor = Color.Transparent;
+            this.contentPanel.Controls.Add(this.ratesFlowPanel);
+            this.contentPanel.Controls.Add(this.managementOverlay);
+            this.contentPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.contentPanel.Location = new System.Drawing.Point(24, 224);
+            this.contentPanel.Margin = new System.Windows.Forms.Padding(0);
+            this.contentPanel.Name = "contentPanel";
+            this.contentPanel.Padding = new System.Windows.Forms.Padding(0);
+            this.contentPanel.Size = new System.Drawing.Size(1872, 832);
+            this.contentPanel.TabIndex = 1;
+
+            // ratesFlowPanel
+            this.ratesFlowPanel.AutoScroll = true;
+            this.ratesFlowPanel.BackColor = Color.Transparent;
+            this.ratesFlowPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.ratesFlowPanel.Location = new System.Drawing.Point(0, 0);
+            this.ratesFlowPanel.Name = "ratesFlowPanel";
+            this.ratesFlowPanel.Padding = new System.Windows.Forms.Padding(16);
+            this.ratesFlowPanel.Size = new System.Drawing.Size(1872, 832);
+            this.ratesFlowPanel.TabIndex = 0;
+
+            // managementOverlay
+            this.managementOverlay.BackColor = Color.FromArgb(255, 255, 255);
+            this.managementOverlay.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.managementOverlay.Controls.Add(this.managementTabs);
+            this.managementOverlay.Controls.Add(this.btnCloseManagement);
+            this.managementOverlay.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.managementOverlay.Location = new System.Drawing.Point(0, 0);
+            this.managementOverlay.Name = "managementOverlay";
+            this.managementOverlay.Padding = new System.Windows.Forms.Padding(24, 24, 24, 64);
+            this.managementOverlay.Size = new System.Drawing.Size(1872, 832);
+            this.managementOverlay.TabIndex = 1;
+            this.managementOverlay.Visible = false;
+
+            // managementTabs
+            this.managementTabs.Controls.Add(this.tabCourts);
+            this.managementTabs.Controls.Add(this.tabGameTypes);
+            this.managementTabs.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.managementTabs.Font = new System.Drawing.Font("Segoe UI", 11F);
+            this.managementTabs.Location = new System.Drawing.Point(24, 24);
+            this.managementTabs.Name = "managementTabs";
+            this.managementTabs.SelectedIndex = 0;
+            this.managementTabs.Size = new System.Drawing.Size(1824, 744);
+            this.managementTabs.TabIndex = 0;
+
+            // Style the tabs
+            this.managementTabs.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
+            this.managementTabs.DrawItem += (s, e) => {
+                System.Drawing.Rectangle tabRect = this.managementTabs.GetTabRect(e.Index);
+                using (System.Drawing.Brush brush = new System.Drawing.SolidBrush(e.Index == this.managementTabs.SelectedIndex ? primaryColor : System.Drawing.Color.FromArgb(243, 244, 246)))
+                using (System.Drawing.Brush textBrush = new System.Drawing.SolidBrush(e.Index == this.managementTabs.SelectedIndex ? System.Drawing.Color.White : System.Drawing.Color.FromArgb(75, 85, 99)))
+                {
+                    e.Graphics.FillRectangle(brush, tabRect);
+                    string tabText = this.managementTabs.TabPages[e.Index].Text;
+                    System.Drawing.StringFormat sf = new System.Drawing.StringFormat { Alignment = System.Drawing.StringAlignment.Center, LineAlignment = System.Drawing.StringAlignment.Center };
+                    e.Graphics.DrawString(tabText, e.Font, textBrush, tabRect, sf);
+                }
+            };
+
+            // tabCourts
+            this.tabCourts.BackColor = Color.White;
+            this.tabCourts.Controls.Add(this.courtsPanel);
+            this.tabCourts.Location = new System.Drawing.Point(4, 29);
+            this.tabCourts.Name = "tabCourts";
+            this.tabCourts.Padding = new System.Windows.Forms.Padding(20);
+            this.tabCourts.Size = new System.Drawing.Size(1816, 711);
+            this.tabCourts.TabIndex = 0;
+            this.tabCourts.Text = "Courts";
+
+            // courtsPanel - NEW: Panel to hold flow panel and button
+            this.courtsPanel.BackColor = Color.White;
+            this.courtsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.courtsPanel.Location = new System.Drawing.Point(20, 20);
+            this.courtsPanel.Name = "courtsPanel";
+            this.courtsPanel.Size = new System.Drawing.Size(1776, 671);
+            this.courtsPanel.TabIndex = 0;
+
+            // courtsFlowPanel
+            this.courtsFlowPanel.AutoScroll = true;
+            this.courtsFlowPanel.BackColor = Color.White;
+            this.courtsFlowPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.courtsFlowPanel.Location = new System.Drawing.Point(0, 0);
+            this.courtsFlowPanel.Name = "courtsFlowPanel";
+            this.courtsFlowPanel.Padding = new System.Windows.Forms.Padding(12);
+            this.courtsFlowPanel.Size = new System.Drawing.Size(1776, 611);
+            this.courtsFlowPanel.TabIndex = 0;
+
             // btnAddCourt
-            // 
-            this.btnAddCourt.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.btnAddCourt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(167)))), ((int)(((byte)(69)))));
+            this.btnAddCourt.BackColor = successColor;
+            this.btnAddCourt.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.btnAddCourt.FlatAppearance.BorderSize = 0;
             this.btnAddCourt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAddCourt.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnAddCourt.ForeColor = System.Drawing.Color.White;
-            this.btnAddCourt.Location = new System.Drawing.Point(1550, 10);
+            this.btnAddCourt.Font = new System.Drawing.Font("Segoe UI Semibold", 11F, System.Drawing.FontStyle.Bold);
+            this.btnAddCourt.ForeColor = Color.White;
+            this.btnAddCourt.Location = new System.Drawing.Point(0, 611);
             this.btnAddCourt.Name = "btnAddCourt";
-            this.btnAddCourt.Size = new System.Drawing.Size(150, 40);
-            this.btnAddCourt.TabIndex = 0;
-            this.btnAddCourt.Text = "Add New Court";
+            this.btnAddCourt.Size = new System.Drawing.Size(1776, 60);
+            this.btnAddCourt.TabIndex = 1;
+            this.btnAddCourt.Text = "+ Add New Court";
             this.btnAddCourt.UseVisualStyleBackColor = false;
-            // 
-            // btnCloseCourts
-            // 
-            this.btnCloseCourts.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.btnCloseCourts.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(53)))), ((int)(((byte)(69)))));
-            this.btnCloseCourts.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCloseCourts.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnCloseCourts.ForeColor = System.Drawing.Color.White;
-            this.btnCloseCourts.Location = new System.Drawing.Point(1720, 10);
-            this.btnCloseCourts.Name = "btnCloseCourts";
-            this.btnCloseCourts.Size = new System.Drawing.Size(150, 40);
-            this.btnCloseCourts.TabIndex = 1;
-            this.btnCloseCourts.Text = "Close";
-            this.btnCloseCourts.UseVisualStyleBackColor = false;
-            // 
-            // tabPageGameTypes
-            // 
-            this.tabPageGameTypes.BackColor = System.Drawing.Color.White;
-            this.tabPageGameTypes.Controls.Add(this.dgvGameTypes);
-            this.tabPageGameTypes.Controls.Add(this.panelGameTypeButtons);
-            this.tabPageGameTypes.Location = new System.Drawing.Point(4, 46);
-            this.tabPageGameTypes.Margin = new System.Windows.Forms.Padding(0);
-            this.tabPageGameTypes.Name = "tabPageGameTypes";
-            this.tabPageGameTypes.Size = new System.Drawing.Size(1912, 310);
-            this.tabPageGameTypes.TabIndex = 1;
-            this.tabPageGameTypes.Text = "Manage Game Types";
-            this.tabPageGameTypes.UseVisualStyleBackColor = true;
-            // 
-            // dgvGameTypes
-            // 
-            this.dgvGameTypes.AllowUserToAddRows = false;
-            this.dgvGameTypes.AllowUserToDeleteRows = false;
-            this.dgvGameTypes.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dgvGameTypes.BackgroundColor = System.Drawing.Color.White;
-            this.dgvGameTypes.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.dgvGameTypes.ColumnHeadersHeight = 40;
-            this.dgvGameTypes.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colGameTypeId,
-            this.colGameTypeName,
-            this.colGameTypeDescription,
-            this.colGameTypeActions});
-            dataGridViewCellStyle15.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle15.BackColor = System.Drawing.Color.White;
-            dataGridViewCellStyle15.Font = new System.Drawing.Font("Segoe UI", 10F);
-            dataGridViewCellStyle15.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
-            dataGridViewCellStyle15.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
-            dataGridViewCellStyle15.SelectionForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(33)))), ((int)(((byte)(37)))), ((int)(((byte)(41)))));
-            dataGridViewCellStyle15.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvGameTypes.DefaultCellStyle = dataGridViewCellStyle15;
-            this.dgvGameTypes.Location = new System.Drawing.Point(0, 0);
-            this.dgvGameTypes.Name = "dgvGameTypes";
-            this.dgvGameTypes.ReadOnly = true;
-            this.dgvGameTypes.RowHeadersVisible = false;
-            this.dgvGameTypes.RowHeadersWidth = 51;
-            this.dgvGameTypes.RowTemplate.Height = 40;
-            this.dgvGameTypes.Size = new System.Drawing.Size(1912, 260);
-            this.dgvGameTypes.TabIndex = 1;
-            // 
-            // colGameTypeId
-            // 
-            this.colGameTypeId.HeaderText = "ID";
-            this.colGameTypeId.MinimumWidth = 6;
-            this.colGameTypeId.Name = "colGameTypeId";
-            this.colGameTypeId.ReadOnly = true;
-            this.colGameTypeId.Width = 50;
-            // 
-            // colGameTypeName
-            // 
-            this.colGameTypeName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colGameTypeName.HeaderText = "Game Type";
-            this.colGameTypeName.MinimumWidth = 6;
-            this.colGameTypeName.Name = "colGameTypeName";
-            this.colGameTypeName.ReadOnly = true;
-            // 
-            // colGameTypeDescription
-            // 
-            this.colGameTypeDescription.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colGameTypeDescription.HeaderText = "Description";
-            this.colGameTypeDescription.MinimumWidth = 6;
-            this.colGameTypeDescription.Name = "colGameTypeDescription";
-            this.colGameTypeDescription.ReadOnly = true;
-            // 
-            // colGameTypeActions
-            // 
-            this.colGameTypeActions.HeaderText = "Actions";
-            this.colGameTypeActions.MinimumWidth = 6;
-            this.colGameTypeActions.Name = "colGameTypeActions";
-            this.colGameTypeActions.ReadOnly = true;
-            this.colGameTypeActions.Text = "Delete";
-            this.colGameTypeActions.UseColumnTextForButtonValue = true;
-            this.colGameTypeActions.Width = 120;
-            // 
-            // panelGameTypeButtons
-            // 
-            this.panelGameTypeButtons.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panelGameTypeButtons.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
-            this.panelGameTypeButtons.Controls.Add(this.btnAddGameType);
-            this.panelGameTypeButtons.Controls.Add(this.btnCloseGameTypes);
-            this.panelGameTypeButtons.Location = new System.Drawing.Point(0, 260);
-            this.panelGameTypeButtons.Margin = new System.Windows.Forms.Padding(0);
-            this.panelGameTypeButtons.Name = "panelGameTypeButtons";
-            this.panelGameTypeButtons.Size = new System.Drawing.Size(1912, 60);
-            this.panelGameTypeButtons.TabIndex = 2;
-            // 
+            this.btnAddCourt.Click += new System.EventHandler(this.btnAddCourt_Click);
+            this.btnAddCourt.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnAddCourt.Width, this.btnAddCourt.Height, 8, 8));
+
+            // Add controls to courtsPanel
+            this.courtsPanel.Controls.Add(this.courtsFlowPanel);
+            this.courtsPanel.Controls.Add(this.btnAddCourt);
+
+            // tabGameTypes
+            this.tabGameTypes.BackColor = Color.White;
+            this.tabGameTypes.Controls.Add(this.gameTypesPanel);
+            this.tabGameTypes.Location = new System.Drawing.Point(4, 29);
+            this.tabGameTypes.Name = "tabGameTypes";
+            this.tabGameTypes.Padding = new System.Windows.Forms.Padding(20);
+            this.tabGameTypes.Size = new System.Drawing.Size(1816, 711);
+            this.tabGameTypes.TabIndex = 1;
+            this.tabGameTypes.Text = "Game Types";
+
+            // gameTypesPanel - NEW: Panel to hold flow panel and button
+            this.gameTypesPanel.BackColor = Color.White;
+            this.gameTypesPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gameTypesPanel.Location = new System.Drawing.Point(20, 20);
+            this.gameTypesPanel.Name = "gameTypesPanel";
+            this.gameTypesPanel.Size = new System.Drawing.Size(1776, 671);
+            this.gameTypesPanel.TabIndex = 0;
+
+            // gameTypesFlowPanel
+            this.gameTypesFlowPanel.AutoScroll = true;
+            this.gameTypesFlowPanel.BackColor = Color.White;
+            this.gameTypesFlowPanel.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gameTypesFlowPanel.Location = new System.Drawing.Point(0, 0);
+            this.gameTypesFlowPanel.Name = "gameTypesFlowPanel";
+            this.gameTypesFlowPanel.Padding = new System.Windows.Forms.Padding(12);
+            this.gameTypesFlowPanel.Size = new System.Drawing.Size(1776, 611);
+            this.gameTypesFlowPanel.TabIndex = 0;
+
             // btnAddGameType
-            // 
-            this.btnAddGameType.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.btnAddGameType.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(167)))), ((int)(((byte)(69)))));
+            this.btnAddGameType.BackColor = successColor;
+            this.btnAddGameType.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.btnAddGameType.FlatAppearance.BorderSize = 0;
             this.btnAddGameType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnAddGameType.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnAddGameType.ForeColor = System.Drawing.Color.White;
-            this.btnAddGameType.Location = new System.Drawing.Point(1550, 10);
+            this.btnAddGameType.Font = new System.Drawing.Font("Segoe UI Semibold", 11F, System.Drawing.FontStyle.Bold);
+            this.btnAddGameType.ForeColor = Color.White;
+            this.btnAddGameType.Location = new System.Drawing.Point(0, 611);
             this.btnAddGameType.Name = "btnAddGameType";
-            this.btnAddGameType.Size = new System.Drawing.Size(150, 40);
+            this.btnAddGameType.Size = new System.Drawing.Size(1776, 60);
             this.btnAddGameType.TabIndex = 1;
-            this.btnAddGameType.Text = "Add New Type";
+            this.btnAddGameType.Text = "+ Add New Game Type";
             this.btnAddGameType.UseVisualStyleBackColor = false;
-            // 
-            // btnCloseGameTypes
-            // 
-            this.btnCloseGameTypes.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.btnCloseGameTypes.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(53)))), ((int)(((byte)(69)))));
-            this.btnCloseGameTypes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCloseGameTypes.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.btnCloseGameTypes.ForeColor = System.Drawing.Color.White;
-            this.btnCloseGameTypes.Location = new System.Drawing.Point(1720, 10);
-            this.btnCloseGameTypes.Name = "btnCloseGameTypes";
-            this.btnCloseGameTypes.Size = new System.Drawing.Size(150, 40);
-            this.btnCloseGameTypes.TabIndex = 2;
-            this.btnCloseGameTypes.Text = "Close";
-            this.btnCloseGameTypes.UseVisualStyleBackColor = false;
-            // 
+            this.btnAddGameType.Click += new System.EventHandler(this.btnAddGameType_Click);
+            this.btnAddGameType.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnAddGameType.Width, this.btnAddGameType.Height, 8, 8));
+
+            // Add controls to gameTypesPanel
+            this.gameTypesPanel.Controls.Add(this.gameTypesFlowPanel);
+            this.gameTypesPanel.Controls.Add(this.btnAddGameType);
+
+            // btnCloseManagement
+            this.btnCloseManagement.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btnCloseManagement.BackColor = dangerColor;
+            this.btnCloseManagement.FlatAppearance.BorderSize = 0;
+            this.btnCloseManagement.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCloseManagement.Font = new System.Drawing.Font("Segoe UI Semibold", 11F, System.Drawing.FontStyle.Bold);
+            this.btnCloseManagement.ForeColor = Color.White;
+            this.btnCloseManagement.Location = new System.Drawing.Point(876, 776);
+            this.btnCloseManagement.Name = "btnCloseManagement";
+            this.btnCloseManagement.Size = new System.Drawing.Size(120, 40);
+            this.btnCloseManagement.TabIndex = 4;
+            this.btnCloseManagement.Text = "Close";
+            this.btnCloseManagement.UseVisualStyleBackColor = false;
+            this.btnCloseManagement.Click += new System.EventHandler(this.btnCloseManagement_Click);
+            this.btnCloseManagement.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnCloseManagement.Width, this.btnCloseManagement.Height, 8, 8));
+
             // GameRates
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(250)))), ((int)(((byte)(252)))));
-            this.Controls.Add(this.mainTableLayout);
+            this.BackColor = Color.FromArgb(248, 250, 252);
+            this.Controls.Add(this.mainContainer);
+            this.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.Name = "GameRates";
             this.Size = new System.Drawing.Size(1920, 1080);
-            this.mainTableLayout.ResumeLayout(false);
-            this.dataPanel.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvGameRates)).EndInit();
-            this.panelHeader.ResumeLayout(false);
-            this.panelHeader.PerformLayout();
-            this.panelManagement.ResumeLayout(false);
-            this.tabControlManagement.ResumeLayout(false);
-            this.tabPageCourts.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvCourts)).EndInit();
-            this.panelCourtButtons.ResumeLayout(false);
-            this.tabPageGameTypes.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvGameTypes)).EndInit();
-            this.panelGameTypeButtons.ResumeLayout(false);
+            this.mainContainer.ResumeLayout(false);
+            this.headerPanel.ResumeLayout(false);
+            this.headerControlsPanel.ResumeLayout(false);
+            this.headerControlsPanel.PerformLayout();
+            this.statsPanel.ResumeLayout(false);
+            this.contentPanel.ResumeLayout(false);
+            this.managementOverlay.ResumeLayout(false);
+            this.managementTabs.ResumeLayout(false);
+            this.tabCourts.ResumeLayout(false);
+            this.courtsPanel.ResumeLayout(false);
+            this.tabGameTypes.ResumeLayout(false);
+            this.gameTypesPanel.ResumeLayout(false);
             this.ResumeLayout(false);
-
         }
 
-        #endregion
-
-        private System.Windows.Forms.TableLayoutPanel mainTableLayout;
-        private System.Windows.Forms.Panel dataPanel;
-        private System.Windows.Forms.DataGridView dgvGameRates;
-        private System.Windows.Forms.DataGridViewButtonColumn colStatus;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colCourtType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colGameType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colRate;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colDescription;
-        private System.Windows.Forms.DataGridViewButtonColumn colEdit;
-        private System.Windows.Forms.Button btnAddNew;
-        private System.Windows.Forms.Panel panelHeader;
+        private System.Windows.Forms.TableLayoutPanel mainContainer;
+        private System.Windows.Forms.Panel headerPanel;
+        private System.Windows.Forms.Panel headerControlsPanel;
         private System.Windows.Forms.Label lblTitle;
-        private System.Windows.Forms.Label lblFilterStatus;
-        private System.Windows.Forms.ComboBox cboFilterStatus;
+        private System.Windows.Forms.ComboBox filterCombo;
+        private System.Windows.Forms.Button btnAddNew;
         private System.Windows.Forms.Button btnManage;
-
-        // Management Panel Controls
-        private System.Windows.Forms.Panel panelManagement;
-        private System.Windows.Forms.TabControl tabControlManagement;
-        private System.Windows.Forms.TabPage tabPageCourts;
-        private System.Windows.Forms.DataGridView dgvCourts;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colCourtId;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colCourtName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colCourtDescription;
-        private System.Windows.Forms.DataGridViewButtonColumn colCourtActions;
-        private System.Windows.Forms.Panel panelCourtButtons;
+        private System.Windows.Forms.Panel statsPanel;
+        private System.Windows.Forms.Panel contentPanel;
+        private System.Windows.Forms.FlowLayoutPanel ratesFlowPanel;
+        private System.Windows.Forms.Panel managementOverlay;
+        private System.Windows.Forms.TabControl managementTabs;
+        private System.Windows.Forms.TabPage tabCourts;
+        private System.Windows.Forms.Panel courtsPanel;
+        private System.Windows.Forms.FlowLayoutPanel courtsFlowPanel;
         private System.Windows.Forms.Button btnAddCourt;
-        private System.Windows.Forms.Button btnCloseCourts;
-        private System.Windows.Forms.TabPage tabPageGameTypes;
-        private System.Windows.Forms.DataGridView dgvGameTypes;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colGameTypeId;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colGameTypeName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colGameTypeDescription;
-        private System.Windows.Forms.DataGridViewButtonColumn colGameTypeActions;
-        private System.Windows.Forms.Panel panelGameTypeButtons;
+        private System.Windows.Forms.TabPage tabGameTypes;
+        private System.Windows.Forms.Panel gameTypesPanel;
+        private System.Windows.Forms.FlowLayoutPanel gameTypesFlowPanel;
         private System.Windows.Forms.Button btnAddGameType;
-        private System.Windows.Forms.Button btnCloseGameTypes;
+        private System.Windows.Forms.Button btnCloseManagement;
+
+        // Stats card controls
+        private System.Windows.Forms.Panel statsCard1;
+        private System.Windows.Forms.Label statsIcon1;
+        private System.Windows.Forms.Label lblStatsTitle1;
+        private System.Windows.Forms.Label lblStatsValue1;
+        private System.Windows.Forms.Label lblStatsSub1;
+
+        private System.Windows.Forms.Panel statsCard2;
+        private System.Windows.Forms.Label statsIcon2;
+        private System.Windows.Forms.Label lblStatsTitle2;
+        private System.Windows.Forms.Label lblStatsValue2;
+        private System.Windows.Forms.Label lblStatsSub2;
+
+        private System.Windows.Forms.Panel statsCard3;
+        private System.Windows.Forms.Label statsIcon3;
+        private System.Windows.Forms.Label lblStatsTitle3;
+        private System.Windows.Forms.Label lblStatsValue3;
+        private System.Windows.Forms.Label lblStatsSub3;
+
+        private System.Windows.Forms.Panel statsCard4;
+        private System.Windows.Forms.Label statsIcon4;
+        private System.Windows.Forms.Label lblStatsTitle4;
+        private System.Windows.Forms.Label lblStatsValue4;
+        private System.Windows.Forms.Label lblStatsSub4;
     }
 }
