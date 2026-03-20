@@ -10,9 +10,8 @@
 
 namespace cms.Properties {
     using System;
-    using System.Drawing;
-
-
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -24,7 +23,7 @@ namespace cms.Properties {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        internal static Image plus_white;
+        
         private static global::System.Resources.ResourceManager resourceMan;
         
         private static global::System.Globalization.CultureInfo resourceCulture;
@@ -32,9 +31,7 @@ namespace cms.Properties {
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-
-        public static Image placeholder_image { get; internal set; }
-
+        
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -79,6 +76,66 @@ namespace cms.Properties {
         internal static System.Drawing.Bitmap MATCHPOINT__11_ {
             get {
                 object obj = ResourceManager.GetObject("MATCHPOINT (11)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap MATCHPOINT__12_ {
+            get {
+                object obj = ResourceManager.GetObject("MATCHPOINT (12)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap MATCHPOINT__13_ {
+            get {
+                object obj = ResourceManager.GetObject("MATCHPOINT (13)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap MATCHPOINT__14_ {
+            get {
+                object obj = ResourceManager.GetObject("MATCHPOINT (14)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap MATCHPOINT__15_ {
+            get {
+                object obj = ResourceManager.GetObject("MATCHPOINT (15)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap MATCHPOINT__16_ {
+            get {
+                object obj = ResourceManager.GetObject("MATCHPOINT (16)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap MATCHPOINT__17_ {
+            get {
+                object obj = ResourceManager.GetObject("MATCHPOINT (17)", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
