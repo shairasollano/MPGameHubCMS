@@ -34,7 +34,6 @@
             this.tabConditions = new System.Windows.Forms.TabPage();
             this.conditionsPanel = new System.Windows.Forms.Panel();
             this.conditionsFlowPanel = new System.Windows.Forms.FlowLayoutPanel();
-            // Removed btnAddCondition
             this.btnCloseManagement = new System.Windows.Forms.Button();
 
             this.mainContainer.SuspendLayout();
@@ -130,6 +129,7 @@
             this.filterCombo.Name = "filterCombo";
             this.filterCombo.Size = new System.Drawing.Size(180, 25);
             this.filterCombo.TabIndex = 1;
+            // REMOVED: this.filterCombo.SelectedIndexChanged += new System.EventHandler(this.filterCombo_SelectedIndexChanged);
 
             // btnAddEquipment
             this.btnAddEquipment.Anchor = System.Windows.Forms.AnchorStyles.Right;
@@ -144,7 +144,7 @@
             this.btnAddEquipment.TabIndex = 2;
             this.btnAddEquipment.Text = "+ Add Equipment";
             this.btnAddEquipment.UseVisualStyleBackColor = false;
-            this.btnAddEquipment.Click += new System.EventHandler(this.btnAddEquipment_Click);
+            // REMOVED: this.btnAddEquipment.Click += new System.EventHandler(this.btnAddEquipment_Click);
 
             // btnManageCategories
             this.btnManageCategories.Anchor = System.Windows.Forms.AnchorStyles.Right;
@@ -159,7 +159,7 @@
             this.btnManageCategories.TabIndex = 3;
             this.btnManageCategories.Text = "Manage Categories";
             this.btnManageCategories.UseVisualStyleBackColor = false;
-            this.btnManageCategories.Click += new System.EventHandler(this.btnManageCategories_Click);
+            // REMOVED: this.btnManageCategories.Click += new System.EventHandler(this.btnManageCategories_Click);
 
             // btnViewLogs
             this.btnViewLogs.Anchor = System.Windows.Forms.AnchorStyles.Right;
@@ -174,7 +174,7 @@
             this.btnViewLogs.TabIndex = 4;
             this.btnViewLogs.Text = "View Logs";
             this.btnViewLogs.UseVisualStyleBackColor = false;
-            this.btnViewLogs.Click += new System.EventHandler(this.btnViewLogs_Click);
+            // REMOVED: this.btnViewLogs.Click += new System.EventHandler(this.btnViewLogs_Click);
 
             // contentPanel
             this.contentPanel.BackColor = System.Drawing.Color.Transparent;
@@ -221,20 +221,7 @@
             this.managementTabs.SelectedIndex = 0;
             this.managementTabs.Size = new System.Drawing.Size(1822, 846);
             this.managementTabs.TabIndex = 0;
-
-            // Style the tabs
-            this.managementTabs.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
-            this.managementTabs.DrawItem += (s, e) => {
-                System.Drawing.Rectangle tabRect = this.managementTabs.GetTabRect(e.Index);
-                using (System.Drawing.Brush brush = new System.Drawing.SolidBrush(e.Index == this.managementTabs.SelectedIndex ? primaryColor : System.Drawing.Color.FromArgb(243, 244, 246)))
-                using (System.Drawing.Brush textBrush = new System.Drawing.SolidBrush(e.Index == this.managementTabs.SelectedIndex ? System.Drawing.Color.White : System.Drawing.Color.FromArgb(75, 85, 99)))
-                {
-                    e.Graphics.FillRectangle(brush, tabRect);
-                    string tabText = this.managementTabs.TabPages[e.Index].Text;
-                    System.Drawing.StringFormat sf = new System.Drawing.StringFormat { Alignment = System.Drawing.StringAlignment.Center, LineAlignment = System.Drawing.StringAlignment.Center };
-                    e.Graphics.DrawString(tabText, e.Font, textBrush, tabRect, sf);
-                }
-            };
+            // REMOVED: this.managementTabs.SelectedIndexChanged += new System.EventHandler(this.ManagementTabs_SelectedIndexChanged);
 
             // ============== CATEGORIES TAB ==============
             this.tabCategories.BackColor = System.Drawing.Color.FromArgb(250, 250, 252);
@@ -248,6 +235,8 @@
 
             // categoriesPanel
             this.categoriesPanel.BackColor = System.Drawing.Color.Transparent;
+            this.categoriesPanel.Controls.Add(this.categoriesFlowPanel);
+            this.categoriesPanel.Controls.Add(this.btnAddCategory);
             this.categoriesPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.categoriesPanel.Location = new System.Drawing.Point(20, 20);
             this.categoriesPanel.Name = "categoriesPanel";
@@ -277,13 +266,13 @@
             this.btnAddCategory.TabIndex = 1;
             this.btnAddCategory.Text = "+ Add New Category";
             this.btnAddCategory.UseVisualStyleBackColor = false;
-            this.btnAddCategory.Click += new System.EventHandler(this.btnAddCategory_Click);
+            // REMOVED: this.btnAddCategory.Click += new System.EventHandler(this.btnAddCategory_Click);
 
             // Add controls to categoriesPanel
             this.categoriesPanel.Controls.Add(this.categoriesFlowPanel);
             this.categoriesPanel.Controls.Add(this.btnAddCategory);
 
-            // ============== CONDITIONS TAB (NO ADD BUTTON) ==============
+            // ============== CONDITIONS TAB ==============
             this.tabConditions.BackColor = System.Drawing.Color.FromArgb(250, 250, 252);
             this.tabConditions.Controls.Add(this.conditionsPanel);
             this.tabConditions.Location = new System.Drawing.Point(4, 29);
@@ -295,13 +284,14 @@
 
             // conditionsPanel
             this.conditionsPanel.BackColor = System.Drawing.Color.Transparent;
+            this.conditionsPanel.Controls.Add(this.conditionsFlowPanel);
             this.conditionsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.conditionsPanel.Location = new System.Drawing.Point(20, 20);
             this.conditionsPanel.Name = "conditionsPanel";
             this.conditionsPanel.Size = new System.Drawing.Size(1774, 773);
             this.conditionsPanel.TabIndex = 0;
 
-            // conditionsFlowPanel - Fills the entire panel since no add button
+            // conditionsFlowPanel
             this.conditionsFlowPanel.AutoScroll = true;
             this.conditionsFlowPanel.BackColor = System.Drawing.Color.Transparent;
             this.conditionsFlowPanel.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -311,7 +301,7 @@
             this.conditionsFlowPanel.Size = new System.Drawing.Size(1774, 773);
             this.conditionsFlowPanel.TabIndex = 0;
 
-            // Add controls to conditionsPanel (no add button)
+            // Add controls to conditionsPanel
             this.conditionsPanel.Controls.Add(this.conditionsFlowPanel);
 
             // btnCloseManagement
@@ -327,7 +317,7 @@
             this.btnCloseManagement.TabIndex = 3;
             this.btnCloseManagement.Text = "Close";
             this.btnCloseManagement.UseVisualStyleBackColor = false;
-            this.btnCloseManagement.Click += new System.EventHandler(this.btnCloseManagement_Click);
+            // REMOVED: this.btnCloseManagement.Click += new System.EventHandler(this.btnCloseManagement_Click);
 
             // GameEquipment
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -371,7 +361,6 @@
         private System.Windows.Forms.TabPage tabConditions;
         private System.Windows.Forms.Panel conditionsPanel;
         private System.Windows.Forms.FlowLayoutPanel conditionsFlowPanel;
-        // Removed btnAddCondition declaration
         private System.Windows.Forms.Button btnCloseManagement;
     }
 }

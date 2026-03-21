@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.monthlySale = new System.Windows.Forms.Panel();
+            this.customerCount = new System.Windows.Forms.Panel();
             this.weeklySale = new System.Windows.Forms.Panel();
             this.panel11 = new System.Windows.Forms.Panel();
             this.generateReport = new System.Windows.Forms.Label();
@@ -45,11 +45,11 @@
             this.panel4 = new System.Windows.Forms.Panel();
             this.totalSessionTxt = new System.Windows.Forms.Label();
             this.panel9 = new System.Windows.Forms.Panel();
+            this.label2 = new System.Windows.Forms.Label();
             this.panel3 = new System.Windows.Forms.Panel();
             this.activeSessionTxt = new System.Windows.Forms.Label();
             this.panel10 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             this.panel11.SuspendLayout();
             this.panel12.SuspendLayout();
             this.panel6.SuspendLayout();
@@ -60,15 +60,15 @@
             this.panel10.SuspendLayout();
             this.SuspendLayout();
             // 
-            // monthlySale
+            // customerCount
             // 
-            this.monthlySale.BackColor = System.Drawing.SystemColors.Control;
-            this.monthlySale.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.monthlySale.Location = new System.Drawing.Point(867, 344);
-            this.monthlySale.Name = "monthlySale";
-            this.monthlySale.Size = new System.Drawing.Size(692, 379);
-            this.monthlySale.TabIndex = 14;
-            this.monthlySale.Paint += new System.Windows.Forms.PaintEventHandler(this.monthlySale_Paint);
+            this.customerCount.BackColor = System.Drawing.SystemColors.Control;
+            this.customerCount.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.customerCount.Location = new System.Drawing.Point(867, 344);
+            this.customerCount.Name = "customerCount";
+            this.customerCount.Size = new System.Drawing.Size(729, 379);
+            this.customerCount.TabIndex = 14;
+            this.customerCount.Paint += new System.Windows.Forms.PaintEventHandler(this.monthlySale_Paint);
             // 
             // weeklySale
             // 
@@ -76,7 +76,7 @@
             this.weeklySale.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.weeklySale.Location = new System.Drawing.Point(93, 344);
             this.weeklySale.Name = "weeklySale";
-            this.weeklySale.Size = new System.Drawing.Size(692, 379);
+            this.weeklySale.Size = new System.Drawing.Size(729, 379);
             this.weeklySale.TabIndex = 13;
             this.weeklySale.Click += new System.EventHandler(this.weeklySale_Click);
             this.weeklySale.Paint += new System.Windows.Forms.PaintEventHandler(this.weeklySale_Paint);
@@ -85,11 +85,10 @@
             // 
             this.panel11.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
             this.panel11.Controls.Add(this.generateReport);
-            this.panel11.Location = new System.Drawing.Point(1295, 796);
+            this.panel11.Location = new System.Drawing.Point(1304, 795);
             this.panel11.Name = "panel11";
             this.panel11.Size = new System.Drawing.Size(292, 47);
             this.panel11.TabIndex = 12;
-            this.generateReport.Click += new System.EventHandler(this.generateReport_Click);
             // 
             // generateReport
             // 
@@ -247,6 +246,17 @@
             this.panel9.Size = new System.Drawing.Size(344, 66);
             this.panel9.TabIndex = 3;
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
+            this.label2.Location = new System.Drawing.Point(31, 20);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(202, 25);
+            this.label2.TabIndex = 6;
+            this.label2.Text = "TOTAL SESSIONS";
+            // 
             // panel3
             // 
             this.panel3.BackColor = System.Drawing.SystemColors.ControlLightLight;
@@ -290,22 +300,11 @@
             this.label1.TabIndex = 5;
             this.label1.Text = "ACTIVE SESSIONS";
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.label2.Location = new System.Drawing.Point(31, 20);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(202, 25);
-            this.label2.TabIndex = 6;
-            this.label2.Text = "TOTAL SESSIONS";
-            // 
             // UserControl2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.monthlySale);
+            this.Controls.Add(this.customerCount);
             this.Controls.Add(this.weeklySale);
             this.Controls.Add(this.panel11);
             this.Controls.Add(this.panel12);
@@ -337,7 +336,7 @@
 
         #endregion
 
-        private System.Windows.Forms.Panel monthlySale;
+        private System.Windows.Forms.Panel customerCount;
         private System.Windows.Forms.Panel weeklySale;
         private System.Windows.Forms.Panel panel11;
         private System.Windows.Forms.Label generateReport;

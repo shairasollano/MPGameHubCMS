@@ -10,7 +10,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
-using KGHCashierPOS;
 
 namespace cms
 {
@@ -21,10 +20,6 @@ namespace cms
         private const string STAFF_PASSWORD = "staff123";
         private const string ADMIN_USERNAME = "admin";
         private const string ADMIN_PASSWORD = "admin123";
-
-        // POS / Cashier credentials
-        private const string POS_USERNAME = "cashier";
-        private const string POS_PASSWORD = "pos123";
 
         // Track password visibility state
         private bool isPasswordVisible = false;
@@ -200,43 +195,47 @@ namespace cms
             // Debug
             Console.WriteLine("Login attempt - Username: " + username + ", Password: " + password);
 
-            // POS login (cashier)
-            if (username.ToLower() == POS_USERNAME && password == POS_PASSWORD)
+            // Check credentials - Staff login (case insensitive username)
+            if (username.ToLower() == STAFF_USERNAME && password == STAFF_PASSWORD)
             {
                 loggedInUsername = username;
-                loggedInRole = "POS";
+                loggedInRole = "Staff";
 
-                Form posForm = new KGHCashierPOS.CashierForm();
-                posForm.FormClosed += (s, args) => Application.Exit();
-                posForm.Show();
+                // Show POS coming soon message for staff
+                MessageBox.Show("POS is coming soon!",
+                    "Point of Sale System",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
 
-                this.Hide();
+                // Don't close the form - stay on login screen
+                // Clear password field for next attempt
+                passwordType.Text = "";
+                passwordText = "";
+                usernameType.Focus();
+                usernameType.SelectAll();
+
+                return;
             }
-
-            // Admin login
+            // Check credentials - Admin login (case insensitive username)
             else if (username.ToLower() == ADMIN_USERNAME && password == ADMIN_PASSWORD)
             {
+                // Store which user logged in
                 loggedInUsername = username;
                 loggedInRole = "Admin";
 
+                // Login successful - set DialogResult to OK
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
-
-            // (Optional) Staff login — REMOVE or keep separate
-            else if (username.ToLower() == STAFF_USERNAME && password == STAFF_PASSWORD)
-            {
-                MessageBox.Show("Staff login is disabled or redirected to POS.");
-            }
-
-            // Invalid
             else
             {
+                // Show error message
                 MessageBox.Show("Invalid username or password!",
                     "Login Failed",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
 
+                // Clear password field
                 passwordType.Text = "";
                 passwordText = "";
                 usernameType.Focus();

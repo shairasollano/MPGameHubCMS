@@ -103,7 +103,12 @@ namespace cms
             gameTypesList = new List<GameType>();
             _imageCache = new Dictionary<int, byte[]>();
 
-            // Style buttons
+            // Style buttons after they are created by InitializeComponent
+            this.Load += GameRates_Load;
+        }
+
+        private void GameRates_Load(object sender, EventArgs e)
+        {
             StyleButton(btnAddNew, successColor);
             StyleButton(btnManage, primaryColor);
             StyleButton(btnAddCourt, successColor);
@@ -115,18 +120,23 @@ namespace cms
             InitializeControls();
 
             // Log that GameRates module was opened
-            Activitylogs.Instance.AddLogEntry(currentUser, "Module Opened", "Game Rates management module was opened", "Info", "GameRates");
+            try
+            {
+                Activitylogs.Instance.AddLogEntry(currentUser, "Module Opened", "Game Rates management module was opened", "Info", "GameRates");
+            }
+            catch { }
         }
 
         private void StyleButton(Button btn, Color backColor)
         {
+            if (btn == null) return;
+
             btn.BackColor = backColor;
             btn.FlatAppearance.BorderSize = 0;
             btn.FlatStyle = FlatStyle.Flat;
             btn.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btn.ForeColor = Color.White;
             btn.Cursor = Cursors.Hand;
-            btn.Height = 32;
 
             // Hover effect
             btn.MouseEnter += (s, e) => btn.BackColor = ControlPaint.Light(backColor, 0.2f);
@@ -151,7 +161,11 @@ namespace cms
             }
             catch (Exception ex)
             {
-                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Database initialization error");
+                try
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Database initialization error");
+                }
+                catch { }
                 MessageBox.Show($"Database initialization error: {ex.Message}\n\nUsing default sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeDefaultOptions();
@@ -285,7 +299,11 @@ namespace cms
                     insertCmd.ExecuteNonQuery();
                 }
 
-                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default court types were created", "Info", "GameRates");
+                try
+                {
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default court types were created", "Info", "GameRates");
+                }
+                catch { }
             }
 
             // Check game_types
@@ -305,7 +323,11 @@ namespace cms
                     insertCmd.ExecuteNonQuery();
                 }
 
-                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game types were created", "Info", "GameRates");
+                try
+                {
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game types were created", "Info", "GameRates");
+                }
+                catch { }
             }
 
             // Check game_rates
@@ -325,7 +347,11 @@ namespace cms
                 MySqlCommand insertRatesCmd = new MySqlCommand(insertRate, connection);
                 insertRatesCmd.ExecuteNonQuery();
 
-                Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game rates were created", "Info", "GameRates");
+                try
+                {
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game rates were created", "Info", "GameRates");
+                }
+                catch { }
             }
         }
 
@@ -375,11 +401,19 @@ namespace cms
                     LoadGameRatesFromDatabase();
                 }
 
-                Activitylogs.Instance.AddLogEntry(currentUser, "Data Loaded", $"Loaded {gameRates.Count} game rates from database", "Info", "GameRates");
+                try
+                {
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Data Loaded", $"Loaded {gameRates.Count} game rates from database", "Info", "GameRates");
+                }
+                catch { }
             }
             catch (Exception ex)
             {
-                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading data from database");
+                try
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading data from database");
+                }
+                catch { }
                 MessageBox.Show($"Error loading data from database: {ex.Message}\nUsing sample data instead.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 InitializeDefaultOptions();
@@ -451,7 +485,11 @@ namespace cms
             }
             catch (Exception ex)
             {
-                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading game rates");
+                try
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading game rates");
+                }
+                catch { }
                 MessageBox.Show($"Error loading game rates: {ex.Message}\nUsing sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 AddSampleData();
@@ -501,13 +539,15 @@ namespace cms
             {
                 filterCombo.Invoke(new MethodInvoker(() => {
                     filterCombo.SelectedIndex = 0;
-                    managementOverlay.Visible = false;
+                    if (managementOverlay != null)
+                        managementOverlay.Visible = false;
                 }));
             }
             else
             {
                 filterCombo.SelectedIndex = 0;
-                managementOverlay.Visible = false;
+                if (managementOverlay != null)
+                    managementOverlay.Visible = false;
             }
             UpdateStatistics();
         }
@@ -602,6 +642,8 @@ namespace cms
 
         private void LoadCourtCards()
         {
+            if (courtsFlowPanel == null || courtsFlowPanel.IsDisposed) return;
+
             if (courtsFlowPanel.InvokeRequired)
             {
                 courtsFlowPanel.Invoke(new MethodInvoker(() => LoadCourtCards()));
@@ -684,6 +726,8 @@ namespace cms
 
         private void LoadGameTypeCards()
         {
+            if (gameTypesFlowPanel == null || gameTypesFlowPanel.IsDisposed) return;
+
             if (gameTypesFlowPanel.InvokeRequired)
             {
                 gameTypesFlowPanel.Invoke(new MethodInvoker(() => LoadGameTypeCards()));
@@ -763,6 +807,8 @@ namespace cms
 
         private void DisplayGameRates()
         {
+            if (ratesFlowPanel == null || ratesFlowPanel.IsDisposed) return;
+
             if (ratesFlowPanel.InvokeRequired)
             {
                 ratesFlowPanel.Invoke(new MethodInvoker(() => DisplayGameRates()));
@@ -963,18 +1009,22 @@ namespace cms
                     avgRate = gameRates.Average(r => r.Rate);
                 }
 
-                lblStatsValue1.Text = totalRates.ToString();
-                lblStatsValue2.Text = activeCount.ToString();
-                lblStatsValue3.Text = inactiveCount.ToString();
-                lblStatsValue4.Text = $"₱{avgRate:F0}";
+                if (lblStatsValue1 != null) lblStatsValue1.Text = totalRates.ToString();
+                if (lblStatsValue2 != null) lblStatsValue2.Text = activeCount.ToString();
+                if (lblStatsValue3 != null) lblStatsValue3.Text = inactiveCount.ToString();
+                if (lblStatsValue4 != null) lblStatsValue4.Text = $"₱{avgRate:F0}";
 
-                lblStatsSub1.Text = totalRates == 1 ? "total rate" : "total rates";
-                lblStatsSub2.Text = activeCount == 1 ? "active" : "active";
-                lblStatsSub3.Text = inactiveCount == 1 ? "inactive" : "inactive";
+                if (lblStatsSub1 != null) lblStatsSub1.Text = totalRates == 1 ? "total rate" : "total rates";
+                if (lblStatsSub2 != null) lblStatsSub2.Text = activeCount == 1 ? "active" : "active";
+                if (lblStatsSub3 != null) lblStatsSub3.Text = inactiveCount == 1 ? "inactive" : "inactive";
             }
             catch (Exception ex)
             {
-                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error updating statistics");
+                try
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error updating statistics");
+                }
+                catch { }
             }
         }
 
@@ -1002,14 +1052,22 @@ namespace cms
                 DisplayGameRates();
                 UpdateStatistics();
 
-                Activitylogs.Instance.LogGameRateActivity(currentUser, "Status Changed", rate.Name, $"Changed from {oldStatus} to {newStatus}");
+                try
+                {
+                    Activitylogs.Instance.LogGameRateActivity(currentUser, "Status Changed", rate.Name, $"Changed from {oldStatus} to {newStatus}");
+                }
+                catch { }
 
                 MessageBox.Show($"Game rate {newStatus.ToLower()}!", "Status Changed",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error changing status for {rate.Name}");
+                try
+                {
+                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error changing status for {rate.Name}");
+                }
+                catch { }
                 MessageBox.Show($"Error updating status: {ex.Message}",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -1219,6 +1277,7 @@ namespace cms
                     WrapContents = false
                 };
 
+                // FIX: Set DialogResult for Cancel button
                 Button btnCancel = new Button
                 {
                     Text = "Cancel",
@@ -1228,7 +1287,8 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Margin = new Padding(10, 5, 0, 5),
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    DialogResult = DialogResult.Cancel  // This makes the cancel button work
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
 
@@ -1264,6 +1324,9 @@ namespace cms
                 tlp.Controls.Add(buttonPanel, 1, 7);
 
                 editDialog.Controls.Add(tlp);
+
+                // FIX: Set the CancelButton property of the form
+                editDialog.CancelButton = btnCancel;
 
                 btnSave.Click += (s, args) =>
                 {
@@ -1351,16 +1414,25 @@ namespace cms
                         if (oldRate != rate.Rate) changes += $"Rate: ₱{oldRate} → ₱{rate.Rate} ";
                         if (imageChanged) changes += "Image updated ";
 
-                        Activitylogs.Instance.LogGameRateActivity(currentUser, "Updated", rate.Name, changes);
+                        try
+                        {
+                            Activitylogs.Instance.LogGameRateActivity(currentUser, "Updated", rate.Name, changes);
+                        }
+                        catch { }
 
                         MessageBox.Show("Game rate updated successfully!", "Success",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                        editDialog.DialogResult = DialogResult.OK;
                         editDialog.Close();
                     }
                     catch (Exception ex)
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error updating {rate.Name}");
+                        try
+                        {
+                            Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error updating {rate.Name}");
+                        }
+                        catch { }
                         MessageBox.Show($"Error updating database: {ex.Message}",
                             "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -1389,15 +1461,24 @@ namespace cms
                             DisplayGameRates();
                             UpdateStatistics();
 
-                            Activitylogs.Instance.LogGameRateActivity(currentUser, "Deleted", deletedName);
+                            try
+                            {
+                                Activitylogs.Instance.LogGameRateActivity(currentUser, "Deleted", deletedName);
+                            }
+                            catch { }
 
                             MessageBox.Show("Game rate deleted successfully!", "Success",
                                 MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            editDialog.DialogResult = DialogResult.OK;
                             editDialog.Close();
                         }
                         catch (Exception ex)
                         {
-                            Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting {rate.Name}");
+                            try
+                            {
+                                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting {rate.Name}");
+                            }
+                            catch { }
                             MessageBox.Show($"Error deleting: {ex.Message}",
                                 "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
@@ -1607,7 +1688,8 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Margin = new Padding(10, 5, 0, 5),
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    DialogResult = DialogResult.Cancel
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
 
@@ -1629,6 +1711,7 @@ namespace cms
                 tlp.Controls.Add(buttonPanel, 1, 7);
 
                 addRateDialog.Controls.Add(tlp);
+                addRateDialog.CancelButton = btnCancel;
 
                 btnAdd.Click += (s, args) =>
                 {
@@ -1704,8 +1787,12 @@ namespace cms
                             UpdateStatistics();
                         }
 
-                        Activitylogs.Instance.LogGameRateActivity(currentUser, "Added", txtName.Text.Trim(),
-                            $"Court: {cboCourtType.Text}, Game: {cboGameType.Text}, Rate: ₱{rate}");
+                        try
+                        {
+                            Activitylogs.Instance.LogGameRateActivity(currentUser, "Added", txtName.Text.Trim(),
+                                $"Court: {cboCourtType.Text}, Game: {cboGameType.Text}, Rate: ₱{rate}");
+                        }
+                        catch { }
 
                         MessageBox.Show("Game rate added successfully!", "Success",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1714,7 +1801,11 @@ namespace cms
                     }
                     catch (Exception ex)
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error adding new game rate");
+                        try
+                        {
+                            Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error adding new game rate");
+                        }
+                        catch { }
                         MessageBox.Show($"Error saving: {ex.Message}",
                             "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
@@ -1766,14 +1857,22 @@ namespace cms
                     courtTypes.Remove(court);
                     LoadCourtCards();
 
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Deleted", $"Court type '{deletedCourt}' was deleted", "Info", "GameRates");
+                    try
+                    {
+                        Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Deleted", $"Court type '{deletedCourt}' was deleted", "Info", "GameRates");
+                    }
+                    catch { }
 
                     MessageBox.Show($"Court type '{deletedCourt}' deleted successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting court type {court.CourtName}");
+                    try
+                    {
+                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting court type {court.CourtName}");
+                    }
+                    catch { }
                     MessageBox.Show($"Error deleting: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -1812,21 +1911,28 @@ namespace cms
                     gameTypesList.Remove(gameType);
                     LoadGameTypeCards();
 
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Deleted", $"Game type '{deletedGame}' was deleted", "Info", "GameRates");
+                    try
+                    {
+                        Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Deleted", $"Game type '{deletedGame}' was deleted", "Info", "GameRates");
+                    }
+                    catch { }
 
                     MessageBox.Show($"Game type '{deletedGame}' deleted successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting game type {gameType.GameName}");
+                    try
+                    {
+                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting game type {gameType.GameName}");
+                    }
+                    catch { }
                     MessageBox.Show($"Error deleting: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        // ADD COURT BUTTON CLICK HANDLER
         private void btnAddCourt_Click(object sender, EventArgs e)
         {
             string newCourtName = ShowInputDialog("Add Court Type", "Enter new court type:");
@@ -1862,21 +1968,28 @@ namespace cms
                         LoadCourtCards();
                     }
 
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Added", $"New court type '{newCourtName}' was added", "Info", "GameRates");
+                    try
+                    {
+                        Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Added", $"New court type '{newCourtName}' was added", "Info", "GameRates");
+                    }
+                    catch { }
 
                     MessageBox.Show($"Court type '{newCourtName}' added successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding court type {newCourtName}");
+                    try
+                    {
+                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding court type {newCourtName}");
+                    }
+                    catch { }
                     MessageBox.Show($"Error adding: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
-        // ADD GAME TYPE BUTTON CLICK HANDLER
         private void btnAddGameType_Click(object sender, EventArgs e)
         {
             string newGameName = ShowInputDialog("Add Game Type", "Enter new game type:");
@@ -1912,14 +2025,22 @@ namespace cms
                         LoadGameTypeCards();
                     }
 
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Added", $"New game type '{newGameName}' was added", "Info", "GameRates");
+                    try
+                    {
+                        Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Added", $"New game type '{newGameName}' was added", "Info", "GameRates");
+                    }
+                    catch { }
 
                     MessageBox.Show($"Game type '{newGameName}' added successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding game type {newGameName}");
+                    try
+                    {
+                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding game type {newGameName}");
+                    }
+                    catch { }
                     MessageBox.Show($"Error adding: {ex.Message}",
                         "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -1928,22 +2049,30 @@ namespace cms
 
         private void btnManage_Click(object sender, EventArgs e)
         {
-            // Show the management overlay
-            managementOverlay.Visible = true;
-            managementOverlay.BringToFront();
-            btnManage.Text = "Hide Management";
+            if (managementOverlay != null)
+            {
+                managementOverlay.Visible = true;
+                managementOverlay.BringToFront();
+                btnManage.Text = "Hide Management";
 
-            LoadCourtCards();
-            LoadGameTypeCards();
+                LoadCourtCards();
+                LoadGameTypeCards();
 
-            Activitylogs.Instance.AddLogEntry(currentUser, "Management View", "Opened court and game type management", "Info", "GameRates");
+                try
+                {
+                    Activitylogs.Instance.AddLogEntry(currentUser, "Management View", "Opened court and game type management", "Info", "GameRates");
+                }
+                catch { }
+            }
         }
 
         private void btnCloseManagement_Click(object sender, EventArgs e)
         {
-            // Hide the management overlay
-            managementOverlay.Visible = false;
-            btnManage.Text = "Manage Courts/Types";
+            if (managementOverlay != null)
+            {
+                managementOverlay.Visible = false;
+                btnManage.Text = "Manage Courts/Types";
+            }
         }
 
         private void btnAddNew_Click(object sender, EventArgs e)
@@ -2023,4 +2152,4 @@ namespace cms
             }
         }
     }
-}
+} 

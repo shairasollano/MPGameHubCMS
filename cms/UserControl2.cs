@@ -26,13 +26,19 @@ namespace cms
         private float topMargin = 40;
         private float lineHeight = 20;
 
+        // Store current data
+        private int[] dailySales = { 12500, 18700, 15400, 21000, 28500, 32000, 27500 };
+        private int[] dailyCustomerCounts = { 45, 67, 54, 78, 95, 120, 105 };
+        private string[] days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+        private string[] fullDays = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+
         public UserControl2()
         {
             InitializeComponent();
             SetupCharts();
             InitializePrinting();
 
-            // Wire up the click events for the new controls
+            // Wire up the click events
             if (generateReport != null)
                 generateReport.Click += generateReport_Click;
 
@@ -47,7 +53,6 @@ namespace cms
             printDoc.BeginPrint += PrintDocument_BeginPrint;
             printDoc.EndPrint += PrintDocument_EndPrint;
 
-            // Set up fonts for printing - use System.Drawing.Font explicitly
             reportFont = new System.Drawing.Font("Arial", 10);
             headerFont = new System.Drawing.Font("Arial", 12, FontStyle.Bold);
             titleFont = new System.Drawing.Font("Arial", 16, FontStyle.Bold);
@@ -55,8 +60,8 @@ namespace cms
 
         private void SetupCharts()
         {
-            SetupWeeklyChart();
-            SetupMonthlyChart();
+            SetupWeeklyChart(); // Keep this as is (sales chart)
+            SetupWeeklyCustomerChart(); // Changed from monthly to weekly customer counts
         }
 
         private void SetupWeeklyChart()
@@ -65,12 +70,10 @@ namespace cms
             {
                 weeklySale.Controls.Clear();
 
-                // Create a Chart control
                 Chart weeklyChart = new Chart();
                 weeklyChart.Dock = DockStyle.Fill;
                 weeklyChart.BackColor = Color.White;
 
-                // Create chart area
                 ChartArea chartArea = new ChartArea();
                 chartArea.Name = "WeeklyChartArea";
                 chartArea.BackColor = Color.FromArgb(245, 245, 245);
@@ -82,7 +85,6 @@ namespace cms
                 chartArea.AxisY.TitleFont = new System.Drawing.Font("Arial", 9, FontStyle.Bold);
                 weeklyChart.ChartAreas.Add(chartArea);
 
-                // Create series
                 Series series = new Series();
                 series.Name = "WeeklySales";
                 series.ChartType = SeriesChartType.Column;
@@ -93,21 +95,16 @@ namespace cms
                 series.Font = new System.Drawing.Font("Arial", 8, FontStyle.Bold);
                 series.LabelFormat = "₱{0:#,0}";
 
-                // Add data
-                string[] days = { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
-                int[] sales = { 12500, 18700, 15400, 21000, 28500, 32000, 27500 };
-
                 for (int i = 0; i < days.Length; i++)
                 {
                     DataPoint point = new DataPoint();
-                    point.SetValueXY(days[i], sales[i]);
-                    point.Color = i >= 5 ? Color.FromArgb(228, 186, 94) : Color.FromArgb(40, 41, 34); // Highlight weekends
+                    point.SetValueXY(days[i], dailySales[i]);
+                    point.Color = i >= 5 ? Color.FromArgb(228, 186, 94) : Color.FromArgb(40, 41, 34);
                     series.Points.Add(point);
                 }
 
                 weeklyChart.Series.Add(series);
 
-                // Add title
                 Label weeklyTitle = new Label();
                 weeklyTitle.Text = "Weekly Sales Report";
                 weeklyTitle.Font = new System.Drawing.Font("Arial", 12, FontStyle.Bold);
@@ -122,234 +119,170 @@ namespace cms
             }
         }
 
-        private void SetupMonthlyChart()
+        private void SetupWeeklyCustomerChart()
         {
-            if (monthlySale != null)
+            if (customerCount != null)
             {
-                monthlySale.Controls.Clear();
+                customerCount.Controls.Clear();
 
-                // Create a Chart control
-                Chart monthlyChart = new Chart();
-                monthlyChart.Dock = DockStyle.Fill;
-                monthlyChart.BackColor = Color.White;
+                Chart weeklyCustomerChart = new Chart();
+                weeklyCustomerChart.Dock = DockStyle.Fill;
+                weeklyCustomerChart.BackColor = Color.White;
 
-                // Create chart area
                 ChartArea chartArea = new ChartArea();
-                chartArea.Name = "MonthlyChartArea";
+                chartArea.Name = "WeeklyCustomerChartArea";
                 chartArea.BackColor = Color.FromArgb(250, 250, 250);
                 chartArea.AxisX.MajorGrid.LineColor = Color.FromArgb(200, 200, 200);
                 chartArea.AxisY.MajorGrid.LineColor = Color.FromArgb(200, 200, 200);
-                chartArea.AxisX.Title = "Months";
-                chartArea.AxisY.Title = "Sales (₱)";
+                chartArea.AxisX.Title = "Days";
+                chartArea.AxisY.Title = "Customer Count";
                 chartArea.AxisX.TitleFont = new System.Drawing.Font("Arial", 9, FontStyle.Bold);
                 chartArea.AxisY.TitleFont = new System.Drawing.Font("Arial", 9, FontStyle.Bold);
+                weeklyCustomerChart.ChartAreas.Add(chartArea);
 
-                // Rotate month labels for better fit
-                chartArea.AxisX.LabelStyle.Angle = -45;
-                chartArea.AxisX.Interval = 1;
-                monthlyChart.ChartAreas.Add(chartArea);
-
-                // Create series - use line chart for monthly trend
                 Series series = new Series();
-                series.Name = "MonthlySales";
-                series.ChartType = SeriesChartType.Line;
-                series.Color = Color.FromArgb(40, 41, 34);
-                series.BorderWidth = 3;
-                series.MarkerStyle = MarkerStyle.Circle;
-                series.MarkerSize = 8;
-                series.MarkerColor = Color.FromArgb(228, 186, 94);
-                series.IsValueShownAsLabel = true;
-                series.LabelForeColor = Color.FromArgb(40, 41, 34);
-                series.Font = new System.Drawing.Font("Arial", 7, FontStyle.Bold);
-                series.LabelFormat = "₱{0:#,0}";
-
-                // Add data
-                string[] months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-                int[] monthlySales = { 125000, 187000, 154000, 210000, 285000, 320000,
-                                      295000, 350000, 310000, 380000, 420000, 500000 };
-
-                for (int i = 0; i < months.Length; i++)
-                {
-                    DataPoint point = new DataPoint();
-                    point.SetValueXY(months[i], monthlySales[i]);
-                    series.Points.Add(point);
-                }
-
-                monthlyChart.Series.Add(series);
-
-                // Add title
-                Label monthlyTitle = new Label();
-                monthlyTitle.Text = "Monthly Sales Trend";
-                monthlyTitle.Font = new System.Drawing.Font("Arial", 12, FontStyle.Bold);
-                monthlyTitle.TextAlign = ContentAlignment.MiddleCenter;
-                monthlyTitle.Dock = DockStyle.Top;
-                monthlyTitle.Height = 30;
-                monthlyTitle.BackColor = Color.FromArgb(228, 186, 94);
-                monthlyTitle.ForeColor = Color.FromArgb(40, 41, 34);
-
-                monthlySale.Controls.Add(monthlyTitle);
-                monthlySale.Controls.Add(monthlyChart);
-            }
-        }
-
-        // Alternative: Create bar chart for monthly sales
-        private void SetupMonthlyBarChart()
-        {
-            if (monthlySale != null)
-            {
-                monthlySale.Controls.Clear();
-
-                Chart monthlyChart = new Chart();
-                monthlyChart.Dock = DockStyle.Fill;
-                monthlyChart.BackColor = Color.White;
-
-                ChartArea chartArea = new ChartArea();
-                chartArea.Name = "MonthlyChartArea";
-                chartArea.BackColor = Color.FromArgb(250, 250, 250);
-                chartArea.AxisX.MajorGrid.LineColor = Color.FromArgb(200, 200, 200);
-                chartArea.AxisY.MajorGrid.LineColor = Color.FromArgb(200, 200, 200);
-                chartArea.AxisX.Title = "Months";
-                chartArea.AxisY.Title = "Sales (₱)";
-                monthlyChart.ChartAreas.Add(chartArea);
-
-                // Create bar series
-                Series series = new Series();
-                series.Name = "MonthlySales";
+                series.Name = "WeeklyCustomerCount";
                 series.ChartType = SeriesChartType.Column;
                 series.Color = Color.FromArgb(40, 41, 34);
+                series.BorderWidth = 2;
                 series.IsValueShownAsLabel = true;
-                series.LabelFormat = "₱{0:#,0}";
+                series.LabelForeColor = Color.FromArgb(40, 41, 34);
+                series.Font = new System.Drawing.Font("Arial", 8, FontStyle.Bold);
+                series.LabelFormat = "{0:#,0}";
 
-                // Add data with gradient colors
-                string[] months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-                int[] monthlySales = { 125000, 187000, 154000, 210000, 285000, 320000,
-                                      295000, 350000, 310000, 380000, 420000, 500000 };
-
-                for (int i = 0; i < months.Length; i++)
+                for (int i = 0; i < days.Length; i++)
                 {
                     DataPoint point = new DataPoint();
-                    point.SetValueXY(months[i], monthlySales[i]);
-
-                    // Color gradient based on sales value
-                    if (monthlySales[i] >= 400000)
-                        point.Color = Color.FromArgb(0, 150, 0); // Dark green for high sales
-                    else if (monthlySales[i] >= 300000)
-                        point.Color = Color.FromArgb(228, 186, 94); // Gold for medium sales
-                    else
-                        point.Color = Color.FromArgb(40, 41, 34); // Dark for lower sales
-
+                    point.SetValueXY(days[i], dailyCustomerCounts[i]);
+                    point.Color = i >= 5 ? Color.FromArgb(228, 186, 94) : Color.FromArgb(40, 41, 34);
                     series.Points.Add(point);
                 }
 
-                monthlyChart.Series.Add(series);
+                weeklyCustomerChart.Series.Add(series);
 
-                Label monthlyTitle = new Label();
-                monthlyTitle.Text = "Monthly Sales Comparison";
-                monthlyTitle.Font = new System.Drawing.Font("Arial", 12, FontStyle.Bold);
-                monthlyTitle.TextAlign = ContentAlignment.MiddleCenter;
-                monthlyTitle.Dock = DockStyle.Top;
-                monthlyTitle.Height = 30;
-                monthlyTitle.BackColor = Color.FromArgb(228, 186, 94);
-                monthlyTitle.ForeColor = Color.FromArgb(40, 41, 34);
+                Label customerTitle = new Label();
+                customerTitle.Text = "Weekly Customer Counts";
+                customerTitle.Font = new System.Drawing.Font("Arial", 12, FontStyle.Bold);
+                customerTitle.TextAlign = ContentAlignment.MiddleCenter;
+                customerTitle.Dock = DockStyle.Top;
+                customerTitle.Height = 30;
+                customerTitle.BackColor = Color.FromArgb(228, 186, 94);
+                customerTitle.ForeColor = Color.FromArgb(40, 41, 34);
 
-                monthlySale.Controls.Add(monthlyTitle);
-                monthlySale.Controls.Add(monthlyChart);
+                customerCount.Controls.Add(customerTitle);
+                customerCount.Controls.Add(weeklyCustomerChart);
             }
         }
 
-        // New click handler for generateReport (label4)
         private void generateReport_Click(object sender, EventArgs e)
         {
-            // Show options menu
-            ContextMenuStrip reportMenu = new ContextMenuStrip();
+            try
+            {
+                ContextMenuStrip reportMenu = new ContextMenuStrip();
 
-            ToolStripMenuItem previewItem = new ToolStripMenuItem("Preview Report");
-            previewItem.Click += (s, args) => PreviewReport();
-            reportMenu.Items.Add(previewItem);
+                ToolStripMenuItem previewItem = new ToolStripMenuItem("Preview Report");
+                previewItem.Click += (s, args) => PreviewReport();
+                reportMenu.Items.Add(previewItem);
 
-            ToolStripMenuItem printItem = new ToolStripMenuItem("Print Report");
-            printItem.Click += (s, args) => PrintReport();
-            reportMenu.Items.Add(printItem);
+                ToolStripMenuItem printItem = new ToolStripMenuItem("Print Report");
+                printItem.Click += (s, args) => PrintReport();
+                reportMenu.Items.Add(printItem);
 
-            ToolStripMenuItem saveTextItem = new ToolStripMenuItem("Save as Text File");
-            saveTextItem.Click += (s, args) => SaveAsTextFile();
-            reportMenu.Items.Add(saveTextItem);
+                ToolStripMenuItem saveTextItem = new ToolStripMenuItem("Save as Text File");
+                saveTextItem.Click += (s, args) => SaveAsTextFile();
+                reportMenu.Items.Add(saveTextItem);
 
-            // Show menu at cursor position
-            reportMenu.Show(System.Windows.Forms.Cursor.Position);
+                reportMenu.Show(generateReport, new Point(0, generateReport.Height));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error showing report menu: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
-        // New click handler for refreshData (label10)
         private void refreshData_Click(object sender, EventArgs e)
         {
-            SetupCharts();
-            MessageBox.Show("Data refreshed successfully!", "Dashboard", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                SetupCharts();
+                MessageBox.Show("Data refreshed successfully!", "Dashboard",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error refreshing data: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void GenerateReportData()
         {
             reportLines = new List<string>();
 
-            // Report header - Updated to MATCHPOINT GAME HUB REPORT
-            reportLines.Add("MATCHPOINT GAME HUB REPORT");
-            reportLines.Add("===============================");
-            reportLines.Add($"Generated on: {DateTime.Now.ToString("yyyy-MM-dd HH:mm")}");
-            reportLines.Add("");
-            reportLines.Add("");
-
-            // Weekly Sales Section
-            reportLines.Add("WEEKLY SALES REPORT");
-            reportLines.Add("-------------------");
-            string[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
-            int[] weeklySales = { 12500, 18700, 15400, 21000, 28500, 32000, 27500 };
-
-            for (int i = 0; i < days.Length; i++)
+            try
             {
-                reportLines.Add($"  {days[i].PadRight(12)} ₱{weeklySales[i]:#,##0}");
+                // Report header
+                reportLines.Add("MATCHPOINT GAME HUB REPORT");
+                reportLines.Add("===============================");
+                reportLines.Add($"Generated on: {DateTime.Now.ToString("yyyy-MM-dd HH:mm")}");
+                reportLines.Add("");
+                reportLines.Add("");
+
+                // Weekly Sales Section
+                reportLines.Add("WEEKLY SALES REPORT");
+                reportLines.Add("-------------------");
+
+                for (int i = 0; i < fullDays.Length; i++)
+                {
+                    reportLines.Add($"  {fullDays[i].PadRight(12)} ₱{dailySales[i]:#,##0}");
+                }
+
+                int weeklyTotal = dailySales.Sum();
+                reportLines.Add($"");
+                reportLines.Add($"  Total Weekly Sales: ₱{weeklyTotal:#,##0}");
+                reportLines.Add($"  Average Daily Sales: ₱{(weeklyTotal / 7):#,##0}");
+                reportLines.Add("");
+                reportLines.Add("");
+
+                // Weekly Customer Counts Section (NEW - Replaces Monthly Sales)
+                reportLines.Add("WEEKLY CUSTOMER COUNTS");
+                reportLines.Add("---------------------");
+
+                for (int i = 0; i < fullDays.Length; i++)
+                {
+                    reportLines.Add($"  {fullDays[i].PadRight(12)} {dailyCustomerCounts[i]:#,##0} customers");
+                }
+
+                int weeklyCustomerTotal = dailyCustomerCounts.Sum();
+                reportLines.Add($"");
+                reportLines.Add($"  Total Weekly Customers: {weeklyCustomerTotal:#,##0}");
+                reportLines.Add($"  Average Daily Customers: {(weeklyCustomerTotal / 7):#,##0}");
+                reportLines.Add($"  Peak Day: {fullDays[Array.IndexOf(dailyCustomerCounts, dailyCustomerCounts.Max())]} with {dailyCustomerCounts.Max():#,##0} customers");
+                reportLines.Add("");
+                reportLines.Add("");
+
+                // Summary Section
+                reportLines.Add("SUMMARY");
+                reportLines.Add("-------");
+                reportLines.Add($"  Total Revenue: ₱{weeklyTotal:#,##0}");
+                reportLines.Add($"  Total Customers: {weeklyCustomerTotal:#,##0}");
+                reportLines.Add($"  Average Transaction Value: ₱{(weeklyTotal / weeklyCustomerTotal):#,##0}");
+                reportLines.Add($"  Best Performing Day: {fullDays[Array.IndexOf(dailySales, dailySales.Max())]} (₱{dailySales.Max():#,##0})");
+                reportLines.Add($"  Most Customers Day: {fullDays[Array.IndexOf(dailyCustomerCounts, dailyCustomerCounts.Max())]} ({dailyCustomerCounts.Max():#,##0} customers)");
+                reportLines.Add($"  Peak Hour: 6:00 PM - 9:00 PM");
+                reportLines.Add("");
+                reportLines.Add("");
+
+                // Footer
+                reportLines.Add("==========================================");
+                reportLines.Add("END OF REPORT");
+                reportLines.Add("==========================================");
             }
-
-            int weeklyTotal = weeklySales.Sum();
-            reportLines.Add($"");
-            reportLines.Add($"  Total Weekly Sales: ₱{weeklyTotal:#,##0}");
-            reportLines.Add("");
-            reportLines.Add("");
-
-            // Monthly Sales Section
-            reportLines.Add("MONTHLY SALES REPORT");
-            reportLines.Add("--------------------");
-            string[] months = { "January", "February", "March", "April", "May", "June",
-                              "July", "August", "September", "October", "November", "December" };
-            int[] monthlySales = { 125000, 187000, 154000, 210000, 285000, 320000,
-                                  295000, 350000, 310000, 380000, 420000, 500000 };
-
-            for (int i = 0; i < months.Length; i++)
+            catch (Exception ex)
             {
-                reportLines.Add($"  {months[i].PadRight(12)} ₱{monthlySales[i]:#,##0}");
+                reportLines.Add($"ERROR GENERATING REPORT: {ex.Message}");
             }
-
-            int monthlyTotal = monthlySales.Sum();
-            reportLines.Add($"");
-            reportLines.Add($"  Total Monthly Sales: ₱{monthlyTotal:#,##0}");
-            reportLines.Add("");
-            reportLines.Add("");
-
-            // Summary Section
-            reportLines.Add("SUMMARY");
-            reportLines.Add("-------");
-            reportLines.Add($"  Average Daily Sales: ₱{(weeklyTotal / 7):#,##0}");
-            reportLines.Add($"  Average Monthly Sales: ₱{(monthlyTotal / 12):#,##0}");
-            reportLines.Add($"  Best Performing Day: {days[Array.IndexOf(weeklySales, weeklySales.Max())]}");
-            reportLines.Add($"  Best Performing Month: {months[Array.IndexOf(monthlySales, monthlySales.Max())]}");
-            reportLines.Add($"  Peak Hour: 6:00 PM - 9:00 PM");
-            reportLines.Add("");
-            reportLines.Add("");
-
-            // Footer
-            reportLines.Add("==========================================");
-            reportLines.Add("END OF REPORT");
-            reportLines.Add("==========================================");
         }
 
         private void PrintDocument_BeginPrint(object sender, PrintEventArgs e)
@@ -360,90 +293,114 @@ namespace cms
 
         private void PrintDocument_PrintPage(object sender, PrintPageEventArgs e)
         {
-            Graphics g = e.Graphics;
-            float pageHeight = e.MarginBounds.Height;
-            float pageWidth = e.MarginBounds.Width;
-
-            // Draw report title - Updated to MATCHPOINT GAME HUB REPORT
-            string reportTitle = "MATCHPOINT GAME HUB REPORT";
-            g.DrawString(reportTitle, titleFont, Brushes.Black,
-                        (pageWidth - g.MeasureString(reportTitle, titleFont).Width) / 2, yPos);
-            yPos += 40;
-
-            // Draw generation date
-            g.DrawString($"Generated: {DateTime.Now.ToString("yyyy-MM-dd HH:mm")}", reportFont, Brushes.Black, leftMargin, yPos);
-            yPos += 30;
-
-            // Draw separator line
-            g.DrawLine(Pens.Black, leftMargin, yPos, pageWidth - leftMargin, yPos);
-            yPos += 20;
-
-            // Define data
-            string[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
-            int[] weeklySales = { 12500, 18700, 15400, 21000, 28500, 22000, 27500 };
-            string[] months = { "January", "February", "March", "April", "May", "June",
-                              "July", "August", "September", "October", "November", "December" };
-            int[] monthlySales = { 125000, 187000, 154000, 210000, 285000, 320000,
-                                  295000, 350000, 310000, 380000, 420000, 500000 };
-
-            // Draw Weekly Sales Section
-            g.DrawString("WEEKLY SALES", headerFont, Brushes.Black, leftMargin, yPos);
-            yPos += 25;
-
-            for (int i = 0; i < days.Length; i++)
+            try
             {
-                if (yPos > pageHeight - 50)
+                Graphics g = e.Graphics;
+                float pageHeight = e.MarginBounds.Height;
+                float pageWidth = e.MarginBounds.Width;
+
+                // Draw report title
+                string reportTitle = "MATCHPOINT GAME HUB REPORT";
+                g.DrawString(reportTitle, titleFont, Brushes.Black,
+                            (pageWidth - g.MeasureString(reportTitle, titleFont).Width) / 2, yPos);
+                yPos += 40;
+
+                // Draw generation date
+                g.DrawString($"Generated: {DateTime.Now.ToString("yyyy-MM-dd HH:mm")}", reportFont, Brushes.Black, leftMargin, yPos);
+                yPos += 30;
+
+                // Draw separator line
+                g.DrawLine(Pens.Black, leftMargin, yPos, pageWidth - leftMargin, yPos);
+                yPos += 20;
+
+                // Draw Weekly Sales Section
+                g.DrawString("WEEKLY SALES", headerFont, Brushes.Black, leftMargin, yPos);
+                yPos += 25;
+
+                for (int i = 0; i < fullDays.Length; i++)
+                {
+                    if (yPos > pageHeight - 50)
+                    {
+                        e.HasMorePages = true;
+                        return;
+                    }
+                    g.DrawString($"{fullDays[i].PadRight(15)} ₱{dailySales[i]:#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                    yPos += lineHeight;
+                }
+
+                int weeklyTotal = dailySales.Sum();
+                g.DrawString($"Total Weekly Sales: ₱{weeklyTotal:#,##0}", headerFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += lineHeight;
+                g.DrawString($"Average Daily Sales: ₱{(weeklyTotal / 7):#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += 40;
+
+                // Check for page break
+                if (yPos > pageHeight - 150)
                 {
                     e.HasMorePages = true;
                     return;
                 }
-                g.DrawString($"{days[i].PadRight(15)} ₱{weeklySales[i]:#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
+
+                // Draw Weekly Customer Counts Section
+                g.DrawString("WEEKLY CUSTOMER COUNTS", headerFont, Brushes.Black, leftMargin, yPos);
+                yPos += 25;
+
+                for (int i = 0; i < fullDays.Length; i++)
+                {
+                    if (yPos > pageHeight - 50)
+                    {
+                        e.HasMorePages = true;
+                        return;
+                    }
+                    g.DrawString($"{fullDays[i].PadRight(15)} {dailyCustomerCounts[i]:#,##0} customers", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                    yPos += lineHeight;
+                }
+
+                int weeklyCustomerTotal = dailyCustomerCounts.Sum();
+                g.DrawString($"Total Weekly Customers: {weeklyCustomerTotal:#,##0}", headerFont, Brushes.Black, leftMargin + 20, yPos);
                 yPos += lineHeight;
-            }
+                g.DrawString($"Average Daily Customers: {(weeklyCustomerTotal / 7):#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += lineHeight;
+                g.DrawString($"Peak Day: {fullDays[Array.IndexOf(dailyCustomerCounts, dailyCustomerCounts.Max())]} with {dailyCustomerCounts.Max():#,##0} customers", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += 40;
 
-            int weeklyTotal = weeklySales.Sum();
-            g.DrawString($"Total Weekly Sales: ₱{weeklyTotal:#,##0}", headerFont, Brushes.Black, leftMargin + 20, yPos);
-            yPos += 40;
-
-            // Draw Monthly Sales Section
-            g.DrawString("MONTHLY SALES", headerFont, Brushes.Black, leftMargin, yPos);
-            yPos += 25;
-
-            for (int i = 0; i < months.Length; i++)
-            {
-                if (yPos > pageHeight - 50)
+                // Check for page break
+                if (yPos > pageHeight - 150)
                 {
                     e.HasMorePages = true;
                     return;
                 }
-                g.DrawString($"{months[i].PadRight(15)} ₱{monthlySales[i]:#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
+
+                // Draw Summary Section
+                g.DrawString("SUMMARY", headerFont, Brushes.Black, leftMargin, yPos);
+                yPos += 25;
+
+                g.DrawString($"Total Revenue: ₱{weeklyTotal:#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
                 yPos += lineHeight;
+                g.DrawString($"Total Customers: {weeklyCustomerTotal:#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += lineHeight;
+                g.DrawString($"Average Transaction Value: ₱{(weeklyTotal / weeklyCustomerTotal):#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += lineHeight;
+                g.DrawString($"Best Performing Day: {fullDays[Array.IndexOf(dailySales, dailySales.Max())]} (₱{dailySales.Max():#,##0})", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += lineHeight;
+                g.DrawString($"Most Customers Day: {fullDays[Array.IndexOf(dailyCustomerCounts, dailyCustomerCounts.Max())]} ({dailyCustomerCounts.Max():#,##0} customers)", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += lineHeight;
+                g.DrawString($"Peak Hour: 6:00 PM - 9:00 PM", reportFont, Brushes.Black, leftMargin + 20, yPos);
+                yPos += lineHeight;
+
+                // Footer
+                g.DrawLine(Pens.Black, leftMargin, yPos, pageWidth - leftMargin, yPos);
+                yPos += 20;
+                g.DrawString("END OF REPORT", reportFont, Brushes.Black,
+                            (pageWidth - g.MeasureString("END OF REPORT", reportFont).Width) / 2, yPos);
+
+                e.HasMorePages = false;
             }
-
-            int monthlyTotal = monthlySales.Sum();
-            g.DrawString($"Total Monthly Sales: ₱{monthlyTotal:#,##0}", headerFont, Brushes.Black, leftMargin + 20, yPos);
-            yPos += 40;
-
-            // Draw Summary Section
-            g.DrawString("SUMMARY", headerFont, Brushes.Black, leftMargin, yPos);
-            yPos += 25;
-
-            g.DrawString($"Average Daily Sales: ₱{(weeklyTotal / 7):#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
-            yPos += lineHeight;
-            g.DrawString($"Average Monthly Sales: ₱{(monthlyTotal / 12):#,##0}", reportFont, Brushes.Black, leftMargin + 20, yPos);
-            yPos += lineHeight;
-            g.DrawString($"Best Performing Day: {days[Array.IndexOf(weeklySales, weeklySales.Max())]}", reportFont, Brushes.Black, leftMargin + 20, yPos);
-            yPos += lineHeight;
-            g.DrawString($"Best Performing Month: {months[Array.IndexOf(monthlySales, monthlySales.Max())]}", reportFont, Brushes.Black, leftMargin + 20, yPos);
-            yPos += lineHeight;
-
-            // Footer
-            g.DrawLine(Pens.Black, leftMargin, yPos, pageWidth - leftMargin, yPos);
-            yPos += 20;
-            g.DrawString("END OF REPORT", reportFont, Brushes.Black,
-                        (pageWidth - g.MeasureString("END OF REPORT", reportFont).Width) / 2, yPos);
-
-            e.HasMorePages = false;
+            catch (Exception ex)
+            {
+                e.Graphics.DrawString($"Error printing: {ex.Message}", reportFont, Brushes.Red, leftMargin, yPos);
+                e.HasMorePages = false;
+            }
         }
 
         private void PrintDocument_EndPrint(object sender, PrintEventArgs e)
@@ -453,26 +410,26 @@ namespace cms
 
         private void SaveAsTextFile()
         {
-            GenerateReportData();
-
-            SaveFileDialog saveDialog = new SaveFileDialog();
-            saveDialog.Filter = "Text Files (*.txt)|*.txt";
-            saveDialog.DefaultExt = "txt";
-            saveDialog.FileName = $"MatchPoint_Report_{DateTime.Now:yyyyMMdd_HHmm}.txt";
-
-            if (saveDialog.ShowDialog() == DialogResult.OK)
+            try
             {
-                try
+                GenerateReportData();
+
+                SaveFileDialog saveDialog = new SaveFileDialog();
+                saveDialog.Filter = "Text Files (*.txt)|*.txt|CSV Files (*.csv)|*.csv|All Files (*.*)|*.*";
+                saveDialog.DefaultExt = "txt";
+                saveDialog.FileName = $"MatchPoint_Report_{DateTime.Now:yyyyMMdd_HHmm}";
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
                     File.WriteAllLines(saveDialog.FileName, reportLines);
                     MessageBox.Show($"Report saved successfully as:\n{saveDialog.FileName}",
                         "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error saving file: {ex.Message}",
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving file: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -482,6 +439,7 @@ namespace cms
             {
                 PrintDialog printDialog = new PrintDialog();
                 printDialog.Document = printDoc;
+                printDialog.UseEXDialog = true;
 
                 if (printDialog.ShowDialog() == DialogResult.OK)
                 {
@@ -513,57 +471,7 @@ namespace cms
             }
         }
 
-        // Optional: Add PDF export with iTextSharp (requires NuGet package)
-        private void SaveAsPDF()
-        {
-            // This requires iTextSharp NuGet package
-            // Uncomment if you install iTextSharp
-            /*
-            SaveFileDialog saveDialog = new SaveFileDialog();
-            saveDialog.Filter = "PDF Files (*.pdf)|*.pdf";
-            saveDialog.DefaultExt = "pdf";
-            saveDialog.FileName = $"MatchPoint_Report_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
-
-            if (saveDialog.ShowDialog() == DialogResult.OK)
-            {
-                try
-                {
-                    using (FileStream fs = new FileStream(saveDialog.FileName, FileMode.Create))
-                    {
-                        Document document = new Document(PageSize.A4, 40, 40, 40, 40);
-                        PdfWriter writer = PdfWriter.GetInstance(document, fs);
-                        
-                        document.Open();
-                        
-                        // Add content to PDF
-                        iTextSharp.text.Font titleFont = FontFactory.GetFont("Arial", 16, iTextSharp.text.Font.BOLD);
-                        iTextSharp.text.Font headerFont = FontFactory.GetFont("Arial", 12, iTextSharp.text.Font.BOLD);
-                        iTextSharp.text.Font normalFont = FontFactory.GetFont("Arial", 10);
-                        
-                        document.Add(new Paragraph("MATCHPOINT GAME HUB REPORT", titleFont));
-                        document.Add(new Paragraph($"Generated: {DateTime.Now.ToString("yyyy-MM-dd HH:mm")}", normalFont));
-                        document.Add(new Paragraph(" "));
-                        
-                        // Add your data here...
-                        
-                        document.Close();
-                    }
-                    
-                    MessageBox.Show($"PDF saved successfully as:\n{saveDialog.FileName}", 
-                        "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error saving PDF: {ex.Message}", 
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            */
-            MessageBox.Show("PDF export requires iTextSharp NuGet package. Please install it or use text file export.",
-                "PDF Export", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        // Existing methods...
+        // Existing event handlers
         private void weeklySale_Click(object sender, EventArgs e)
         {
             SetupCharts();
@@ -572,7 +480,6 @@ namespace cms
 
         private void panel12_Click(object sender, EventArgs e)
         {
-            // This might be an old method - we'll keep it for backward compatibility
             SetupCharts();
             MessageBox.Show("Data refreshed successfully!", "Dashboard", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }

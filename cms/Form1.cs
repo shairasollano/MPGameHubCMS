@@ -700,7 +700,12 @@ namespace cms
 
         private void label8_Click(object sender, EventArgs e)
         {
-            // Your existing label8_Click code
+            // Your existing label8_Click code d
+        }
+
+        private void salesBtn_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

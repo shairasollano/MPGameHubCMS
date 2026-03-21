@@ -32,10 +32,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>
-    </StartupObject>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
       <HintPath>..\packages\BouncyCastle.Cryptography.2.6.2\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
@@ -146,6 +142,12 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SALES.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="SALES.Designer.cs">
+      <DependentUpon>SALES.cs</DependentUpon>
+    </Compile>
     <Compile Include="SETTINGS.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -158,6 +160,12 @@
     </Compile>
     <Compile Include="UserControl2.Designer.cs">
       <DependentUpon>UserControl2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserSuperAdminSide.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserSuperAdminSide.Designer.cs">
+      <DependentUpon>UserSuperAdminSide.cs</DependentUpon>
     </Compile>
     <Compile Include="USERSMAINFORM.cs">
       <SubType>UserControl</SubType>
@@ -184,6 +192,9 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="SALES.resx">
+      <DependentUpon>SALES.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="SETTINGS.resx">
       <DependentUpon>SETTINGS.cs</DependentUpon>
     </EmbeddedResource>
@@ -192,6 +203,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="USERSMAINFORM.resx">
       <DependentUpon>USERSMAINFORM.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserSuperAdminSide.resx">
+      <DependentUpon>UserSuperAdminSide.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -222,16 +236,16 @@
   <ItemGroup>
     <Content Include="Resources\MATCHPOINT %2810%29.png" />
     <Content Include="Resources\MATCHPOINT %2811%29.png" />
+    <None Include="Resources\MATCHPOINT %2812%29.png" />
+    <None Include="Resources\MATCHPOINT %2813%29.png" />
+    <None Include="Resources\MATCHPOINT %2814%29.png" />
+    <None Include="Resources\MATCHPOINT %2815%29.png" />
+    <None Include="Resources\MATCHPOINT %2816%29.png" />
+    <None Include="Resources\MATCHPOINT %2817%29.png" />
     <Content Include="Resources\MATCHPOINT %286%29.png" />
     <Content Include="Resources\MATCHPOINT %287%29.png" />
     <Content Include="Resources\MATCHPOINT %288%29.png" />
     <Content Include="Resources\MATCHPOINT %289%29.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\KGHCashierPOS\KGHCashierPOS.csproj">
-      <Project>{7813dfba-3401-4963-a42d-fb8ad330ce3c}</Project>
-      <Name>KGHCashierPOS</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
