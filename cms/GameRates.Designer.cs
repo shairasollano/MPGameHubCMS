@@ -90,14 +90,10 @@ namespace cms
 
             // Modern color scheme
             Color bgColor = Color.FromArgb(248, 250, 252);
-            Color primaryColor = Color.FromArgb(79, 70, 229); // Indigo
-            Color successColor = Color.FromArgb(16, 185, 129); // Emerald
-            Color dangerColor = Color.FromArgb(239, 68, 68); // Red
-            Color warningColor = Color.FromArgb(245, 158, 11); // Amber
-            Color infoColor = Color.FromArgb(59, 130, 246); // Blue
+            Color primaryColor = Color.FromArgb(79, 70, 229);
+            Color successColor = Color.FromArgb(16, 185, 129);
+            Color dangerColor = Color.FromArgb(239, 68, 68);
             Color textColor = Color.FromArgb(17, 24, 39);
-            Color cardBgColor = Color.White;
-            Color borderColor = Color.FromArgb(229, 231, 235);
 
             // mainContainer
             this.mainContainer.BackColor = bgColor;
@@ -119,7 +115,6 @@ namespace cms
 
             // headerPanel
             this.headerPanel.BackColor = Color.White;
-            this.headerPanel.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.headerPanel.Controls.Add(this.headerControlsPanel);
             this.headerPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.headerPanel.Location = new System.Drawing.Point(24, 24);
@@ -184,7 +179,6 @@ namespace cms
             this.btnAddNew.Text = "+ New Rate";
             this.btnAddNew.UseVisualStyleBackColor = false;
             this.btnAddNew.Click += new System.EventHandler(this.btnAddNew_Click);
-            this.btnAddNew.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnAddNew.Width, this.btnAddNew.Height, 8, 8));
 
             // btnManage
             this.btnManage.Anchor = System.Windows.Forms.AnchorStyles.Right;
@@ -200,7 +194,6 @@ namespace cms
             this.btnManage.Text = "Manage Courts/Types";
             this.btnManage.UseVisualStyleBackColor = false;
             this.btnManage.Click += new System.EventHandler(this.btnManage_Click);
-            this.btnManage.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnManage.Width, this.btnManage.Height, 8, 8));
 
             // statsPanel
             this.statsPanel.BackColor = Color.Transparent;
@@ -438,8 +431,7 @@ namespace cms
             this.ratesFlowPanel.TabIndex = 0;
 
             // managementOverlay
-            this.managementOverlay.BackColor = Color.FromArgb(255, 255, 255);
-            this.managementOverlay.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.managementOverlay.BackColor = Color.White;
             this.managementOverlay.Controls.Add(this.managementTabs);
             this.managementOverlay.Controls.Add(this.btnCloseManagement);
             this.managementOverlay.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -461,20 +453,6 @@ namespace cms
             this.managementTabs.Size = new System.Drawing.Size(1824, 744);
             this.managementTabs.TabIndex = 0;
 
-            // Style the tabs
-            this.managementTabs.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
-            this.managementTabs.DrawItem += (s, e) => {
-                System.Drawing.Rectangle tabRect = this.managementTabs.GetTabRect(e.Index);
-                using (System.Drawing.Brush brush = new System.Drawing.SolidBrush(e.Index == this.managementTabs.SelectedIndex ? primaryColor : System.Drawing.Color.FromArgb(243, 244, 246)))
-                using (System.Drawing.Brush textBrush = new System.Drawing.SolidBrush(e.Index == this.managementTabs.SelectedIndex ? System.Drawing.Color.White : System.Drawing.Color.FromArgb(75, 85, 99)))
-                {
-                    e.Graphics.FillRectangle(brush, tabRect);
-                    string tabText = this.managementTabs.TabPages[e.Index].Text;
-                    System.Drawing.StringFormat sf = new System.Drawing.StringFormat { Alignment = System.Drawing.StringAlignment.Center, LineAlignment = System.Drawing.StringAlignment.Center };
-                    e.Graphics.DrawString(tabText, e.Font, textBrush, tabRect, sf);
-                }
-            };
-
             // tabCourts
             this.tabCourts.BackColor = Color.White;
             this.tabCourts.Controls.Add(this.courtsPanel);
@@ -485,8 +463,10 @@ namespace cms
             this.tabCourts.TabIndex = 0;
             this.tabCourts.Text = "Courts";
 
-            // courtsPanel - NEW: Panel to hold flow panel and button
+            // courtsPanel
             this.courtsPanel.BackColor = Color.White;
+            this.courtsPanel.Controls.Add(this.courtsFlowPanel);
+            this.courtsPanel.Controls.Add(this.btnAddCourt);
             this.courtsPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.courtsPanel.Location = new System.Drawing.Point(20, 20);
             this.courtsPanel.Name = "courtsPanel";
@@ -517,11 +497,6 @@ namespace cms
             this.btnAddCourt.Text = "+ Add New Court";
             this.btnAddCourt.UseVisualStyleBackColor = false;
             this.btnAddCourt.Click += new System.EventHandler(this.btnAddCourt_Click);
-            this.btnAddCourt.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnAddCourt.Width, this.btnAddCourt.Height, 8, 8));
-
-            // Add controls to courtsPanel
-            this.courtsPanel.Controls.Add(this.courtsFlowPanel);
-            this.courtsPanel.Controls.Add(this.btnAddCourt);
 
             // tabGameTypes
             this.tabGameTypes.BackColor = Color.White;
@@ -533,8 +508,10 @@ namespace cms
             this.tabGameTypes.TabIndex = 1;
             this.tabGameTypes.Text = "Game Types";
 
-            // gameTypesPanel - NEW: Panel to hold flow panel and button
+            // gameTypesPanel
             this.gameTypesPanel.BackColor = Color.White;
+            this.gameTypesPanel.Controls.Add(this.gameTypesFlowPanel);
+            this.gameTypesPanel.Controls.Add(this.btnAddGameType);
             this.gameTypesPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.gameTypesPanel.Location = new System.Drawing.Point(20, 20);
             this.gameTypesPanel.Name = "gameTypesPanel";
@@ -565,11 +542,6 @@ namespace cms
             this.btnAddGameType.Text = "+ Add New Game Type";
             this.btnAddGameType.UseVisualStyleBackColor = false;
             this.btnAddGameType.Click += new System.EventHandler(this.btnAddGameType_Click);
-            this.btnAddGameType.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnAddGameType.Width, this.btnAddGameType.Height, 8, 8));
-
-            // Add controls to gameTypesPanel
-            this.gameTypesPanel.Controls.Add(this.gameTypesFlowPanel);
-            this.gameTypesPanel.Controls.Add(this.btnAddGameType);
 
             // btnCloseManagement
             this.btnCloseManagement.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
@@ -585,7 +557,6 @@ namespace cms
             this.btnCloseManagement.Text = "Close";
             this.btnCloseManagement.UseVisualStyleBackColor = false;
             this.btnCloseManagement.Click += new System.EventHandler(this.btnCloseManagement_Click);
-            this.btnCloseManagement.Region = System.Drawing.Region.FromHrgn(CreateRoundRectRgn(0, 0, this.btnCloseManagement.Width, this.btnCloseManagement.Height, 8, 8));
 
             // GameRates
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);

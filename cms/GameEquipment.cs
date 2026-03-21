@@ -31,7 +31,6 @@ namespace cms
         private List<EquipmentItem> equipmentList;
         private List<Category> categoryList;
         private List<Condition> conditionList;
-        private List<CheckoutLog> checkoutLogs;
 
         // Model classes
         private class EquipmentItem
@@ -41,7 +40,6 @@ namespace cms
             public string Category { get; set; }
             public int TotalQuantity { get; set; }
             public int AvailableQuantity { get; set; }
-            public int CheckedOutQuantity => TotalQuantity - AvailableQuantity;
             public string Condition { get; set; }
             public string Location { get; set; }
             public string Notes { get; set; }
@@ -74,50 +72,28 @@ namespace cms
             public string Description { get; set; }
         }
 
-        private class CheckoutLog
-        {
-            public int Id { get; set; }
-            public int EquipmentId { get; set; }
-            public string EquipmentName { get; set; }
-            public int Quantity { get; set; }
-            public string CheckedOutBy { get; set; }
-            public DateTime CheckOutDate { get; set; }
-            public DateTime? ActualReturnDate { get; set; }
-            public string Notes { get; set; }
-            public string Status { get; set; } // "Checked Out", "Returned"
-            public string Duration
-            {
-                get
-                {
-                    if (ActualReturnDate.HasValue)
-                    {
-                        TimeSpan diff = ActualReturnDate.Value - CheckOutDate;
-                        return $"{(int)diff.TotalHours}h {diff.Minutes}m";
-                    }
-                    else
-                    {
-                        TimeSpan diff = DateTime.Now - CheckOutDate;
-                        return $"{(int)diff.TotalHours}h {diff.Minutes}m (ongoing)";
-                    }
-                }
-            }
-        }
-
-        // Helper class for sample logs
-        private class SampleLog
-        {
-            public int eqId { get; set; }
-            public string eqName { get; set; }
-            public int qty { get; set; }
-            public string by { get; set; }
-            public DateTime outDate { get; set; }
-            public object returnDate { get; set; }
-            public string status { get; set; }
-        }
-
         public GameEquipment()
         {
             InitializeComponent();
+
+            // Add event handlers
+            if (filterCombo != null)
+                filterCombo.SelectedIndexChanged += FilterCombo_SelectedIndexChanged;
+            if (btnAddEquipment != null)
+                btnAddEquipment.Click += btnAddEquipment_Click;
+            if (btnManageCategories != null)
+                btnManageCategories.Click += btnManageCategories_Click;
+            if (btnViewLogs != null)
+                btnViewLogs.Click += btnViewLogs_Click;
+            if (btnAddCategory != null)
+                btnAddCategory.Click += btnAddCategory_Click;
+            if (btnCloseManagement != null)
+                btnCloseManagement.Click += btnCloseManagement_Click;
+            if (managementTabs != null)
+                managementTabs.SelectedIndexChanged += ManagementTabs_SelectedIndexChanged;
+
+            // Style the tabs
+            StyleTabs();
 
             // Set up the initial UI state
             InitializeUI();
@@ -126,7 +102,6 @@ namespace cms
             equipmentList = new List<EquipmentItem>();
             categoryList = new List<Category>();
             conditionList = new List<Condition>();
-            checkoutLogs = new List<CheckoutLog>();
 
             // Initialize database
             InitializeDatabase();
@@ -136,17 +111,10 @@ namespace cms
             LoadCategories();
             LoadConditions();
 
-            // Setup filter
+            // Setup filter initial value
             if (filterCombo != null)
             {
-                filterCombo.SelectedIndexChanged += FilterCombo_SelectedIndexChanged;
                 filterCombo.SelectedIndex = 0;
-            }
-
-            // Setup tab change handler
-            if (managementTabs != null)
-            {
-                managementTabs.SelectedIndexChanged += ManagementTabs_SelectedIndexChanged;
             }
 
             // Hide management overlay initially
@@ -159,6 +127,28 @@ namespace cms
                 Activitylogs.Instance?.AddLogEntry(currentUser, "Module Opened", "Game Equipment management module was opened", "Info", "GameEquipment");
             }
             catch { }
+        }
+
+        private void StyleTabs()
+        {
+            if (managementTabs != null)
+            {
+                managementTabs.DrawMode = TabDrawMode.OwnerDrawFixed;
+                managementTabs.DrawItem += (s, e) =>
+                {
+                    Rectangle tabRect = managementTabs.GetTabRect(e.Index);
+                    Color tabPrimaryColor = Color.FromArgb(79, 70, 229);
+
+                    using (Brush brush = new SolidBrush(e.Index == managementTabs.SelectedIndex ? tabPrimaryColor : Color.FromArgb(243, 244, 246)))
+                    using (Brush textBrush = new SolidBrush(e.Index == managementTabs.SelectedIndex ? Color.White : Color.FromArgb(75, 85, 99)))
+                    {
+                        e.Graphics.FillRectangle(brush, tabRect);
+                        string tabText = managementTabs.TabPages[e.Index].Text;
+                        StringFormat sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+                        e.Graphics.DrawString(tabText, e.Font, textBrush, tabRect, sf);
+                    }
+                };
+            }
         }
 
         private void InitializeUI()
@@ -182,7 +172,6 @@ namespace cms
                     "Needs Maintenance"
                 });
                 filterCombo.DropDownStyle = ComboBoxStyle.DropDownList;
-                filterCombo.SelectedIndex = 0;
             }
 
             // Ensure the main container is visible and properly configured
@@ -303,7 +292,7 @@ namespace cms
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
                 new MySqlCommand(createConditionsTable, connection).ExecuteNonQuery();
 
-                // Create equipment_items table
+                // Create equipment_items table (NO check-in/out features)
                 string createEquipmentTable = @"
                     CREATE TABLE IF NOT EXISTS equipment_items (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -326,26 +315,6 @@ namespace cms
                         INDEX idx_available (available_quantity)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
                 new MySqlCommand(createEquipmentTable, connection).ExecuteNonQuery();
-
-                // Create equipment_checkout_logs table
-                string createCheckoutTable = @"
-                    CREATE TABLE IF NOT EXISTS equipment_checkout_logs (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        equipment_id INT NOT NULL,
-                        equipment_name VARCHAR(200) NOT NULL,
-                        quantity INT NOT NULL,
-                        checked_out_by VARCHAR(100) NOT NULL,
-                        check_out_date DATETIME NOT NULL,
-                        actual_return_date DATETIME,
-                        notes TEXT,
-                        status VARCHAR(20) DEFAULT 'Checked Out',
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (equipment_id) REFERENCES equipment_items(id) ON DELETE CASCADE,
-                        INDEX idx_equipment (equipment_id),
-                        INDEX idx_status (status),
-                        INDEX idx_dates (check_out_date)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-                new MySqlCommand(createCheckoutTable, connection).ExecuteNonQuery();
 
                 // Insert default data if tables are empty
                 InsertDefaultDataIfEmpty();
@@ -459,48 +428,6 @@ namespace cms
                 }
                 catch { }
             }
-
-            // Insert sample checkout logs for demo
-            InsertSampleCheckoutLogs();
-        }
-
-        private void InsertSampleCheckoutLogs()
-        {
-            string checkLogs = "SELECT COUNT(*) FROM equipment_checkout_logs";
-            int logCount = Convert.ToInt32(new MySqlCommand(checkLogs, connection).ExecuteScalar());
-
-            if (logCount == 0)
-            {
-                // Use strongly-typed list instead of array
-                List<SampleLog> logs = new List<SampleLog>
-                {
-                    new SampleLog { eqId = 1, eqName = "Tennis Racket - Pro Staff", qty = 2, by = "John Smith", outDate = DateTime.Now.AddDays(-3), returnDate = DateTime.Now.AddDays(-1), status = "Returned" },
-                    new SampleLog { eqId = 1, eqName = "Tennis Racket - Pro Staff", qty = 1, by = "Mike Johnson", outDate = DateTime.Now.AddDays(-2), returnDate = DBNull.Value, status = "Checked Out" },
-                    new SampleLog { eqId = 2, eqName = "Badminton Shuttlecocks (Tube)", qty = 3, by = "Sarah Lee", outDate = DateTime.Now.AddDays(-5), returnDate = DateTime.Now.AddDays(-2), status = "Returned" },
-                    new SampleLog { eqId = 2, eqName = "Badminton Shuttlecocks (Tube)", qty = 2, by = "Tom Wilson", outDate = DateTime.Now.AddDays(-1), returnDate = DBNull.Value, status = "Checked Out" },
-                    new SampleLog { eqId = 3, eqName = "Basketball - Official Size", qty = 1, by = "David Brown", outDate = DateTime.Now.AddDays(-4), returnDate = DateTime.Now.AddDays(-1), status = "Returned" },
-                    new SampleLog { eqId = 4, eqName = "Volleyball Net (Complete Set)", qty = 1, by = "Lisa Chen", outDate = DateTime.Now.AddDays(-2), returnDate = DBNull.Value, status = "Checked Out" },
-                    new SampleLog { eqId = 5, eqName = "Knee Pads (Pair)", qty = 2, by = "Alex Garcia", outDate = DateTime.Now.AddDays(-3), returnDate = DateTime.Now, status = "Returned" }
-                };
-
-                foreach (var log in logs)
-                {
-                    string insert = @"
-                        INSERT INTO equipment_checkout_logs 
-                        (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, actual_return_date, status) 
-                        VALUES (@eqId, @eqName, @qty, @by, @outDate, @returnDate, @status)";
-
-                    MySqlCommand cmd = new MySqlCommand(insert, connection);
-                    cmd.Parameters.AddWithValue("@eqId", log.eqId);
-                    cmd.Parameters.AddWithValue("@eqName", log.eqName);
-                    cmd.Parameters.AddWithValue("@qty", log.qty);
-                    cmd.Parameters.AddWithValue("@by", log.by);
-                    cmd.Parameters.AddWithValue("@outDate", log.outDate);
-                    cmd.Parameters.AddWithValue("@returnDate", log.returnDate);
-                    cmd.Parameters.AddWithValue("@status", log.status);
-                    cmd.ExecuteNonQuery();
-                }
-            }
         }
 
         private void LoadDataFromDatabase()
@@ -580,44 +507,6 @@ namespace cms
                         }
                     }
 
-                    // Load checkout logs
-                    checkoutLogs.Clear();
-                    string logQuery = @"
-                        SELECT id, equipment_id, equipment_name, quantity, checked_out_by,
-                               check_out_date, actual_return_date, notes, status
-                        FROM equipment_checkout_logs ORDER BY check_out_date DESC";
-
-                    MySqlCommand logCmd = new MySqlCommand(logQuery, connection);
-                    using (MySqlDataReader reader = logCmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            CheckoutLog log = new CheckoutLog
-                            {
-                                Id = Convert.ToInt32(reader["id"]),
-                                EquipmentId = Convert.ToInt32(reader["equipment_id"]),
-                                EquipmentName = reader["equipment_name"].ToString(),
-                                Quantity = Convert.ToInt32(reader["quantity"]),
-                                CheckedOutBy = reader["checked_out_by"].ToString(),
-                                CheckOutDate = Convert.ToDateTime(reader["check_out_date"]),
-                                Notes = reader["notes"]?.ToString() ?? "",
-                                Status = reader["status"].ToString()
-                            };
-
-                            // Handle nullable DateTime for actual_return_date
-                            if (reader["actual_return_date"] != DBNull.Value)
-                            {
-                                log.ActualReturnDate = Convert.ToDateTime(reader["actual_return_date"]);
-                            }
-                            else
-                            {
-                                log.ActualReturnDate = null;
-                            }
-
-                            checkoutLogs.Add(log);
-                        }
-                    }
-
                     // Update category item counts
                     foreach (var category in categoryList)
                     {
@@ -627,7 +516,7 @@ namespace cms
 
                 try
                 {
-                    Activitylogs.Instance?.AddLogEntry(currentUser, "Data Loaded", $"Loaded {equipmentList.Count} equipment items and {checkoutLogs.Count} logs from database", "Info", "GameEquipment");
+                    Activitylogs.Instance?.AddLogEntry(currentUser, "Data Loaded", $"Loaded {equipmentList.Count} equipment items from database", "Info", "GameEquipment");
                 }
                 catch { }
             }
@@ -731,91 +620,6 @@ namespace cms
                 NeedsMaintenance = false,
                 LastMaintenance = DateTime.Now.AddMonths(-1)
             });
-
-            // Add sample checkout logs
-            checkoutLogs.Add(new CheckoutLog
-            {
-                Id = 1,
-                EquipmentId = 1,
-                EquipmentName = "Tennis Racket - Pro Staff",
-                Quantity = 2,
-                CheckedOutBy = "John Smith",
-                CheckOutDate = DateTime.Now.AddDays(-3),
-                ActualReturnDate = DateTime.Now.AddDays(-1),
-                Status = "Returned"
-            });
-
-            checkoutLogs.Add(new CheckoutLog
-            {
-                Id = 2,
-                EquipmentId = 1,
-                EquipmentName = "Tennis Racket - Pro Staff",
-                Quantity = 1,
-                CheckedOutBy = "Mike Johnson",
-                CheckOutDate = DateTime.Now.AddDays(-2),
-                ActualReturnDate = null,
-                Status = "Checked Out"
-            });
-
-            checkoutLogs.Add(new CheckoutLog
-            {
-                Id = 3,
-                EquipmentId = 2,
-                EquipmentName = "Badminton Shuttlecocks (Tube)",
-                Quantity = 3,
-                CheckedOutBy = "Sarah Lee",
-                CheckOutDate = DateTime.Now.AddDays(-5),
-                ActualReturnDate = DateTime.Now.AddDays(-2),
-                Status = "Returned"
-            });
-
-            checkoutLogs.Add(new CheckoutLog
-            {
-                Id = 4,
-                EquipmentId = 2,
-                EquipmentName = "Badminton Shuttlecocks (Tube)",
-                Quantity = 2,
-                CheckedOutBy = "Tom Wilson",
-                CheckOutDate = DateTime.Now.AddDays(-1),
-                ActualReturnDate = null,
-                Status = "Checked Out"
-            });
-
-            checkoutLogs.Add(new CheckoutLog
-            {
-                Id = 5,
-                EquipmentId = 3,
-                EquipmentName = "Basketball - Official Size",
-                Quantity = 1,
-                CheckedOutBy = "David Brown",
-                CheckOutDate = DateTime.Now.AddDays(-4),
-                ActualReturnDate = DateTime.Now.AddDays(-1),
-                Status = "Returned"
-            });
-
-            checkoutLogs.Add(new CheckoutLog
-            {
-                Id = 6,
-                EquipmentId = 4,
-                EquipmentName = "Volleyball Net (Complete Set)",
-                Quantity = 1,
-                CheckedOutBy = "Lisa Chen",
-                CheckOutDate = DateTime.Now.AddDays(-2),
-                ActualReturnDate = null,
-                Status = "Checked Out"
-            });
-
-            checkoutLogs.Add(new CheckoutLog
-            {
-                Id = 7,
-                EquipmentId = 5,
-                EquipmentName = "Knee Pads (Pair)",
-                Quantity = 2,
-                CheckedOutBy = "Alex Garcia",
-                CheckOutDate = DateTime.Now.AddDays(-3),
-                ActualReturnDate = DateTime.Now,
-                Status = "Returned"
-            });
         }
 
         private void StyleButtons()
@@ -863,7 +667,7 @@ namespace cms
             {
                 Label lblNoData = new Label
                 {
-                    Text = "No equipment found. Click 'Add Equipment' to add new items.",
+                    Text = "No equipment found. Click '+ Add Equipment' to add new items.",
                     Font = new Font("Segoe UI", 12F, FontStyle.Italic),
                     ForeColor = Color.Gray,
                     TextAlign = ContentAlignment.MiddleCenter,
@@ -1045,39 +849,7 @@ namespace cms
                 ForeColor = Color.FromArgb(140, 140, 140)
             };
 
-            // Action buttons
-            Button btnCheckOut = new Button
-            {
-                Text = "Check Out",
-                FlatStyle = FlatStyle.Flat,
-                BackColor = item.IsAvailable ? successColor : Color.Gray,
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Size = new Size(85, 35),
-                Location = new Point(15, 215),
-                Tag = item,
-                Cursor = Cursors.Hand,
-                Enabled = item.IsAvailable
-            };
-            btnCheckOut.FlatAppearance.BorderSize = 0;
-            btnCheckOut.Click += BtnCheckOut_Click;
-
-            Button btnCheckIn = new Button
-            {
-                Text = "Check In",
-                FlatStyle = FlatStyle.Flat,
-                BackColor = item.CheckedOutQuantity > 0 ? warningColor : Color.Gray,
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Size = new Size(85, 35),
-                Location = new Point(110, 215),
-                Tag = item,
-                Cursor = Cursors.Hand,
-                Enabled = item.CheckedOutQuantity > 0
-            };
-            btnCheckIn.FlatAppearance.BorderSize = 0;
-            btnCheckIn.Click += BtnCheckIn_Click;
-
+            // Action buttons (NO CHECK IN/OUT - only Edit and Maintenance)
             Button btnEdit = new Button
             {
                 Text = "Edit",
@@ -1085,8 +857,8 @@ namespace cms
                 BackColor = primaryColor,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                Size = new Size(60, 35),
-                Location = new Point(205, 215),
+                Size = new Size(75, 35),
+                Location = new Point(15, 215),
                 Tag = item,
                 Cursor = Cursors.Hand
             };
@@ -1097,22 +869,25 @@ namespace cms
             {
                 Text = "🔧",
                 FlatStyle = FlatStyle.Flat,
-                BackColor = item.NeedsMaintenance ? dangerColor : Color.Gray,
+                BackColor = item.NeedsMaintenance ? warningColor : Color.Gray,
                 ForeColor = Color.White,
                 Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 Size = new Size(45, 35),
-                Location = new Point(275, 215),
+                Location = new Point(280, 215),
                 Tag = item,
                 Cursor = Cursors.Hand,
-                Visible = item.NeedsMaintenance
+                FlatAppearance = { BorderSize = 0 }
             };
-            btnMaintenance.FlatAppearance.BorderSize = 0;
             btnMaintenance.Click += BtnMaintenance_Click;
+
+            // Make maintenance button visible only if equipment needs maintenance
+            btnMaintenance.BackColor = item.NeedsMaintenance ? warningColor : Color.LightGray;
+            btnMaintenance.Enabled = item.NeedsMaintenance;
 
             card.Controls.AddRange(new Control[] {
                 statusBar, categoryBadge, lblName, stockPanel,
                 lblCondition, lblLocation, lblMaintenance, lblNotes,
-                btnCheckOut, btnCheckIn, btnEdit, btnMaintenance
+                btnEdit, btnMaintenance
             });
 
             // Hover effect
@@ -1122,232 +897,24 @@ namespace cms
             return card;
         }
 
-        private void BtnCheckOut_Click(object sender, EventArgs e)
+        private void BtnEdit_Click(object sender, EventArgs e)
+        {
+            Button btn = (Button)sender;
+            EquipmentItem item = (EquipmentItem)btn.Tag;
+            ShowEditDialog(item);
+        }
+
+        private void BtnMaintenance_Click(object sender, EventArgs e)
         {
             Button btn = (Button)sender;
             EquipmentItem item = (EquipmentItem)btn.Tag;
 
             using (var dialog = new Form())
             {
-                dialog.Text = $"Check Out - {item.Name}";
-                dialog.Size = new Size(400, 200);
-                dialog.StartPosition = FormStartPosition.CenterParent;
-                dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-                dialog.MaximizeBox = false;
-                dialog.MinimizeBox = false;
-                dialog.BackColor = Color.White;
-
-                TableLayoutPanel tlp = new TableLayoutPanel
-                {
-                    Dock = DockStyle.Fill,
-                    ColumnCount = 2,
-                    RowCount = 3,
-                    Padding = new Padding(20),
-                    ColumnStyles = {
-                        new ColumnStyle(SizeType.Absolute, 120),
-                        new ColumnStyle(SizeType.Percent, 100)
-                    }
-                };
-
-                // Available quantity
-                tlp.Controls.Add(new Label { Text = "Available:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 0);
-                Label lblAvailable = new Label
-                {
-                    Text = item.AvailableQuantity.ToString(),
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    ForeColor = successColor,
-                    Anchor = AnchorStyles.Left
-                };
-                tlp.Controls.Add(lblAvailable, 1, 0);
-
-                // Quantity to check out
-                tlp.Controls.Add(new Label { Text = "Quantity:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 1);
-                NumericUpDown nudQuantity = new NumericUpDown
-                {
-                    Minimum = 1,
-                    Maximum = item.AvailableQuantity,
-                    Value = 1,
-                    Font = new Font("Segoe UI", 10F),
-                    Width = 100
-                };
-                tlp.Controls.Add(nudQuantity, 1, 1);
-
-                // Checked out by
-                tlp.Controls.Add(new Label { Text = "Checked out by:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 2);
-                TextBox txtCheckedBy = new TextBox
-                {
-                    Font = new Font("Segoe UI", 10F),
-                    Dock = DockStyle.Fill
-                };
-                tlp.Controls.Add(txtCheckedBy, 1, 2);
-
-                // Buttons
-                FlowLayoutPanel btnPanel = new FlowLayoutPanel
-                {
-                    Dock = DockStyle.Bottom,
-                    FlowDirection = FlowDirection.RightToLeft,
-                    Height = 50,
-                    Padding = new Padding(0, 0, 20, 0)
-                };
-
-                Button btnCancel = new Button
-                {
-                    Text = "Cancel",
-                    Size = new Size(100, 35),
-                    BackColor = Color.Gray,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 10F),
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(5)
-                };
-                btnCancel.FlatAppearance.BorderSize = 0;
-                btnCancel.Click += (s, args) => dialog.Close();
-
-                Button btnConfirm = new Button
-                {
-                    Text = "Check Out",
-                    Size = new Size(100, 35),
-                    BackColor = successColor,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(5)
-                };
-                btnConfirm.FlatAppearance.BorderSize = 0;
-                btnConfirm.Click += (s, args) =>
-                {
-                    if (string.IsNullOrWhiteSpace(txtCheckedBy.Text))
-                    {
-                        MessageBox.Show("Please enter who is checking out the equipment.",
-                            "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    int quantity = (int)nudQuantity.Value;
-
-                    try
-                    {
-                        using (MySqlConnection conn = new MySqlConnection(connectionString))
-                        {
-                            conn.Open();
-
-                            // Update equipment stock
-                            string updateEq = "UPDATE equipment_items SET available_quantity = available_quantity - @qty WHERE id = @id";
-                            MySqlCommand updateCmd = new MySqlCommand(updateEq, conn);
-                            updateCmd.Parameters.AddWithValue("@qty", quantity);
-                            updateCmd.Parameters.AddWithValue("@id", item.Id);
-                            updateCmd.ExecuteNonQuery();
-
-                            // Create checkout log
-                            string insertLog = @"
-                                INSERT INTO equipment_checkout_logs 
-                                (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, status) 
-                                VALUES (@eqId, @eqName, @qty, @by, @outDate, 'Checked Out')";
-
-                            MySqlCommand logCmd = new MySqlCommand(insertLog, conn);
-                            logCmd.Parameters.AddWithValue("@eqId", item.Id);
-                            logCmd.Parameters.AddWithValue("@eqName", item.Name);
-                            logCmd.Parameters.AddWithValue("@qty", quantity);
-                            logCmd.Parameters.AddWithValue("@by", txtCheckedBy.Text);
-                            logCmd.Parameters.AddWithValue("@outDate", DateTime.Now);
-                            logCmd.ExecuteNonQuery();
-                        }
-
-                        // Update local object
-                        item.AvailableQuantity -= quantity;
-
-                        // Add to local checkout logs
-                        checkoutLogs.Add(new CheckoutLog
-                        {
-                            Id = checkoutLogs.Count + 1,
-                            EquipmentId = item.Id,
-                            EquipmentName = item.Name,
-                            Quantity = quantity,
-                            CheckedOutBy = txtCheckedBy.Text,
-                            CheckOutDate = DateTime.Now,
-                            Status = "Checked Out"
-                        });
-
-                        // Log the checkout
-                        try
-                        {
-                            Activitylogs.Instance?.LogEquipmentCheckout(currentUser, item.Name, quantity, txtCheckedBy.Text);
-                        }
-                        catch { }
-
-                        // Check for low stock warning
-                        if (item.AvailableQuantity < 5)
-                        {
-                            try
-                            {
-                                Activitylogs.Instance?.LogWarning(currentUser, "GameEquipment",
-                                    $"Low stock warning: {item.Name} only has {item.AvailableQuantity} left");
-                            }
-                            catch { }
-                        }
-
-                        MessageBox.Show($"Successfully checked out {quantity} {item.Name}(s) to {txtCheckedBy.Text}.\n" +
-                                      $"Check out time: {DateTime.Now:MMM dd, yyyy hh:mm tt}\n" +
-                                      $"Remaining stock: {item.AvailableQuantity}",
-                            "Check Out Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        dialog.Close();
-                        DisplayEquipment();
-                    }
-                    catch (Exception ex)
-                    {
-                        try
-                        {
-                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking out {item.Name}");
-                        }
-                        catch { }
-
-                        MessageBox.Show($"Database error: {ex.Message}", "Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                };
-
-                btnPanel.Controls.Add(btnCancel);
-                btnPanel.Controls.Add(btnConfirm);
-
-                dialog.Controls.Add(tlp);
-                dialog.Controls.Add(btnPanel);
-                dialog.ShowDialog(this);
-            }
-        }
-
-        private void BtnCheckIn_Click(object sender, EventArgs e)
-        {
-            Button btn = (Button)sender;
-            EquipmentItem item = (EquipmentItem)btn.Tag;
-
-            // Find active checkouts for this item
-            var activeCheckouts = checkoutLogs.Where(c => c.EquipmentId == item.Id && c.Status == "Checked Out").ToList();
-
-            if (activeCheckouts.Count == 0)
-            {
-                // Manual check in if no logs exist
-                ManualCheckIn(item);
-            }
-            else
-            {
-                // Show list of active checkouts to select which one to return
-                SelectCheckoutToReturn(item, activeCheckouts);
-            }
-        }
-
-        private void ManualCheckIn(EquipmentItem item)
-        {
-            using (var dialog = new Form())
-            {
-                dialog.Text = $"Check In - {item.Name}";
+                dialog.Text = $"Complete Maintenance - {item.Name}";
                 dialog.Size = new Size(400, 250);
                 dialog.StartPosition = FormStartPosition.CenterParent;
                 dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-                dialog.MaximizeBox = false;
-                dialog.MinimizeBox = false;
                 dialog.BackColor = Color.White;
 
                 TableLayoutPanel tlp = new TableLayoutPanel
@@ -1362,45 +929,33 @@ namespace cms
                     }
                 };
 
-                // Currently checked out
-                tlp.Controls.Add(new Label { Text = "Checked out:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 0);
-                Label lblCheckedOut = new Label
+                // Maintenance date
+                tlp.Controls.Add(new Label { Text = "Maintenance Date:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 0);
+                DateTimePicker dtpDate = new DateTimePicker
                 {
-                    Text = item.CheckedOutQuantity.ToString(),
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    ForeColor = warningColor,
-                    Anchor = AnchorStyles.Left
-                };
-                tlp.Controls.Add(lblCheckedOut, 1, 0);
-
-                // Quantity to check in
-                tlp.Controls.Add(new Label { Text = "Quantity to return:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 1);
-                NumericUpDown nudQuantity = new NumericUpDown
-                {
-                    Minimum = 1,
-                    Maximum = item.CheckedOutQuantity,
-                    Value = 1,
+                    Value = DateTime.Now,
                     Font = new Font("Segoe UI", 10F),
-                    Width = 100
+                    Width = 200
                 };
-                tlp.Controls.Add(nudQuantity, 1, 1);
+                tlp.Controls.Add(dtpDate, 1, 0);
 
-                // Returned by
-                tlp.Controls.Add(new Label { Text = "Returned by:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 2);
-                TextBox txtReturnedBy = new TextBox
+                // New condition
+                tlp.Controls.Add(new Label { Text = "New Condition:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 1);
+                ComboBox cboCondition = new ComboBox
                 {
                     Font = new Font("Segoe UI", 10F),
-                    Dock = DockStyle.Fill
+                    DropDownStyle = ComboBoxStyle.DropDownList,
+                    Width = 150
                 };
-                tlp.Controls.Add(txtReturnedBy, 1, 2);
+                cboCondition.Items.AddRange(conditionList.Select(c => c.Name).ToArray());
+                cboCondition.SelectedItem = "Good";
+                tlp.Controls.Add(cboCondition, 1, 1);
 
                 // Buttons
                 FlowLayoutPanel btnPanel = new FlowLayoutPanel
                 {
-                    Dock = DockStyle.Bottom,
-                    FlowDirection = FlowDirection.RightToLeft,
-                    Height = 50,
-                    Padding = new Padding(0, 0, 20, 0)
+                    Dock = DockStyle.Fill,
+                    FlowDirection = FlowDirection.RightToLeft
                 };
 
                 Button btnCancel = new Button
@@ -1411,279 +966,64 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 10F),
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(5)
+                    Cursor = Cursors.Hand
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
                 btnCancel.Click += (s, args) => dialog.Close();
 
-                Button btnConfirm = new Button
+                Button btnComplete = new Button
                 {
-                    Text = "Check In",
+                    Text = "Complete",
                     Size = new Size(100, 35),
-                    BackColor = warningColor,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    Cursor = Cursors.Hand,
-                    Margin = new Padding(5)
-                };
-                btnConfirm.FlatAppearance.BorderSize = 0;
-
-                btnConfirm.Click += (s, args) =>
-                {
-                    int quantity = (int)nudQuantity.Value;
-                    string returnedBy = string.IsNullOrWhiteSpace(txtReturnedBy.Text) ? "Unknown" : txtReturnedBy.Text;
-
-                    try
-                    {
-                        using (MySqlConnection conn = new MySqlConnection(connectionString))
-                        {
-                            conn.Open();
-
-                            // Update equipment stock
-                            string updateEq = "UPDATE equipment_items SET available_quantity = available_quantity + @qty WHERE id = @id";
-                            MySqlCommand updateCmd = new MySqlCommand(updateEq, conn);
-                            updateCmd.Parameters.AddWithValue("@qty", quantity);
-                            updateCmd.Parameters.AddWithValue("@id", item.Id);
-                            updateCmd.ExecuteNonQuery();
-
-                            // Create a return log
-                            string insertLog = @"
-                                INSERT INTO equipment_checkout_logs 
-                                (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, actual_return_date, status, notes) 
-                                VALUES (@eqId, @eqName, @qty, @by, @outDate, @returnDate, 'Returned', @notes)";
-
-                            MySqlCommand logCmd = new MySqlCommand(insertLog, conn);
-                            logCmd.Parameters.AddWithValue("@eqId", item.Id);
-                            logCmd.Parameters.AddWithValue("@eqName", item.Name);
-                            logCmd.Parameters.AddWithValue("@qty", quantity);
-                            logCmd.Parameters.AddWithValue("@by", returnedBy);
-                            logCmd.Parameters.AddWithValue("@outDate", DateTime.Now.AddHours(-1));
-                            logCmd.Parameters.AddWithValue("@returnDate", DateTime.Now);
-                            logCmd.Parameters.AddWithValue("@notes", $"Returned by {returnedBy}");
-                            logCmd.ExecuteNonQuery();
-                        }
-
-                        // Update local object
-                        item.AvailableQuantity += quantity;
-
-                        // Log the check-in
-                        try
-                        {
-                            Activitylogs.Instance?.LogEquipmentCheckin(currentUser, item.Name, quantity, returnedBy);
-                        }
-                        catch { }
-
-                        MessageBox.Show($"Successfully checked in {quantity} {item.Name}(s).\n" +
-                                      $"Check in time: {DateTime.Now:MMM dd, yyyy hh:mm tt}\n" +
-                                      $"Current stock: {item.AvailableQuantity}/{item.TotalQuantity}",
-                            "Check In Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        dialog.Close();
-                        DisplayEquipment();
-                    }
-                    catch (Exception ex)
-                    {
-                        try
-                        {
-                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking in {item.Name}");
-                        }
-                        catch { }
-
-                        MessageBox.Show($"Database error: {ex.Message}", "Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                };
-
-                btnPanel.Controls.Add(btnCancel);
-                btnPanel.Controls.Add(btnConfirm);
-
-                dialog.Controls.Add(tlp);
-                dialog.Controls.Add(btnPanel);
-                dialog.ShowDialog(this);
-            }
-        }
-
-        private void SelectCheckoutToReturn(EquipmentItem item, List<CheckoutLog> activeCheckouts)
-        {
-            using (var dialog = new Form())
-            {
-                dialog.Text = $"Return Equipment - {item.Name}";
-                dialog.Size = new Size(600, 400);
-                dialog.StartPosition = FormStartPosition.CenterParent;
-                dialog.BackColor = Color.White;
-
-                ListView listView = new ListView
-                {
-                    Dock = DockStyle.Fill,
-                    View = View.Details,
-                    FullRowSelect = true,
-                    GridLines = true,
-                    Font = new Font("Segoe UI", 10F)
-                };
-                listView.Columns.Add("Checked Out By", 150);
-                listView.Columns.Add("Quantity", 80);
-                listView.Columns.Add("Check Out Date", 150);
-                listView.Columns.Add("Time Out", 100);
-                listView.Columns.Add("Duration", 100);
-
-                foreach (var checkout in activeCheckouts)
-                {
-                    var item2 = new ListViewItem(checkout.CheckedOutBy);
-                    item2.SubItems.Add(checkout.Quantity.ToString());
-                    item2.SubItems.Add(checkout.CheckOutDate.ToString("MMM dd, yyyy"));
-                    item2.SubItems.Add(checkout.CheckOutDate.ToString("hh:mm tt"));
-
-                    TimeSpan diff = DateTime.Now - checkout.CheckOutDate;
-                    item2.SubItems.Add($"{(int)diff.TotalHours}h {diff.Minutes}m");
-
-                    item2.Tag = checkout;
-                    listView.Items.Add(item2);
-                }
-
-                // Quantity to return panel
-                Panel returnPanel = new Panel
-                {
-                    Dock = DockStyle.Bottom,
-                    Height = 80,
-                    BackColor = Color.FromArgb(240, 240, 240)
-                };
-
-                Label lblQuantity = new Label
-                {
-                    Text = "Quantity to return:",
-                    Location = new Point(150, 15),
-                    Size = new Size(120, 25),
-                    Font = new Font("Segoe UI", 10F)
-                };
-
-                NumericUpDown nudQuantity = new NumericUpDown
-                {
-                    Location = new Point(280, 12),
-                    Minimum = 1,
-                    Maximum = 1,
-                    Value = 1,
-                    Width = 60,
-                    Font = new Font("Segoe UI", 10F)
-                };
-
-                Button btnReturn = new Button
-                {
-                    Text = "Return Selected",
-                    Size = new Size(150, 35),
                     BackColor = successColor,
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    Location = new Point(220, 45),
                     Cursor = Cursors.Hand
                 };
-                btnReturn.FlatAppearance.BorderSize = 0;
+                btnComplete.FlatAppearance.BorderSize = 0;
 
-                // Update max quantity when item selected
-                listView.SelectedIndexChanged += (s, args) =>
+                btnPanel.Controls.Add(btnCancel);
+                btnPanel.Controls.Add(btnComplete);
+                tlp.Controls.Add(btnPanel, 1, 2);
+
+                dialog.Controls.Add(tlp);
+
+                btnComplete.Click += (s, args) =>
                 {
-                    if (listView.SelectedItems.Count > 0)
-                    {
-                        var selectedCheckout = (CheckoutLog)listView.SelectedItems[0].Tag;
-                        nudQuantity.Maximum = selectedCheckout.Quantity;
-                        nudQuantity.Value = selectedCheckout.Quantity;
-                    }
-                };
-
-                returnPanel.Controls.Add(lblQuantity);
-                returnPanel.Controls.Add(nudQuantity);
-                returnPanel.Controls.Add(btnReturn);
-
-                btnReturn.Click += (s, args) =>
-                {
-                    if (listView.SelectedItems.Count == 0)
-                    {
-                        MessageBox.Show("Please select a checkout to return.",
-                            "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
-                    var selectedCheckout = (CheckoutLog)listView.SelectedItems[0].Tag;
-                    int quantityToReturn = (int)nudQuantity.Value;
-
                     try
                     {
                         using (MySqlConnection conn = new MySqlConnection(connectionString))
                         {
                             conn.Open();
 
-                            // Update equipment stock
-                            string updateEq = "UPDATE equipment_items SET available_quantity = available_quantity + @qty WHERE id = @id";
-                            MySqlCommand updateCmd = new MySqlCommand(updateEq, conn);
-                            updateCmd.Parameters.AddWithValue("@qty", quantityToReturn);
-                            updateCmd.Parameters.AddWithValue("@id", item.Id);
-                            updateCmd.ExecuteNonQuery();
+                            string updateQuery = @"
+                                UPDATE equipment_items 
+                                SET last_maintenance = @date, condition_name = @cond, needs_maintenance = FALSE 
+                                WHERE id = @id";
 
-                            if (quantityToReturn == selectedCheckout.Quantity)
-                            {
-                                // Full return
-                                string updateLog = @"
-                                    UPDATE equipment_checkout_logs 
-                                    SET actual_return_date = @returnDate, status = 'Returned' 
-                                    WHERE id = @id";
-
-                                MySqlCommand logCmd = new MySqlCommand(updateLog, conn);
-                                logCmd.Parameters.AddWithValue("@returnDate", DateTime.Now);
-                                logCmd.Parameters.AddWithValue("@id", selectedCheckout.Id);
-                                logCmd.ExecuteNonQuery();
-
-                                selectedCheckout.Status = "Returned";
-                                selectedCheckout.ActualReturnDate = DateTime.Now;
-                            }
-                            else
-                            {
-                                // Partial return - split the log
-                                string updateLog = @"
-                                    UPDATE equipment_checkout_logs 
-                                    SET quantity = @newQty 
-                                    WHERE id = @id";
-
-                                MySqlCommand updateCmd2 = new MySqlCommand(updateLog, conn);
-                                updateCmd2.Parameters.AddWithValue("@newQty", selectedCheckout.Quantity - quantityToReturn);
-                                updateCmd2.Parameters.AddWithValue("@id", selectedCheckout.Id);
-                                updateCmd2.ExecuteNonQuery();
-
-                                // Create new log for returned items
-                                string insertLog = @"
-                                    INSERT INTO equipment_checkout_logs 
-                                    (equipment_id, equipment_name, quantity, checked_out_by, check_out_date, actual_return_date, status, notes) 
-                                    VALUES (@eqId, @eqName, @qty, @by, @outDate, @returnDate, 'Returned', @notes)";
-
-                                MySqlCommand insertCmd = new MySqlCommand(insertLog, conn);
-                                insertCmd.Parameters.AddWithValue("@eqId", item.Id);
-                                insertCmd.Parameters.AddWithValue("@eqName", item.Name);
-                                insertCmd.Parameters.AddWithValue("@qty", quantityToReturn);
-                                insertCmd.Parameters.AddWithValue("@by", selectedCheckout.CheckedOutBy);
-                                insertCmd.Parameters.AddWithValue("@outDate", selectedCheckout.CheckOutDate);
-                                insertCmd.Parameters.AddWithValue("@returnDate", DateTime.Now);
-                                insertCmd.Parameters.AddWithValue("@notes", $"Partial return");
-                                insertCmd.ExecuteNonQuery();
-                            }
+                            MySqlCommand cmd = new MySqlCommand(updateQuery, conn);
+                            cmd.Parameters.AddWithValue("@date", dtpDate.Value);
+                            cmd.Parameters.AddWithValue("@cond", cboCondition.SelectedItem.ToString());
+                            cmd.Parameters.AddWithValue("@id", item.Id);
+                            cmd.ExecuteNonQuery();
                         }
 
-                        // Update local object
-                        item.AvailableQuantity += quantityToReturn;
+                        string oldCondition = item.Condition;
+                        item.LastMaintenance = dtpDate.Value;
+                        item.Condition = cboCondition.SelectedItem.ToString();
+                        item.NeedsMaintenance = false;
 
-                        // Log the check-in
+                        // Log the maintenance
                         try
                         {
-                            Activitylogs.Instance?.LogEquipmentCheckin(currentUser, item.Name, quantityToReturn, selectedCheckout.CheckedOutBy);
+                            Activitylogs.Instance?.LogEquipmentMaintenance(currentUser, item.Name, item.Condition);
                         }
                         catch { }
 
-                        MessageBox.Show($"Successfully returned {quantityToReturn} {item.Name}(s) from {selectedCheckout.CheckedOutBy}.\n" +
-                                      $"Return time: {DateTime.Now:MMM dd, yyyy hh:mm tt}",
-                            "Return Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        // Refresh data to update logs
-                        RefreshDataFromDatabase();
+                        MessageBox.Show($"Maintenance completed for {item.Name}.\n" +
+                                      $"New condition: {item.Condition}",
+                            "Maintenance Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                         dialog.Close();
                         DisplayEquipment();
@@ -1692,7 +1032,7 @@ namespace cms
                     {
                         try
                         {
-                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error checking in {item.Name}");
+                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error completing maintenance for {item.Name}");
                         }
                         catch { }
 
@@ -1701,8 +1041,6 @@ namespace cms
                     }
                 };
 
-                dialog.Controls.Add(listView);
-                dialog.Controls.Add(returnPanel);
                 dialog.ShowDialog(this);
             }
         }
@@ -1746,44 +1084,6 @@ namespace cms
                             });
                         }
                     }
-
-                    // Reload checkout logs
-                    checkoutLogs.Clear();
-                    string logQuery = @"
-                        SELECT id, equipment_id, equipment_name, quantity, checked_out_by,
-                               check_out_date, actual_return_date, notes, status
-                        FROM equipment_checkout_logs ORDER BY check_out_date DESC";
-
-                    MySqlCommand logCmd = new MySqlCommand(logQuery, connection);
-                    using (MySqlDataReader reader = logCmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            CheckoutLog log = new CheckoutLog
-                            {
-                                Id = Convert.ToInt32(reader["id"]),
-                                EquipmentId = Convert.ToInt32(reader["equipment_id"]),
-                                EquipmentName = reader["equipment_name"].ToString(),
-                                Quantity = Convert.ToInt32(reader["quantity"]),
-                                CheckedOutBy = reader["checked_out_by"].ToString(),
-                                CheckOutDate = Convert.ToDateTime(reader["check_out_date"]),
-                                Notes = reader["notes"]?.ToString() ?? "",
-                                Status = reader["status"].ToString()
-                            };
-
-                            // Handle nullable DateTime for actual_return_date
-                            if (reader["actual_return_date"] != DBNull.Value)
-                            {
-                                log.ActualReturnDate = Convert.ToDateTime(reader["actual_return_date"]);
-                            }
-                            else
-                            {
-                                log.ActualReturnDate = null;
-                            }
-
-                            checkoutLogs.Add(log);
-                        }
-                    }
                 }
             }
             catch (Exception ex)
@@ -1794,288 +1094,6 @@ namespace cms
                 }
                 catch { }
             }
-        }
-
-        private void btnViewLogs_Click(object sender, EventArgs e)
-        {
-            ShowLogsDialog();
-        }
-
-        private void ShowLogsDialog()
-        {
-            using (var dialog = new Form())
-            {
-                dialog.Text = "Equipment Checkout Logs";
-                dialog.Size = new Size(1000, 600);
-                dialog.StartPosition = FormStartPosition.CenterParent;
-                dialog.BackColor = Color.White;
-
-                // Create TabControl for different log views
-                TabControl tabControl = new TabControl
-                {
-                    Dock = DockStyle.Fill,
-                    Font = new Font("Segoe UI", 10F)
-                };
-
-                // All Logs Tab
-                TabPage allLogsTab = new TabPage("All Transactions");
-                CreateLogsListView(allLogsTab, checkoutLogs);
-                tabControl.TabPages.Add(allLogsTab);
-
-                // Active Checkouts Tab
-                TabPage activeTab = new TabPage("Active Checkouts");
-                var activeLogs = checkoutLogs.Where(l => l.Status == "Checked Out").ToList();
-                CreateLogsListView(activeTab, activeLogs);
-                tabControl.TabPages.Add(activeTab);
-
-                // Returned Items Tab
-                TabPage returnedTab = new TabPage("Returned Items");
-                var returnedLogs = checkoutLogs.Where(l => l.Status == "Returned").ToList();
-                CreateLogsListView(returnedTab, returnedLogs);
-                tabControl.TabPages.Add(returnedTab);
-
-                // Summary Tab
-                TabPage summaryTab = new TabPage("Summary");
-                CreateSummaryView(summaryTab);
-                tabControl.TabPages.Add(summaryTab);
-
-                // Export Button
-                Button btnExport = new Button
-                {
-                    Text = "Export Logs",
-                    Size = new Size(120, 35),
-                    BackColor = successColor,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    Location = new Point(850, 550),
-                    Cursor = Cursors.Hand
-                };
-                btnExport.FlatAppearance.BorderSize = 0;
-                btnExport.Click += (s, args) => ExportLogs();
-
-                Button btnClose = new Button
-                {
-                    Text = "Close",
-                    Size = new Size(100, 35),
-                    BackColor = Color.Gray,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 10F),
-                    Location = new Point(980, 550),
-                    Cursor = Cursors.Hand
-                };
-                btnClose.FlatAppearance.BorderSize = 0;
-                btnClose.Click += (s, args) => dialog.Close();
-
-                dialog.Controls.Add(tabControl);
-                dialog.Controls.Add(btnExport);
-                dialog.Controls.Add(btnClose);
-
-                dialog.ShowDialog(this);
-            }
-        }
-
-        private void CreateLogsListView(TabPage tabPage, List<CheckoutLog> logs)
-        {
-            ListView listView = new ListView
-            {
-                Dock = DockStyle.Fill,
-                View = View.Details,
-                FullRowSelect = true,
-                GridLines = true,
-                Font = new Font("Segoe UI", 10F)
-            };
-
-            listView.Columns.Add("Equipment", 200);
-            listView.Columns.Add("Quantity", 80);
-            listView.Columns.Add("Checked Out By", 150);
-            listView.Columns.Add("Check Out Date", 120);
-            listView.Columns.Add("Check Out Time", 100);
-            listView.Columns.Add("Return Date", 120);
-            listView.Columns.Add("Return Time", 100);
-            listView.Columns.Add("Duration", 100);
-            listView.Columns.Add("Status", 100);
-
-            foreach (var log in logs)
-            {
-                var item = new ListViewItem(log.EquipmentName);
-                item.SubItems.Add(log.Quantity.ToString());
-                item.SubItems.Add(log.CheckedOutBy);
-                item.SubItems.Add(log.CheckOutDate.ToString("MMM dd, yyyy"));
-                item.SubItems.Add(log.CheckOutDate.ToString("hh:mm tt"));
-
-                if (log.ActualReturnDate.HasValue)
-                {
-                    item.SubItems.Add(log.ActualReturnDate.Value.ToString("MMM dd, yyyy"));
-                    item.SubItems.Add(log.ActualReturnDate.Value.ToString("hh:mm tt"));
-                }
-                else
-                {
-                    item.SubItems.Add("-");
-                    item.SubItems.Add("-");
-                }
-
-                item.SubItems.Add(log.Duration);
-
-                if (log.Status == "Checked Out")
-                {
-                    item.SubItems.Add("⏳ Active");
-                    item.BackColor = Color.FromArgb(255, 255, 225); // Light yellow
-                }
-                else
-                {
-                    item.SubItems.Add("✅ Returned");
-                    item.BackColor = Color.FromArgb(225, 255, 225); // Light green
-                }
-
-                listView.Items.Add(item);
-            }
-
-            tabPage.Controls.Add(listView);
-        }
-
-        private void CreateSummaryView(TabPage tabPage)
-        {
-            Panel summaryPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(20),
-                BackColor = Color.White
-            };
-
-            int activeCount = checkoutLogs.Count(l => l.Status == "Checked Out");
-            int returnedCount = checkoutLogs.Count(l => l.Status == "Returned");
-            int uniqueItems = checkoutLogs.Select(l => l.EquipmentId).Distinct().Count();
-            int totalItemsOut = checkoutLogs.Where(l => l.Status == "Checked Out").Sum(l => l.Quantity);
-            int totalItemsReturned = checkoutLogs.Where(l => l.Status == "Returned").Sum(l => l.Quantity);
-
-            // Summary cards
-            int yPos = 20;
-            CreateSummaryCard(summaryPanel, "📊 Summary Statistics", 20, yPos, 600, 30, true);
-            yPos += 40;
-
-            CreateSummaryCard(summaryPanel, $"Total Transactions: {checkoutLogs.Count}", 40, yPos, 300, 60, false);
-            CreateSummaryCard(summaryPanel, $"Active Checkouts: {activeCount}", 360, yPos, 300, 60, false);
-            yPos += 70;
-
-            CreateSummaryCard(summaryPanel, $"Returned Items: {returnedCount}", 40, yPos, 300, 60, false);
-            CreateSummaryCard(summaryPanel, $"Unique Equipment Used: {uniqueItems}", 360, yPos, 300, 60, false);
-            yPos += 70;
-
-            CreateSummaryCard(summaryPanel, $"Total Items Currently Out: {totalItemsOut}", 40, yPos, 300, 60, false);
-            CreateSummaryCard(summaryPanel, $"Total Items Returned: {totalItemsReturned}", 360, yPos, 300, 60, false);
-            yPos += 80;
-
-            // Most active users
-            Label lblActiveUsers = new Label
-            {
-                Text = "👥 Most Active Users",
-                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
-                Location = new Point(40, yPos),
-                Size = new Size(300, 25),
-                ForeColor = Color.FromArgb(33, 33, 33)
-            };
-            summaryPanel.Controls.Add(lblActiveUsers);
-            yPos += 30;
-
-            var topUsers = checkoutLogs
-                .GroupBy(l => l.CheckedOutBy)
-                .Select(g => new { User = g.Key, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .Take(5)
-                .ToList();
-
-            foreach (var user in topUsers)
-            {
-                Label lblUser = new Label
-                {
-                    Text = $"• {user.User}: {user.Count} transactions",
-                    Font = new Font("Segoe UI", 10F),
-                    Location = new Point(60, yPos),
-                    Size = new Size(300, 25),
-                    ForeColor = Color.FromArgb(80, 80, 80)
-                };
-                summaryPanel.Controls.Add(lblUser);
-                yPos += 25;
-            }
-
-            tabPage.Controls.Add(summaryPanel);
-        }
-
-        private void CreateSummaryCard(Panel parent, string text, int x, int y, int width, int height, bool isHeader)
-        {
-            Panel card = new Panel
-            {
-                Location = new Point(x, y),
-                Size = new Size(width, height),
-                BackColor = isHeader ? Color.FromArgb(240, 240, 240) : Color.White
-            };
-
-            if (!isHeader)
-            {
-                card.Paint += (s, e) =>
-                {
-                    ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
-                        Color.FromArgb(200, 200, 200), ButtonBorderStyle.Solid);
-                };
-            }
-
-            Label label = new Label
-            {
-                Text = text,
-                Font = new Font("Segoe UI", isHeader ? 12F : 10F, isHeader ? FontStyle.Bold : FontStyle.Regular),
-                Location = new Point(10, 5),
-                Size = new Size(width - 20, height - 10),
-                ForeColor = isHeader ? primaryColor : Color.FromArgb(60, 60, 60),
-                TextAlign = isHeader ? ContentAlignment.MiddleLeft : ContentAlignment.MiddleLeft
-            };
-
-            card.Controls.Add(label);
-            parent.Controls.Add(card);
-        }
-
-        private void ExportLogs()
-        {
-            // Create a simple text export
-            string export = "EQUIPMENT CHECKOUT LOGS\n";
-            export += "=======================\n\n";
-            export += $"Generated: {DateTime.Now:MMM dd, yyyy hh:mm tt}\n";
-            export += $"Total Transactions: {checkoutLogs.Count}\n\n";
-            export += "DETAILED LOGS:\n";
-            export += "--------------\n\n";
-
-            foreach (var log in checkoutLogs.OrderByDescending(l => l.CheckOutDate))
-            {
-                export += $"Equipment: {log.EquipmentName}\n";
-                export += $"Quantity: {log.Quantity}\n";
-                export += $"Checked Out By: {log.CheckedOutBy}\n";
-                export += $"Check Out: {log.CheckOutDate:MMM dd, yyyy hh:mm tt}\n";
-
-                if (log.ActualReturnDate.HasValue)
-                {
-                    export += $"Returned: {log.ActualReturnDate.Value:MMM dd, yyyy hh:mm tt}\n";
-                    export += $"Duration: {log.Duration}\n";
-                }
-                else
-                {
-                    export += $"Status: ACTIVE\n";
-                }
-
-                export += "-------------------\n";
-            }
-
-            string tempFile = Path.GetTempFileName() + ".txt";
-            File.WriteAllText(tempFile, export);
-
-            System.Diagnostics.Process.Start("notepad.exe", tempFile);
-        }
-
-        private void BtnEdit_Click(object sender, EventArgs e)
-        {
-            Button btn = (Button)sender;
-            EquipmentItem item = (EquipmentItem)btn.Tag;
-            ShowEditDialog(item);
         }
 
         private void ShowEditDialog(EquipmentItem item)
@@ -2097,7 +1115,7 @@ namespace cms
                 {
                     Dock = DockStyle.Fill,
                     ColumnCount = 2,
-                    RowCount = 10,
+                    RowCount = 9,
                     Padding = new Padding(20),
                     ColumnStyles = {
                         new ColumnStyle(SizeType.Absolute, 120),
@@ -2204,8 +1222,10 @@ namespace cms
                 // Buttons
                 FlowLayoutPanel btnPanel = new FlowLayoutPanel
                 {
-                    Dock = DockStyle.Fill,
-                    FlowDirection = FlowDirection.RightToLeft
+                    Dock = DockStyle.Bottom,
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Height = 50,
+                    Padding = new Padding(0, 0, 20, 10)
                 };
 
                 Button btnCancel = new Button
@@ -2244,7 +1264,7 @@ namespace cms
                         ForeColor = Color.White,
                         FlatStyle = FlatStyle.Flat,
                         Font = new Font("Segoe UI", 10F),
-                        Margin = new Padding(10, 5, 0, 5),
+                        Margin = new Padding(10, 0, 0, 0),
                         Cursor = Cursors.Hand
                     };
                     btnDelete.FlatAppearance.BorderSize = 0;
@@ -2467,157 +1487,6 @@ namespace cms
             }
         }
 
-        private void BtnMaintenance_Click(object sender, EventArgs e)
-        {
-            Button btn = (Button)sender;
-            EquipmentItem item = (EquipmentItem)btn.Tag;
-
-            using (var dialog = new Form())
-            {
-                dialog.Text = $"Complete Maintenance - {item.Name}";
-                dialog.Size = new Size(400, 250);
-                dialog.StartPosition = FormStartPosition.CenterParent;
-                dialog.FormBorderStyle = FormBorderStyle.FixedDialog;
-                dialog.BackColor = Color.White;
-
-                TableLayoutPanel tlp = new TableLayoutPanel
-                {
-                    Dock = DockStyle.Fill,
-                    ColumnCount = 2,
-                    RowCount = 3,
-                    Padding = new Padding(20),
-                    ColumnStyles = {
-                        new ColumnStyle(SizeType.Absolute, 120),
-                        new ColumnStyle(SizeType.Percent, 100)
-                    }
-                };
-
-                // Maintenance date
-                tlp.Controls.Add(new Label { Text = "Maintenance Date:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 0);
-                DateTimePicker dtpDate = new DateTimePicker
-                {
-                    Value = DateTime.Now,
-                    Font = new Font("Segoe UI", 10F),
-                    Width = 200
-                };
-                tlp.Controls.Add(dtpDate, 1, 0);
-
-                // New condition
-                tlp.Controls.Add(new Label { Text = "New Condition:", Font = new Font("Segoe UI", 10F), Anchor = AnchorStyles.Left }, 0, 1);
-                ComboBox cboCondition = new ComboBox
-                {
-                    Font = new Font("Segoe UI", 10F),
-                    DropDownStyle = ComboBoxStyle.DropDownList,
-                    Width = 150
-                };
-                cboCondition.Items.AddRange(conditionList.Select(c => c.Name).ToArray());
-                cboCondition.SelectedItem = "Good";
-                tlp.Controls.Add(cboCondition, 1, 1);
-
-                // Buttons
-                FlowLayoutPanel btnPanel = new FlowLayoutPanel
-                {
-                    Dock = DockStyle.Fill,
-                    FlowDirection = FlowDirection.RightToLeft
-                };
-
-                Button btnCancel = new Button
-                {
-                    Text = "Cancel",
-                    Size = new Size(100, 35),
-                    BackColor = Color.Gray,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 10F),
-                    Cursor = Cursors.Hand
-                };
-                btnCancel.FlatAppearance.BorderSize = 0;
-                btnCancel.Click += (s, args) => dialog.Close();
-
-                Button btnComplete = new Button
-                {
-                    Text = "Complete",
-                    Size = new Size(100, 35),
-                    BackColor = successColor,
-                    ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    Cursor = Cursors.Hand
-                };
-                btnComplete.FlatAppearance.BorderSize = 0;
-
-                btnPanel.Controls.Add(btnCancel);
-                btnPanel.Controls.Add(btnComplete);
-                tlp.Controls.Add(btnPanel, 1, 2);
-
-                dialog.Controls.Add(tlp);
-
-                btnComplete.Click += (s, args) =>
-                {
-                    try
-                    {
-                        using (MySqlConnection conn = new MySqlConnection(connectionString))
-                        {
-                            conn.Open();
-
-                            string updateQuery = @"
-                                UPDATE equipment_items 
-                                SET last_maintenance = @date, condition_name = @cond, needs_maintenance = FALSE 
-                                WHERE id = @id";
-
-                            MySqlCommand cmd = new MySqlCommand(updateQuery, conn);
-                            cmd.Parameters.AddWithValue("@date", dtpDate.Value);
-                            cmd.Parameters.AddWithValue("@cond", cboCondition.SelectedItem.ToString());
-                            cmd.Parameters.AddWithValue("@id", item.Id);
-                            cmd.ExecuteNonQuery();
-                        }
-
-                        string oldCondition = item.Condition;
-                        item.LastMaintenance = dtpDate.Value;
-                        item.Condition = cboCondition.SelectedItem.ToString();
-                        item.NeedsMaintenance = false;
-
-                        // Log the maintenance
-                        try
-                        {
-                            Activitylogs.Instance?.LogEquipmentMaintenance(currentUser, item.Name, item.Condition);
-                        }
-                        catch { }
-
-                        if (oldCondition != item.Condition)
-                        {
-                            try
-                            {
-                                Activitylogs.Instance?.AddLogEntry(currentUser, "Equipment Condition Changed",
-                                    $"Equipment '{item.Name}' condition changed from {oldCondition} to {item.Condition} after maintenance", "Info", "GameEquipment");
-                            }
-                            catch { }
-                        }
-
-                        MessageBox.Show($"Maintenance completed for {item.Name}.\n" +
-                                      $"New condition: {item.Condition}",
-                            "Maintenance Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        dialog.Close();
-                        DisplayEquipment();
-                    }
-                    catch (Exception ex)
-                    {
-                        try
-                        {
-                            Activitylogs.Instance?.LogError(currentUser, "GameEquipment", ex.Message, $"Error completing maintenance for {item.Name}");
-                        }
-                        catch { }
-
-                        MessageBox.Show($"Database error: {ex.Message}", "Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                };
-
-                dialog.ShowDialog(this);
-            }
-        }
-
         private void FilterCombo_SelectedIndexChanged(object sender, EventArgs e)
         {
             DisplayEquipment();
@@ -2741,29 +1610,22 @@ namespace cms
             {
                 ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
                     Color.FromArgb(230, 230, 230), ButtonBorderStyle.Solid);
-
-                // Add subtle shadow at bottom
-                using (Pen shadowPen = new Pen(Color.FromArgb(30, 0, 0, 0), 2))
-                {
-                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
-                }
             };
 
-            // Icon with background (left side) - FIXED positioning
+            // Icon with background (left side)
             Panel iconPanel = new Panel
             {
                 Width = 60,
                 Height = 60,
-                Location = new Point(15, 35), // Centered vertically (130/2 - 60/2 = 35)
+                Location = new Point(15, 35),
                 BackColor = Color.FromArgb(239, 246, 255)
             };
 
-            // FIXED: Center the icon within the panel
             Label lblIcon = new Label
             {
                 Text = category.Icon ?? "📦",
                 Font = new Font("Segoe UI", 28F),
-                Location = new Point(10, 10), // Center in 60x60 panel (60/2 - 40/2 = 10)
+                Location = new Point(10, 10),
                 Size = new Size(40, 40),
                 TextAlign = ContentAlignment.MiddleCenter,
                 ForeColor = primaryColor
@@ -2890,12 +1752,6 @@ namespace cms
             {
                 ControlPaint.DrawBorder(e.Graphics, card.ClientRectangle,
                     Color.FromArgb(230, 230, 230), ButtonBorderStyle.Solid);
-
-                // Add subtle shadow at bottom
-                using (Pen shadowPen = new Pen(Color.FromArgb(30, 0, 0, 0), 2))
-                {
-                    e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
-                }
             };
 
             // Color indicator (left side)
@@ -3015,7 +1871,7 @@ namespace cms
                 {
                     Dock = DockStyle.Fill,
                     ColumnCount = 2,
-                    RowCount = 5,
+                    RowCount = 4,
                     Padding = new Padding(20),
                     ColumnStyles = {
                         new ColumnStyle(SizeType.Absolute, 100),
@@ -3060,8 +1916,10 @@ namespace cms
                 // Buttons
                 FlowLayoutPanel btnPanel = new FlowLayoutPanel
                 {
-                    Dock = DockStyle.Fill,
-                    FlowDirection = FlowDirection.RightToLeft
+                    Dock = DockStyle.Bottom,
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Height = 50,
+                    Padding = new Padding(0, 0, 20, 10)
                 };
 
                 Button btnCancel = new Button
@@ -3091,7 +1949,7 @@ namespace cms
 
                 btnPanel.Controls.Add(btnCancel);
                 btnPanel.Controls.Add(btnSave);
-                tlp.Controls.Add(btnPanel, 1, 4);
+                tlp.Controls.Add(btnPanel, 1, 3);
 
                 dialog.Controls.Add(tlp);
 
@@ -3190,7 +2048,7 @@ namespace cms
                 {
                     Dock = DockStyle.Fill,
                     ColumnCount = 2,
-                    RowCount = 5,
+                    RowCount = 4,
                     Padding = new Padding(20),
                     ColumnStyles = {
                         new ColumnStyle(SizeType.Absolute, 100),
@@ -3233,8 +2091,10 @@ namespace cms
                 // Buttons
                 FlowLayoutPanel btnPanel = new FlowLayoutPanel
                 {
-                    Dock = DockStyle.Fill,
-                    FlowDirection = FlowDirection.RightToLeft
+                    Dock = DockStyle.Bottom,
+                    FlowDirection = FlowDirection.RightToLeft,
+                    Height = 50,
+                    Padding = new Padding(0, 0, 20, 10)
                 };
 
                 Button btnCancel = new Button
@@ -3264,7 +2124,7 @@ namespace cms
 
                 btnPanel.Controls.Add(btnCancel);
                 btnPanel.Controls.Add(btnAdd);
-                tlp.Controls.Add(btnPanel, 1, 4);
+                tlp.Controls.Add(btnPanel, 1, 3);
 
                 dialog.Controls.Add(tlp);
 
@@ -3345,6 +2205,22 @@ namespace cms
 
                 dialog.ShowDialog(this);
             }
+        }
+
+        private void btnViewLogs_Click(object sender, EventArgs e)
+        {
+            // Show coming soon message
+            MessageBox.Show("This feature is coming soon!\n\nActivity logs will be available in the next update.",
+                "Coming Soon",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            // Log that the user attempted to view logs
+            try
+            {
+                Activitylogs.Instance?.AddLogEntry(currentUser, "View Logs Attempted", "User attempted to view activity logs (coming soon)", "Info", "GameEquipment");
+            }
+            catch { }
         }
 
         private string ShowInputDialog(string title, string promptText)
