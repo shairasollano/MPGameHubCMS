@@ -1,6 +1,6 @@
 ﻿namespace cms
 {
-    partial class UserSuperAdminSide
+    partial class lastsuper
     {
         /// <summary> 
         /// Required designer variable.
@@ -28,10 +28,24 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UserSuperAdminSide));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(lastsuper));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            this.userheader = new System.Windows.Forms.Label();
+            this.pictureBox4 = new System.Windows.Forms.PictureBox();
+            this.statusColumn = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.RoleColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.UsernameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.fullnameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.IDColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dgvUsers = new System.Windows.Forms.DataGridView();
+            this.LastLoginColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.pnlTableHeader = new System.Windows.Forms.Panel();
+            this.lblUserList = new System.Windows.Forms.Label();
+            this.txtSearch = new System.Windows.Forms.TextBox();
+            this.btnManageUsers = new System.Windows.Forms.Button();
+            this.btnExport = new System.Windows.Forms.Button();
+            this.lblOnlineValue = new System.Windows.Forms.Label();
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.cardTotalUsers = new System.Windows.Forms.Panel();
             this.lblTotalValue = new System.Windows.Forms.Label();
@@ -46,23 +60,13 @@
             this.lblInactiveAcc = new System.Windows.Forms.Label();
             this.pictureBox2 = new System.Windows.Forms.PictureBox();
             this.cardOnline = new System.Windows.Forms.Panel();
-            this.lblOnlineValue = new System.Windows.Forms.Label();
             this.lblOnlineNow = new System.Windows.Forms.Label();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
-            this.btnExport = new System.Windows.Forms.Button();
-            this.btnManageUsers = new System.Windows.Forms.Button();
-            this.txtSearchBox = new System.Windows.Forms.TextBox();
-            this.lblUserList = new System.Windows.Forms.Label();
-            this.pnlTableHeader = new System.Windows.Forms.Panel();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.dgvUsers = new System.Windows.Forms.DataGridView();
-            this.IDColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.fullnameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.UsernameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.RoleColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.statusColumn = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.LastLoginColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.pictureBox4 = new System.Windows.Forms.PictureBox();
+            this.userheader = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvUsers)).BeginInit();
+            this.panel1.SuspendLayout();
+            this.pnlTableHeader.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
             this.cardTotalUsers.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picTotalIcon)).BeginInit();
@@ -72,21 +76,181 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.cardOnline.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
-            this.pnlTableHeader.SuspendLayout();
-            this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvUsers)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).BeginInit();
             this.SuspendLayout();
             // 
-            // userheader
+            // pictureBox4
             // 
-            this.userheader.AutoSize = true;
-            this.userheader.Font = new System.Drawing.Font("Segoe UI Black", 16.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.userheader.Location = new System.Drawing.Point(3, 13);
-            this.userheader.Name = "userheader";
-            this.userheader.Size = new System.Drawing.Size(308, 38);
-            this.userheader.TabIndex = 0;
-            this.userheader.Text = "USER MANAGEMENT";
+            this.pictureBox4.BackColor = System.Drawing.Color.Transparent;
+            this.pictureBox4.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox4.Image")));
+            this.pictureBox4.Location = new System.Drawing.Point(902, 14);
+            this.pictureBox4.Name = "pictureBox4";
+            this.pictureBox4.Size = new System.Drawing.Size(29, 28);
+            this.pictureBox4.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBox4.TabIndex = 12;
+            this.pictureBox4.TabStop = false;
+            // 
+            // statusColumn
+            // 
+            this.statusColumn.HeaderText = "STATUS";
+            this.statusColumn.Items.AddRange(new object[] {
+            "ACTIVE",
+            "INACTIVE"});
+            this.statusColumn.MinimumWidth = 6;
+            this.statusColumn.Name = "statusColumn";
+            this.statusColumn.ReadOnly = true;
+            this.statusColumn.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.statusColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
+            // RoleColumn
+            // 
+            this.RoleColumn.HeaderText = "ROLE";
+            this.RoleColumn.MinimumWidth = 6;
+            this.RoleColumn.Name = "RoleColumn";
+            this.RoleColumn.ReadOnly = true;
+            // 
+            // UsernameColumn
+            // 
+            this.UsernameColumn.HeaderText = "USERNAME";
+            this.UsernameColumn.MinimumWidth = 6;
+            this.UsernameColumn.Name = "UsernameColumn";
+            this.UsernameColumn.ReadOnly = true;
+            // 
+            // fullnameColumn
+            // 
+            this.fullnameColumn.HeaderText = "FULL NAME";
+            this.fullnameColumn.MinimumWidth = 6;
+            this.fullnameColumn.Name = "fullnameColumn";
+            this.fullnameColumn.ReadOnly = true;
+            // 
+            // IDColumn
+            // 
+            this.IDColumn.HeaderText = "#ID";
+            this.IDColumn.MinimumWidth = 6;
+            this.IDColumn.Name = "IDColumn";
+            this.IDColumn.ReadOnly = true;
+            // 
+            // dgvUsers
+            // 
+            this.dgvUsers.AllowUserToAddRows = false;
+            this.dgvUsers.AllowUserToDeleteRows = false;
+            this.dgvUsers.AllowUserToOrderColumns = true;
+            this.dgvUsers.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.dgvUsers.BackgroundColor = System.Drawing.Color.White;
+            this.dgvUsers.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(73)))), ((int)(((byte)(80)))), ((int)(((byte)(87)))));
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvUsers.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
+            this.dgvUsers.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvUsers.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.IDColumn,
+            this.fullnameColumn,
+            this.UsernameColumn,
+            this.RoleColumn,
+            this.statusColumn,
+            this.LastLoginColumn});
+            this.dgvUsers.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvUsers.EnableHeadersVisualStyles = false;
+            this.dgvUsers.GridColor = System.Drawing.SystemColors.AppWorkspace;
+            this.dgvUsers.Location = new System.Drawing.Point(0, 0);
+            this.dgvUsers.Name = "dgvUsers";
+            this.dgvUsers.RowHeadersVisible = false;
+            this.dgvUsers.RowHeadersWidth = 51;
+            this.dgvUsers.RowTemplate.Height = 24;
+            this.dgvUsers.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvUsers.Size = new System.Drawing.Size(1137, 473);
+            this.dgvUsers.TabIndex = 0;
+            this.dgvUsers.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvUsers_CellContentClick);
+            // 
+            // LastLoginColumn
+            // 
+            dataGridViewCellStyle4.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle4.Format = "g";
+            dataGridViewCellStyle4.NullValue = null;
+            this.LastLoginColumn.DefaultCellStyle = dataGridViewCellStyle4;
+            this.LastLoginColumn.HeaderText = "LAST LOG-IN";
+            this.LastLoginColumn.MinimumWidth = 6;
+            this.LastLoginColumn.Name = "LastLoginColumn";
+            this.LastLoginColumn.ReadOnly = true;
+            // 
+            // panel1
+            // 
+            this.panel1.BackColor = System.Drawing.Color.Transparent;
+            this.panel1.Controls.Add(this.dgvUsers);
+            this.panel1.Location = new System.Drawing.Point(10, 212);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(1137, 473);
+            this.panel1.TabIndex = 15;
+            // 
+            // pnlTableHeader
+            // 
+            this.pnlTableHeader.BackColor = System.Drawing.Color.Transparent;
+            this.pnlTableHeader.Controls.Add(this.lblUserList);
+            this.pnlTableHeader.Controls.Add(this.txtSearch);
+            this.pnlTableHeader.Location = new System.Drawing.Point(10, 164);
+            this.pnlTableHeader.Name = "pnlTableHeader";
+            this.pnlTableHeader.Size = new System.Drawing.Size(1136, 39);
+            this.pnlTableHeader.TabIndex = 14;
+            // 
+            // lblUserList
+            // 
+            this.lblUserList.AutoSize = true;
+            this.lblUserList.Font = new System.Drawing.Font("Segoe UI Black", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblUserList.Location = new System.Drawing.Point(3, 5);
+            this.lblUserList.Name = "lblUserList";
+            this.lblUserList.Size = new System.Drawing.Size(140, 31);
+            this.lblUserList.TabIndex = 5;
+            this.lblUserList.Text = "USER LISTS";
+            // 
+            // txtSearch
+            // 
+            this.txtSearch.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSearch.ForeColor = System.Drawing.SystemColors.WindowFrame;
+            this.txtSearch.Location = new System.Drawing.Point(882, 7);
+            this.txtSearch.Multiline = true;
+            this.txtSearch.Name = "txtSearch";
+            this.txtSearch.Size = new System.Drawing.Size(245, 29);
+            this.txtSearch.TabIndex = 6;
+            this.txtSearch.Text = "Search keyword...";
+            // 
+            // btnManageUsers
+            // 
+            this.btnManageUsers.BackColor = System.Drawing.Color.ForestGreen;
+            this.btnManageUsers.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnManageUsers.ForeColor = System.Drawing.Color.White;
+            this.btnManageUsers.Location = new System.Drawing.Point(997, 7);
+            this.btnManageUsers.Name = "btnManageUsers";
+            this.btnManageUsers.Size = new System.Drawing.Size(150, 42);
+            this.btnManageUsers.TabIndex = 13;
+            this.btnManageUsers.Text = "Manage Users";
+            this.btnManageUsers.UseVisualStyleBackColor = false;
+            // 
+            // btnExport
+            // 
+            this.btnExport.BackColor = System.Drawing.Color.MidnightBlue;
+            this.btnExport.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnExport.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnExport.Location = new System.Drawing.Point(892, 7);
+            this.btnExport.Name = "btnExport";
+            this.btnExport.Size = new System.Drawing.Size(99, 43);
+            this.btnExport.TabIndex = 11;
+            this.btnExport.Text = "Export";
+            this.btnExport.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnExport.UseVisualStyleBackColor = false;
+            // 
+            // lblOnlineValue
+            // 
+            this.lblOnlineValue.AutoSize = true;
+            this.lblOnlineValue.Font = new System.Drawing.Font("Segoe UI", 19.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblOnlineValue.Location = new System.Drawing.Point(71, 22);
+            this.lblOnlineValue.Name = "lblOnlineValue";
+            this.lblOnlineValue.Size = new System.Drawing.Size(39, 45);
+            this.lblOnlineValue.TabIndex = 2;
+            this.lblOnlineValue.Text = "4";
             // 
             // flowLayoutPanel1
             // 
@@ -95,12 +259,11 @@
             this.flowLayoutPanel1.Controls.Add(this.cardActiveAdmins);
             this.flowLayoutPanel1.Controls.Add(this.cardInactive);
             this.flowLayoutPanel1.Controls.Add(this.cardOnline);
-            this.flowLayoutPanel1.Location = new System.Drawing.Point(10, 54);
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(10, 56);
             this.flowLayoutPanel1.Name = "flowLayoutPanel1";
             this.flowLayoutPanel1.Padding = new System.Windows.Forms.Padding(20, 10, 20, 10);
             this.flowLayoutPanel1.Size = new System.Drawing.Size(1137, 100);
-            this.flowLayoutPanel1.TabIndex = 1;
-           
+            this.flowLayoutPanel1.TabIndex = 10;
             // 
             // cardTotalUsers
             // 
@@ -142,7 +305,6 @@
             this.picTotalIcon.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.picTotalIcon.TabIndex = 0;
             this.picTotalIcon.TabStop = false;
-            //this.picTotalIcon.Click += new System.EventHandler(this.pictureBox1_Click);
             // 
             // cardActiveAdmins
             // 
@@ -237,16 +399,6 @@
             this.cardOnline.Size = new System.Drawing.Size(235, 74);
             this.cardOnline.TabIndex = 5;
             // 
-            // lblOnlineValue
-            // 
-            this.lblOnlineValue.AutoSize = true;
-            this.lblOnlineValue.Font = new System.Drawing.Font("Segoe UI", 19.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblOnlineValue.Location = new System.Drawing.Point(71, 22);
-            this.lblOnlineValue.Name = "lblOnlineValue";
-            this.lblOnlineValue.Size = new System.Drawing.Size(39, 45);
-            this.lblOnlineValue.TabIndex = 2;
-            this.lblOnlineValue.Text = "4";
-            // 
             // lblOnlineNow
             // 
             this.lblOnlineNow.AutoSize = true;
@@ -267,189 +419,35 @@
             this.pictureBox3.TabIndex = 0;
             this.pictureBox3.TabStop = false;
             // 
-            // btnExport
+            // userheader
             // 
-            this.btnExport.BackColor = System.Drawing.Color.MidnightBlue;
-            this.btnExport.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnExport.ForeColor = System.Drawing.SystemColors.Control;
-            this.btnExport.Location = new System.Drawing.Point(892, 5);
-            this.btnExport.Name = "btnExport";
-            this.btnExport.Size = new System.Drawing.Size(99, 43);
-            this.btnExport.TabIndex = 2;
-            this.btnExport.Text = "Export";
-            this.btnExport.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.btnExport.UseVisualStyleBackColor = false;
+            this.userheader.AutoSize = true;
+            this.userheader.Font = new System.Drawing.Font("Segoe UI Black", 16.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.userheader.Location = new System.Drawing.Point(3, 15);
+            this.userheader.Name = "userheader";
+            this.userheader.Size = new System.Drawing.Size(308, 38);
+            this.userheader.TabIndex = 9;
+            this.userheader.Text = "USER MANAGEMENT";
             // 
-            // btnManageUsers
-            // 
-            this.btnManageUsers.BackColor = System.Drawing.Color.ForestGreen;
-            this.btnManageUsers.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnManageUsers.ForeColor = System.Drawing.Color.White;
-            this.btnManageUsers.Location = new System.Drawing.Point(997, 5);
-            this.btnManageUsers.Name = "btnManageUsers";
-            this.btnManageUsers.Size = new System.Drawing.Size(150, 42);
-            this.btnManageUsers.TabIndex = 4;
-            this.btnManageUsers.Text = "Manage Users";
-            this.btnManageUsers.UseVisualStyleBackColor = false;
-            // 
-            // txtSearchBox
-            // 
-            this.txtSearchBox.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSearchBox.ForeColor = System.Drawing.SystemColors.WindowFrame;
-            this.txtSearchBox.Location = new System.Drawing.Point(882, 7);
-            this.txtSearchBox.Multiline = true;
-            this.txtSearchBox.Name = "txtSearchBox";
-            this.txtSearchBox.Size = new System.Drawing.Size(245, 29);
-            this.txtSearchBox.TabIndex = 6;
-            this.txtSearchBox.Text = "Search keyword...";
-            //this.txtSearchBox.TextChanged += new System.EventHandler(this.txtSearchBox_TextChanged_1);
-            // 
-            // lblUserList
-            // 
-            this.lblUserList.AutoSize = true;
-            this.lblUserList.Font = new System.Drawing.Font("Segoe UI Black", 13.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblUserList.Location = new System.Drawing.Point(3, 5);
-            this.lblUserList.Name = "lblUserList";
-            this.lblUserList.Size = new System.Drawing.Size(140, 31);
-            this.lblUserList.TabIndex = 5;
-            this.lblUserList.Text = "USER LISTS";
-            //this.lblUserList.Click += new System.EventHandler(this.lblUserList_Click_1);
-            // 
-            // pnlTableHeader
-            // 
-            this.pnlTableHeader.BackColor = System.Drawing.Color.Transparent;
-            this.pnlTableHeader.Controls.Add(this.lblUserList);
-            this.pnlTableHeader.Controls.Add(this.txtSearchBox);
-            this.pnlTableHeader.Location = new System.Drawing.Point(10, 162);
-            this.pnlTableHeader.Name = "pnlTableHeader";
-            this.pnlTableHeader.Size = new System.Drawing.Size(1136, 39);
-            this.pnlTableHeader.TabIndex = 7;
-            // 
-            // panel1
-            // 
-            this.panel1.BackColor = System.Drawing.Color.Transparent;
-            this.panel1.Controls.Add(this.dgvUsers);
-            this.panel1.Location = new System.Drawing.Point(10, 210);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1137, 473);
-            this.panel1.TabIndex = 8;
-            // 
-            // dgvUsers
-            // 
-            this.dgvUsers.AllowUserToAddRows = false;
-            this.dgvUsers.AllowUserToDeleteRows = false;
-            this.dgvUsers.AllowUserToOrderColumns = true;
-            this.dgvUsers.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dgvUsers.BackgroundColor = System.Drawing.Color.White;
-            this.dgvUsers.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(73)))), ((int)(((byte)(80)))), ((int)(((byte)(87)))));
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvUsers.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
-            this.dgvUsers.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvUsers.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.IDColumn,
-            this.fullnameColumn,
-            this.UsernameColumn,
-            this.RoleColumn,
-            this.statusColumn,
-            this.LastLoginColumn});
-            this.dgvUsers.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgvUsers.EnableHeadersVisualStyles = false;
-            this.dgvUsers.GridColor = System.Drawing.SystemColors.AppWorkspace;
-            this.dgvUsers.Location = new System.Drawing.Point(0, 0);
-            this.dgvUsers.Name = "dgvUsers";
-            this.dgvUsers.RowHeadersVisible = false;
-            this.dgvUsers.RowHeadersWidth = 51;
-            this.dgvUsers.RowTemplate.Height = 24;
-            this.dgvUsers.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvUsers.Size = new System.Drawing.Size(1137, 473);
-            this.dgvUsers.TabIndex = 0;
-            //this.dgvUsers.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvUsers_CellContentClick);
-            // 
-            // IDColumn
-            // 
-            this.IDColumn.HeaderText = "#ID";
-            this.IDColumn.MinimumWidth = 6;
-            this.IDColumn.Name = "IDColumn";
-            this.IDColumn.ReadOnly = true;
-            // 
-            // fullnameColumn
-            // 
-            this.fullnameColumn.HeaderText = "FULL NAME";
-            this.fullnameColumn.MinimumWidth = 6;
-            this.fullnameColumn.Name = "fullnameColumn";
-            this.fullnameColumn.ReadOnly = true;
-            // 
-            // UsernameColumn
-            // 
-            this.UsernameColumn.HeaderText = "USERNAME";
-            this.UsernameColumn.MinimumWidth = 6;
-            this.UsernameColumn.Name = "UsernameColumn";
-            this.UsernameColumn.ReadOnly = true;
-            // 
-            // RoleColumn
-            // 
-            this.RoleColumn.HeaderText = "ROLE";
-            this.RoleColumn.MinimumWidth = 6;
-            this.RoleColumn.Name = "RoleColumn";
-            this.RoleColumn.ReadOnly = true;
-            // 
-            // statusColumn
-            // 
-            this.statusColumn.HeaderText = "STATUS";
-            this.statusColumn.Items.AddRange(new object[] {
-            "ACTIVE",
-            "INACTIVE"});
-            this.statusColumn.MinimumWidth = 6;
-            this.statusColumn.Name = "statusColumn";
-            this.statusColumn.ReadOnly = true;
-            this.statusColumn.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.statusColumn.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            // 
-            // LastLoginColumn
-            // 
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle4.Format = "g";
-            dataGridViewCellStyle4.NullValue = null;
-            this.LastLoginColumn.DefaultCellStyle = dataGridViewCellStyle4;
-            this.LastLoginColumn.HeaderText = "LAST LOG-IN";
-            this.LastLoginColumn.MinimumWidth = 6;
-            this.LastLoginColumn.Name = "LastLoginColumn";
-            this.LastLoginColumn.ReadOnly = true;
-            // 
-            // pictureBox4
-            // 
-            this.pictureBox4.BackColor = System.Drawing.Color.Transparent;
-            this.pictureBox4.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox4.Image")));
-            this.pictureBox4.Location = new System.Drawing.Point(902, 12);
-            this.pictureBox4.Name = "pictureBox4";
-            this.pictureBox4.Size = new System.Drawing.Size(29, 28);
-            this.pictureBox4.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox4.TabIndex = 3;
-            this.pictureBox4.TabStop = false;
-            //this.pictureBox4.Click += new System.EventHandler(this.pictureBox4_Click);
-            // 
-            // UserSuperAdminSide
+            // lastsuper
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.AutoSize = true;
             this.BackColor = System.Drawing.Color.White;
+            this.Controls.Add(this.pictureBox4);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.pnlTableHeader);
             this.Controls.Add(this.btnManageUsers);
-            this.Controls.Add(this.pictureBox4);
             this.Controls.Add(this.btnExport);
             this.Controls.Add(this.flowLayoutPanel1);
             this.Controls.Add(this.userheader);
-            this.Margin = new System.Windows.Forms.Padding(10, 0, 20, 0);
-            this.Name = "UserSuperAdminSide";
+            this.Name = "lastsuper";
             this.Size = new System.Drawing.Size(1164, 709);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvUsers)).EndInit();
+            this.panel1.ResumeLayout(false);
+            this.pnlTableHeader.ResumeLayout(false);
+            this.pnlTableHeader.PerformLayout();
             this.flowLayoutPanel1.ResumeLayout(false);
             this.cardTotalUsers.ResumeLayout(false);
             this.cardTotalUsers.PerformLayout();
@@ -463,11 +461,6 @@
             this.cardOnline.ResumeLayout(false);
             this.cardOnline.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
-            this.pnlTableHeader.ResumeLayout(false);
-            this.pnlTableHeader.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvUsers)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -475,12 +468,26 @@
 
         #endregion
 
-        private System.Windows.Forms.Label userheader;
+        private System.Windows.Forms.PictureBox pictureBox4;
+        private System.Windows.Forms.DataGridViewComboBoxColumn statusColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn RoleColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn UsernameColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn fullnameColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn IDColumn;
+        private System.Windows.Forms.DataGridView dgvUsers;
+        private System.Windows.Forms.DataGridViewTextBoxColumn LastLoginColumn;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel pnlTableHeader;
+        private System.Windows.Forms.Label lblUserList;
+        private System.Windows.Forms.TextBox txtSearch;
+        private System.Windows.Forms.Button btnManageUsers;
+        private System.Windows.Forms.Button btnExport;
+        private System.Windows.Forms.Label lblOnlineValue;
         private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
         private System.Windows.Forms.Panel cardTotalUsers;
-        private System.Windows.Forms.PictureBox picTotalIcon;
         private System.Windows.Forms.Label lblTotalValue;
         private System.Windows.Forms.Label lblTotalUsers;
+        private System.Windows.Forms.PictureBox picTotalIcon;
         private System.Windows.Forms.Panel cardActiveAdmins;
         private System.Windows.Forms.Label lblActiveValue;
         private System.Windows.Forms.Label lblActiveAdmins;
@@ -490,22 +497,8 @@
         private System.Windows.Forms.Label lblInactiveAcc;
         private System.Windows.Forms.PictureBox pictureBox2;
         private System.Windows.Forms.Panel cardOnline;
-        private System.Windows.Forms.Label lblOnlineValue;
         private System.Windows.Forms.Label lblOnlineNow;
         private System.Windows.Forms.PictureBox pictureBox3;
-        private System.Windows.Forms.Button btnExport;
-        private System.Windows.Forms.PictureBox pictureBox4;
-        private System.Windows.Forms.Button btnManageUsers;
-        private System.Windows.Forms.TextBox txtSearchBox;
-        private System.Windows.Forms.Label lblUserList;
-        private System.Windows.Forms.Panel pnlTableHeader;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.DataGridView dgvUsers;
-        private System.Windows.Forms.DataGridViewTextBoxColumn IDColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn fullnameColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn UsernameColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn RoleColumn;
-        private System.Windows.Forms.DataGridViewComboBoxColumn statusColumn;
-        private System.Windows.Forms.DataGridViewTextBoxColumn LastLoginColumn;
+        private System.Windows.Forms.Label userheader;
     }
 }
