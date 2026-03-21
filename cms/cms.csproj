@@ -236,6 +236,12 @@
   <ItemGroup>
     <Content Include="Resources\MATCHPOINT %2810%29.png" />
     <Content Include="Resources\MATCHPOINT %2811%29.png" />
+    <None Include="Resources\MATCHPOINT %2812%29.png" />
+    <None Include="Resources\MATCHPOINT %2813%29.png" />
+    <None Include="Resources\MATCHPOINT %2814%29.png" />
+    <None Include="Resources\MATCHPOINT %2815%29.png" />
+    <None Include="Resources\MATCHPOINT %2816%29.png" />
+    <None Include="Resources\MATCHPOINT %2817%29.png" />
     <Content Include="Resources\MATCHPOINT %286%29.png" />
     <Content Include="Resources\MATCHPOINT %287%29.png" />
     <Content Include="Resources\MATCHPOINT %288%29.png" />
