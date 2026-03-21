@@ -20,18 +20,11 @@
             this.label2 = new System.Windows.Forms.Label();
             this.lblDate = new System.Windows.Forms.Label();
             this.lblTime = new System.Windows.Forms.Label();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.panel2 = new System.Windows.Forms.Panel();
             this.lblSelect = new System.Windows.Forms.Label();
-            this.btnBilliards = new System.Windows.Forms.Button();
-            this.btnTableTennis = new System.Windows.Forms.Button();
-            this.btnScooter = new System.Windows.Forms.Button();
-            this.btnBadminton = new System.Windows.Forms.Button();
             this.panel3 = new System.Windows.Forms.Panel();
-            this.btn30min = new System.Windows.Forms.Button();
-            this.btn1hour = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.lblTotal = new System.Windows.Forms.Label();
             this.btnProceedPayment = new System.Windows.Forms.Button();
@@ -53,15 +46,24 @@
             this.totalValue = new System.Windows.Forms.Label();
             this.btnClearCashierForm = new System.Windows.Forms.Button();
             this.rtbSelectedGames = new System.Windows.Forms.RichTextBox();
+            this.equipmentRentalControl1 = new KGHCashierPOS.EquipmentRentalControl();
             this.paymentPanel = new KGHCashierPOS.paymentControl1();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.btn30min = new System.Windows.Forms.Button();
+            this.btn1hour = new System.Windows.Forms.Button();
+            this.btnBilliards = new System.Windows.Forms.Button();
+            this.btnTableTennis = new System.Windows.Forms.Button();
+            this.btnScooter = new System.Windows.Forms.Button();
+            this.btnBadminton = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel2.SuspendLayout();
             this.panel3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
-
+            // 
             // panel1
-            this.panel1.BackColor = System.Drawing.Color.FromArgb(40, 40, 35);
+            // 
+            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
             this.panel1.Controls.Add(this.lblUser);
             this.panel1.Controls.Add(this.label2);
             this.panel1.Controls.Add(this.lblDate);
@@ -74,8 +76,9 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1252, 71);
             this.panel1.TabIndex = 0;
-
+            // 
             // lblUser
+            // 
             this.lblUser.AutoSize = true;
             this.lblUser.ForeColor = System.Drawing.SystemColors.Control;
             this.lblUser.Location = new System.Drawing.Point(1083, 47);
@@ -83,8 +86,9 @@
             this.lblUser.Size = new System.Drawing.Size(58, 20);
             this.lblUser.TabIndex = 35;
             this.lblUser.Text = "lblUser";
-
+            // 
             // label2
+            // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Nirmala Text", 8F, System.Drawing.FontStyle.Bold);
             this.label2.ForeColor = System.Drawing.SystemColors.Control;
@@ -93,8 +97,9 @@
             this.label2.Size = new System.Drawing.Size(114, 21);
             this.label2.TabIndex = 7;
             this.label2.Text = "Logged in as: ";
-
+            // 
             // lblDate
+            // 
             this.lblDate.AutoSize = true;
             this.lblDate.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold);
             this.lblDate.ForeColor = System.Drawing.SystemColors.Control;
@@ -103,8 +108,9 @@
             this.lblDate.Size = new System.Drawing.Size(54, 28);
             this.lblDate.TabIndex = 6;
             this.lblDate.Text = "date";
-
+            // 
             // lblTime
+            // 
             this.lblTime.AutoSize = true;
             this.lblTime.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold);
             this.lblTime.ForeColor = System.Drawing.SystemColors.Control;
@@ -113,16 +119,9 @@
             this.lblTime.Size = new System.Drawing.Size(55, 28);
             this.lblTime.TabIndex = 5;
             this.lblTime.Text = "time";
-
-            // pictureBox1
-            this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.pictureBox1.Location = new System.Drawing.Point(9, 5);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(59, 63);
-            this.pictureBox1.TabIndex = 1;
-            this.pictureBox1.TabStop = false;
-
+            // 
             // label4
+            // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold);
             this.label4.ForeColor = System.Drawing.SystemColors.Control;
@@ -131,8 +130,9 @@
             this.label4.Size = new System.Drawing.Size(71, 28);
             this.label4.TabIndex = 37;
             this.label4.Text = "TIME :";
-
+            // 
             // label3
+            // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold);
             this.label3.ForeColor = System.Drawing.SystemColors.Control;
@@ -141,9 +141,10 @@
             this.label3.Size = new System.Drawing.Size(74, 28);
             this.label3.TabIndex = 36;
             this.label3.Text = "DATE :";
-
+            // 
             // panel2
-            this.panel2.BackColor = System.Drawing.Color.FromArgb(233, 190, 95);
+            // 
+            this.panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(233)))), ((int)(((byte)(190)))), ((int)(((byte)(95)))));
             this.panel2.Controls.Add(this.lblSelect);
             this.panel2.Controls.Add(this.btnBilliards);
             this.panel2.Controls.Add(this.btnTableTennis);
@@ -153,8 +154,9 @@
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(330, 275);
             this.panel2.TabIndex = 9;
-
+            // 
             // lblSelect
+            // 
             this.lblSelect.AutoSize = true;
             this.lblSelect.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold);
             this.lblSelect.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
@@ -163,57 +165,10 @@
             this.lblSelect.Size = new System.Drawing.Size(131, 25);
             this.lblSelect.TabIndex = 7;
             this.lblSelect.Text = "SELECT GAME";
-
-            // btnBilliards
-            this.btnBilliards.BackColor = System.Drawing.Color.FromArgb(40, 40, 35);
-            this.btnBilliards.BackgroundImage = global::KGHCashierPOS.Properties.Resources.BILLIARDS;
-            this.btnBilliards.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btnBilliards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBilliards.Location = new System.Drawing.Point(19, 47);
-            this.btnBilliards.Name = "btnBilliards";
-            this.btnBilliards.Size = new System.Drawing.Size(140, 100);
-            this.btnBilliards.TabIndex = 1;
-            this.btnBilliards.UseVisualStyleBackColor = false;
-            this.btnBilliards.Click += new System.EventHandler(this.btnBilliards_Click);
-
-            // btnTableTennis
-            this.btnTableTennis.BackColor = System.Drawing.Color.FromArgb(40, 40, 35);
-            this.btnTableTennis.BackgroundImage = global::KGHCashierPOS.Properties.Resources.TABLETENNIS;
-            this.btnTableTennis.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btnTableTennis.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnTableTennis.Location = new System.Drawing.Point(165, 148);
-            this.btnTableTennis.Name = "btnTableTennis";
-            this.btnTableTennis.Size = new System.Drawing.Size(140, 100);
-            this.btnTableTennis.TabIndex = 2;
-            this.btnTableTennis.UseVisualStyleBackColor = false;
-            this.btnTableTennis.Click += new System.EventHandler(this.btnTableTennis_Click);
-
-            // btnScooter
-            this.btnScooter.BackColor = System.Drawing.Color.FromArgb(40, 40, 35);
-            this.btnScooter.BackgroundImage = global::KGHCashierPOS.Properties.Resources.SCOOTER;
-            this.btnScooter.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btnScooter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnScooter.Location = new System.Drawing.Point(165, 47);
-            this.btnScooter.Name = "btnScooter";
-            this.btnScooter.Size = new System.Drawing.Size(140, 100);
-            this.btnScooter.TabIndex = 6;
-            this.btnScooter.UseVisualStyleBackColor = false;
-            this.btnScooter.Click += new System.EventHandler(this.btnScooter_Click);
-
-            // btnBadminton
-            this.btnBadminton.BackColor = System.Drawing.Color.FromArgb(40, 40, 35);
-            this.btnBadminton.BackgroundImage = global::KGHCashierPOS.Properties.Resources.BADMINTON;
-            this.btnBadminton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btnBadminton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBadminton.Location = new System.Drawing.Point(19, 148);
-            this.btnBadminton.Name = "btnBadminton";
-            this.btnBadminton.Size = new System.Drawing.Size(140, 100);
-            this.btnBadminton.TabIndex = 8;
-            this.btnBadminton.UseVisualStyleBackColor = false;
-            this.btnBadminton.Click += new System.EventHandler(this.btnBadminton_Click);
-
+            // 
             // panel3
-            this.panel3.BackColor = System.Drawing.Color.FromArgb(233, 190, 95);
+            // 
+            this.panel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(233)))), ((int)(((byte)(190)))), ((int)(((byte)(95)))));
             this.panel3.Controls.Add(this.btn30min);
             this.panel3.Controls.Add(this.btn1hour);
             this.panel3.Controls.Add(this.label1);
@@ -221,32 +176,9 @@
             this.panel3.Name = "panel3";
             this.panel3.Size = new System.Drawing.Size(330, 191);
             this.panel3.TabIndex = 10;
-
-            // btn30min
-            this.btn30min.BackColor = System.Drawing.Color.FromArgb(40, 40, 35);
-            this.btn30min.BackgroundImage = global::KGHCashierPOS.Properties.Resources._30MINS1;
-            this.btn30min.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btn30min.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn30min.Location = new System.Drawing.Point(19, 43);
-            this.btn30min.Name = "btn30min";
-            this.btn30min.Size = new System.Drawing.Size(140, 100);
-            this.btn30min.TabIndex = 10;
-            this.btn30min.UseVisualStyleBackColor = false;
-            this.btn30min.Click += new System.EventHandler(this.btn30Min_Click);
-
-            // btn1hour
-            this.btn1hour.BackColor = System.Drawing.Color.FromArgb(40, 40, 35);
-            this.btn1hour.BackgroundImage = global::KGHCashierPOS.Properties.Resources._1HOUR;
-            this.btn1hour.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.btn1hour.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn1hour.Location = new System.Drawing.Point(165, 43);
-            this.btn1hour.Name = "btn1hour";
-            this.btn1hour.Size = new System.Drawing.Size(140, 100);
-            this.btn1hour.TabIndex = 11;
-            this.btn1hour.UseVisualStyleBackColor = false;
-            this.btn1hour.Click += new System.EventHandler(this.btn1Hour_Click);
-
+            // 
             // label1
+            // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold);
             this.label1.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
@@ -255,8 +187,9 @@
             this.label1.Size = new System.Drawing.Size(156, 25);
             this.label1.TabIndex = 7;
             this.label1.Text = "TIME DURATION";
-
+            // 
             // lblTotal
+            // 
             this.lblTotal.AutoSize = true;
             this.lblTotal.BackColor = System.Drawing.SystemColors.Control;
             this.lblTotal.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold);
@@ -265,9 +198,10 @@
             this.lblTotal.Size = new System.Drawing.Size(35, 32);
             this.lblTotal.TabIndex = 12;
             this.lblTotal.Text = "   ";
-
+            // 
             // btnProceedPayment
-            this.btnProceedPayment.BackColor = System.Drawing.Color.FromArgb(37, 162, 166);
+            // 
+            this.btnProceedPayment.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(162)))), ((int)(((byte)(166)))));
             this.btnProceedPayment.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnProceedPayment.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold);
             this.btnProceedPayment.Location = new System.Drawing.Point(415, 562);
@@ -277,9 +211,10 @@
             this.btnProceedPayment.Text = "PROCEED TO PAYMENT";
             this.btnProceedPayment.UseVisualStyleBackColor = false;
             this.btnProceedPayment.Click += new System.EventHandler(this.btnProceedPayment_Click);
-
+            // 
             // btnRemoveGame
-            this.btnRemoveGame.BackColor = System.Drawing.Color.FromArgb(206, 59, 114);
+            // 
+            this.btnRemoveGame.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(206)))), ((int)(((byte)(59)))), ((int)(((byte)(114)))));
             this.btnRemoveGame.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRemoveGame.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
             this.btnRemoveGame.Location = new System.Drawing.Point(548, 515);
@@ -289,8 +224,9 @@
             this.btnRemoveGame.Text = "REMOVE GAME";
             this.btnRemoveGame.UseVisualStyleBackColor = false;
             this.btnRemoveGame.Click += new System.EventHandler(this.btnRemoveGame_Click);
-
+            // 
             // label6
+            // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Nirmala Text", 10F);
             this.label6.Location = new System.Drawing.Point(414, 99);
@@ -298,16 +234,18 @@
             this.label6.Size = new System.Drawing.Size(190, 28);
             this.label6.TabIndex = 18;
             this.label6.Text = "Enter Order Number";
-
+            // 
             // txtOrderNumber
+            // 
             this.txtOrderNumber.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtOrderNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
             this.txtOrderNumber.Location = new System.Drawing.Point(415, 135);
             this.txtOrderNumber.Name = "txtOrderNumber";
             this.txtOrderNumber.Size = new System.Drawing.Size(258, 44);
             this.txtOrderNumber.TabIndex = 19;
-
-            // Number buttons
+            // 
+            // btn1
+            // 
             this.btn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn1.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn1.Location = new System.Drawing.Point(415, 191);
@@ -316,7 +254,9 @@
             this.btn1.TabIndex = 21;
             this.btn1.Text = "1";
             this.btn1.Click += new System.EventHandler(this.NumberButton_Click);
-
+            // 
+            // btn2
+            // 
             this.btn2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn2.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn2.Location = new System.Drawing.Point(503, 191);
@@ -325,7 +265,9 @@
             this.btn2.TabIndex = 22;
             this.btn2.Text = "2";
             this.btn2.Click += new System.EventHandler(this.NumberButton_Click);
-
+            // 
+            // btn3
+            // 
             this.btn3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn3.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn3.Location = new System.Drawing.Point(591, 191);
@@ -334,7 +276,9 @@
             this.btn3.TabIndex = 23;
             this.btn3.Text = "3";
             this.btn3.Click += new System.EventHandler(this.NumberButton_Click);
-
+            // 
+            // btn4
+            // 
             this.btn4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn4.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn4.Location = new System.Drawing.Point(415, 272);
@@ -343,7 +287,9 @@
             this.btn4.TabIndex = 24;
             this.btn4.Text = "4";
             this.btn4.Click += new System.EventHandler(this.NumberButton_Click);
-
+            // 
+            // btn5
+            // 
             this.btn5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn5.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn5.Location = new System.Drawing.Point(503, 272);
@@ -352,7 +298,9 @@
             this.btn5.TabIndex = 25;
             this.btn5.Text = "5";
             this.btn5.Click += new System.EventHandler(this.NumberButton_Click);
-
+            // 
+            // btn6
+            // 
             this.btn6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn6.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn6.Location = new System.Drawing.Point(591, 272);
@@ -361,7 +309,9 @@
             this.btn6.TabIndex = 26;
             this.btn6.Text = "6";
             this.btn6.Click += new System.EventHandler(this.NumberButton_Click);
-
+            // 
+            // btn7
+            // 
             this.btn7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn7.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn7.Location = new System.Drawing.Point(415, 353);
@@ -370,7 +320,9 @@
             this.btn7.TabIndex = 27;
             this.btn7.Text = "7";
             this.btn7.Click += new System.EventHandler(this.NumberButton_Click);
-
+            // 
+            // btn8
+            // 
             this.btn8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn8.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn8.Location = new System.Drawing.Point(503, 353);
@@ -379,7 +331,9 @@
             this.btn8.TabIndex = 28;
             this.btn8.Text = "8";
             this.btn8.Click += new System.EventHandler(this.NumberButton_Click);
-
+            // 
+            // btn9
+            // 
             this.btn9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn9.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn9.Location = new System.Drawing.Point(591, 353);
@@ -388,8 +342,10 @@
             this.btn9.TabIndex = 29;
             this.btn9.Text = "9";
             this.btn9.Click += new System.EventHandler(this.NumberButton_Click);
-
-            this.btnBackspace.BackColor = System.Drawing.Color.FromArgb(206, 59, 114);
+            // 
+            // btnBackspace
+            // 
+            this.btnBackspace.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(206)))), ((int)(((byte)(59)))), ((int)(((byte)(114)))));
             this.btnBackspace.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnBackspace.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btnBackspace.Location = new System.Drawing.Point(503, 434);
@@ -399,7 +355,9 @@
             this.btnBackspace.Text = "⌫";
             this.btnBackspace.UseVisualStyleBackColor = false;
             this.btnBackspace.Click += new System.EventHandler(this.btnBackspace_Click);
-
+            // 
+            // btn0
+            // 
             this.btn0.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn0.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btn0.Location = new System.Drawing.Point(415, 434);
@@ -408,8 +366,10 @@
             this.btn0.TabIndex = 31;
             this.btn0.Text = "0";
             this.btn0.Click += new System.EventHandler(this.NumberButton_Click);
-
-            this.btnEnter.BackColor = System.Drawing.Color.FromArgb(37, 162, 166);
+            // 
+            // btnEnter
+            // 
+            this.btnEnter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(162)))), ((int)(((byte)(166)))));
             this.btnEnter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEnter.Font = new System.Drawing.Font("Nirmala Text", 9F);
             this.btnEnter.Location = new System.Drawing.Point(591, 434);
@@ -419,8 +379,9 @@
             this.btnEnter.Text = "Enter";
             this.btnEnter.UseVisualStyleBackColor = false;
             this.btnEnter.Click += new System.EventHandler(this.btnEnter_Click);
-
+            // 
             // totalValue
+            // 
             this.totalValue.AutoSize = true;
             this.totalValue.BackColor = System.Drawing.SystemColors.Control;
             this.totalValue.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold);
@@ -429,9 +390,10 @@
             this.totalValue.Size = new System.Drawing.Size(99, 32);
             this.totalValue.TabIndex = 33;
             this.totalValue.Text = "TOTAL: ";
-
+            // 
             // btnClearCashierForm
-            this.btnClearCashierForm.BackColor = System.Drawing.Color.FromArgb(233, 190, 95);
+            // 
+            this.btnClearCashierForm.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(233)))), ((int)(((byte)(190)))), ((int)(((byte)(95)))));
             this.btnClearCashierForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClearCashierForm.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
             this.btnClearCashierForm.Location = new System.Drawing.Point(415, 515);
@@ -441,8 +403,9 @@
             this.btnClearCashierForm.Text = "CLEAR";
             this.btnClearCashierForm.UseVisualStyleBackColor = false;
             this.btnClearCashierForm.Click += new System.EventHandler(this.btnClearCashierForm_Click_1);
-
+            // 
             // rtbSelectedGames
+            // 
             this.rtbSelectedGames.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.rtbSelectedGames.Font = new System.Drawing.Font("Courier New", 9F);
             this.rtbSelectedGames.Location = new System.Drawing.Point(729, 112);
@@ -450,15 +413,117 @@
             this.rtbSelectedGames.ReadOnly = true;
             this.rtbSelectedGames.Size = new System.Drawing.Size(390, 481);
             this.rtbSelectedGames.TabIndex = 36;
-
+            this.rtbSelectedGames.Text = "";
+            // 
+            // equipmentRentalControl1
+            // 
+            this.equipmentRentalControl1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.equipmentRentalControl1.Location = new System.Drawing.Point(371, 87);
+            this.equipmentRentalControl1.Name = "equipmentRentalControl1";
+            this.equipmentRentalControl1.Size = new System.Drawing.Size(498, 548);
+            this.equipmentRentalControl1.TabIndex = 37;
+            this.equipmentRentalControl1.Visible = false;
+            // 
             // paymentPanel
+            // 
+            this.paymentPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
             this.paymentPanel.Location = new System.Drawing.Point(0, 71);
+            this.paymentPanel.Margin = new System.Windows.Forms.Padding(0);
             this.paymentPanel.Name = "paymentPanel";
-            this.paymentPanel.Size = new System.Drawing.Size(1278, 650);
+            this.paymentPanel.Size = new System.Drawing.Size(1278, 637);
             this.paymentPanel.TabIndex = 35;
             this.paymentPanel.Visible = false;
-
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.BackgroundImage = global::KGHCashierPOS.Properties.Resources.MATCHPOINT;
+            this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.pictureBox1.Location = new System.Drawing.Point(9, 5);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(59, 63);
+            this.pictureBox1.TabIndex = 1;
+            this.pictureBox1.TabStop = false;
+            // 
+            // btn30min
+            // 
+            this.btn30min.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.btn30min.BackgroundImage = global::KGHCashierPOS.Properties.Resources._30MINS1;
+            this.btn30min.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btn30min.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn30min.Location = new System.Drawing.Point(19, 43);
+            this.btn30min.Name = "btn30min";
+            this.btn30min.Size = new System.Drawing.Size(140, 100);
+            this.btn30min.TabIndex = 10;
+            this.btn30min.UseVisualStyleBackColor = false;
+            this.btn30min.Click += new System.EventHandler(this.btn30Min_Click);
+            // 
+            // btn1hour
+            // 
+            this.btn1hour.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.btn1hour.BackgroundImage = global::KGHCashierPOS.Properties.Resources._1HOUR;
+            this.btn1hour.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btn1hour.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btn1hour.Location = new System.Drawing.Point(165, 43);
+            this.btn1hour.Name = "btn1hour";
+            this.btn1hour.Size = new System.Drawing.Size(140, 100);
+            this.btn1hour.TabIndex = 11;
+            this.btn1hour.UseVisualStyleBackColor = false;
+            this.btn1hour.Click += new System.EventHandler(this.btn1Hour_Click);
+            // 
+            // btnBilliards
+            // 
+            this.btnBilliards.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.btnBilliards.BackgroundImage = global::KGHCashierPOS.Properties.Resources.BILLIARDS;
+            this.btnBilliards.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btnBilliards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnBilliards.Location = new System.Drawing.Point(19, 47);
+            this.btnBilliards.Name = "btnBilliards";
+            this.btnBilliards.Size = new System.Drawing.Size(140, 100);
+            this.btnBilliards.TabIndex = 1;
+            this.btnBilliards.UseVisualStyleBackColor = false;
+            this.btnBilliards.Click += new System.EventHandler(this.btnBilliards_Click);
+            // 
+            // btnTableTennis
+            // 
+            this.btnTableTennis.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.btnTableTennis.BackgroundImage = global::KGHCashierPOS.Properties.Resources.TABLETENNIS;
+            this.btnTableTennis.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btnTableTennis.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnTableTennis.Location = new System.Drawing.Point(165, 148);
+            this.btnTableTennis.Name = "btnTableTennis";
+            this.btnTableTennis.Size = new System.Drawing.Size(140, 100);
+            this.btnTableTennis.TabIndex = 2;
+            this.btnTableTennis.UseVisualStyleBackColor = false;
+            this.btnTableTennis.Click += new System.EventHandler(this.btnTableTennis_Click);
+            // 
+            // btnScooter
+            // 
+            this.btnScooter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.btnScooter.BackgroundImage = global::KGHCashierPOS.Properties.Resources.SCOOTER;
+            this.btnScooter.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btnScooter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnScooter.Location = new System.Drawing.Point(165, 47);
+            this.btnScooter.Name = "btnScooter";
+            this.btnScooter.Size = new System.Drawing.Size(140, 100);
+            this.btnScooter.TabIndex = 6;
+            this.btnScooter.UseVisualStyleBackColor = false;
+            this.btnScooter.Click += new System.EventHandler(this.btnScooter_Click);
+            // 
+            // btnBadminton
+            // 
+            this.btnBadminton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.btnBadminton.BackgroundImage = global::KGHCashierPOS.Properties.Resources.BADMINTON;
+            this.btnBadminton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btnBadminton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnBadminton.Location = new System.Drawing.Point(19, 148);
+            this.btnBadminton.Name = "btnBadminton";
+            this.btnBadminton.Size = new System.Drawing.Size(140, 100);
+            this.btnBadminton.TabIndex = 8;
+            this.btnBadminton.UseVisualStyleBackColor = false;
+            this.btnBadminton.Click += new System.EventHandler(this.btnBadminton_Click);
+            // 
             // CashierForm
+            // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1252, 717);
@@ -485,21 +550,22 @@
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.panel3);
             this.Controls.Add(this.panel2);
+            this.Controls.Add(this.equipmentRentalControl1);
             this.Controls.Add(this.paymentPanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "CashierForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Load += new System.EventHandler(this.CashierForm_Load);
-
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         private System.Windows.Forms.Panel panel1;
@@ -541,5 +607,6 @@
         private System.Windows.Forms.Label label3;
         private paymentControl1 paymentPanel;
         private System.Windows.Forms.RichTextBox rtbSelectedGames;
+        private EquipmentRentalControl equipmentRentalControl1;
     }
 }
