@@ -24,10 +24,12 @@ namespace cms
         private TabPage tabEquipment;
         private Panel gameContentPanel;
 
-        // ADD THIS: GameEquipment control reference
+        // GameEquipment control reference
         private GameEquipment gameEquipmentControl;
 
+        // User info - can be used if needed
         public string LoggedInUserRole { get; set; }
+        public string LoggedInUsername { get; set; }
 
         // Helper class to store original colors
         private class LabelColors
@@ -52,13 +54,21 @@ namespace cms
             // Show dashboard by default when form loads
             ShowDashboard();
 
-            // Connect the Sign Out label
+            // Connect the Sign Out event
             AttachSignOutEvent();
 
             // Add hover effects for menu labels
             AttachMenuHoverEffects();
 
-            // Set the welcome message with logged in user role
+            // Set the welcome message
+            SetWelcomeMessage();
+        }
+
+        // Method to set user info (called from login if needed)
+        public void SetCurrentUser(string username, string role)
+        {
+            LoggedInUsername = username;
+            LoggedInUserRole = role;
             SetWelcomeMessage();
         }
 
@@ -98,14 +108,14 @@ namespace cms
             gameTabControl.TabPages.Add(tabEquipment);
         }
 
-        // NEW: Event handler for when Equipment tab is selected
+        // Event handler for when Equipment tab is selected
         private void TabEquipment_Enter(object sender, EventArgs e)
         {
             // Load GameEquipment control only when tab is clicked
             LoadGameEquipment();
         }
 
-        // NEW: Method to load GameEquipment control
+        // Method to load GameEquipment control
         private void LoadGameEquipment()
         {
             // Clear the tab first
@@ -136,21 +146,15 @@ namespace cms
                 {
                     loggedName.ForeColor = Color.Gold;
                 }
+                else if (LoggedInUserRole == "Cashier")
+                {
+                    loggedName.ForeColor = Color.FromArgb(100, 200, 100);
+                }
+                else
+                {
+                    loggedName.ForeColor = Color.FromArgb(228, 186, 94);
+                }
             }
-        }
-
-        public void SetLoggedInUser(string username)
-        {
-            if (username.ToUpper() == "SUPERADMIN")
-            {
-                LoggedInUserRole = "Super Admin";
-            }
-            else
-            {
-                LoggedInUserRole = "Admin";
-            }
-
-            SetWelcomeMessage();
         }
 
         private void AttachSignOutEvent()
@@ -198,26 +202,14 @@ namespace cms
                 try
                 {
                     isSigningOut = true;
-                    Form2 loginForm = new Form2();
-                    this.Hide();
-
-                    if (loginForm.ShowDialog() == DialogResult.OK)
-                    {
-                        string username = loginForm.GetLoggedInUsername();
-                        SetLoggedInUser(username);
-                        this.Show();
-                    }
-                    else
-                    {
-                        Application.Exit();
-                    }
+                    this.Close();
+                    Application.Restart();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error opening login form: {ex.Message}",
+                    MessageBox.Show($"Error signing out: {ex.Message}",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     isSigningOut = false;
-                    this.Show();
                 }
             }
         }
@@ -393,7 +385,7 @@ namespace cms
                 gameRatesControl = null;
             }
 
-            // ADD THIS: Dispose GameEquipment control
+            // Dispose GameEquipment control
             if (gameEquipmentControl != null && !gameEquipmentControl.IsDisposed)
             {
                 gameEquipmentControl.Dispose();
@@ -427,7 +419,7 @@ namespace cms
             // Remove the tab control from view but DON'T dispose it
             if (gameContentPanel != null && !gameContentPanel.IsDisposed)
             {
-                gameContentPanel.Controls.Clear(); // Remove tab control from view
+                gameContentPanel.Controls.Clear();
                 gameContentPanel.Dispose();
                 gameContentPanel = null;
             }
@@ -700,7 +692,7 @@ namespace cms
 
         private void label8_Click(object sender, EventArgs e)
         {
-            // Your existing label8_Click code d
+            // Your existing label8_Click code
         }
 
         private void salesBtn_Click(object sender, EventArgs e)

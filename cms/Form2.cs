@@ -1,317 +1,410 @@
-﻿
-
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
+﻿using System;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Runtime.InteropServices;
+using Font = System.Drawing.Font;
 
 namespace cms
 {
     public partial class Form2 : Form
     {
-        // Hardcoded credentials - Staff and Admin credentials
+        // Hardcoded credentials
         private const string STAFF_USERNAME = "staff";
         private const string STAFF_PASSWORD = "staff123";
         private const string ADMIN_USERNAME = "admin";
         private const string ADMIN_PASSWORD = "admin123";
+        private const string CASHIER_USERNAME = "cashier";
+        private const string CASHIER_PASSWORD = "cashier123";
 
         // Track password visibility state
         private bool isPasswordVisible = false;
-        private string passwordText = ""; // Store actual password text
+        private string passwordText = "";
 
-        // Add this field to store logged in username and role
-        private string loggedInUsername = "";
-        private string loggedInRole = "";
+        // Password toggle icon
+        private Label showPassIcon;
+
+        // Timer for fade effect
+        private Timer fadeTimer;
 
         public Form2()
         {
             InitializeComponent();
-
-            // Setup the form after designer initialization
             SetupForm();
         }
 
         private void SetupForm()
         {
-            this.Text = "CMS - Login";
+            this.Text = "MatchPoint - Login";
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.WindowState = FormWindowState.Maximized;
 
-            // Wire up the button click event
-            signInBtn.Click += signInBtn_Click;
+            // Create password toggle icon
+            CreateShowPasswordIcon();
+
+            // Wire up events
+            btnSignIn.Click += btnSignIn_Click;
+            btnExit.Click += btnExit_Click;
+            lblForgotPassword.Click += lblForgotPassword_Click;
 
             // Set Enter key to trigger login
-            this.AcceptButton = signInBtn;
+            this.AcceptButton = btnSignIn;
 
-            // Auto-focus on username field
-            usernameType.Focus();
+            // Setup textboxes with placeholder text
+            SetupTextBoxes();
 
             // Initialize password field
-            passwordType.Text = "";
             passwordText = "";
 
-            // Change "Forgot Password?" to show test credentials - Updated to show correct credentials
-            label3.Text = "Staff: staff / staff123 | Admin: admin / admin123";
-            label3.ForeColor = Color.Gray;
-            label3.Font = new System.Drawing.Font(label3.Font, System.Drawing.FontStyle.Italic);
-
-            // Setup show password icon click event
-            showPassIcon.Click += showPassIcon_Click;
-            showPassIcon.Cursor = Cursors.Hand;
-
-            // Handle text changes for password field
-            passwordType.TextChanged += passwordType_TextChanged;
-
             // Handle key events
-            passwordType.KeyPress += passwordType_KeyPress;
-            passwordType.KeyDown += passwordType_KeyDown;
+            txtPassword.KeyPress += txtPassword_KeyPress;
+            txtPassword.KeyDown += txtPassword_KeyDown;
+            txtUsername.KeyDown += txtUsername_KeyDown;
+
+            // Setup hover effects
+            SetupHoverEffects();
+
+            // Add fade-in effect
+            this.Opacity = 0;
+            fadeTimer = new Timer();
+            fadeTimer.Interval = 20;
+            fadeTimer.Tick += FadeTimer_Tick;
+            fadeTimer.Start();
         }
 
-        // Add this method to expose the logged-in username
-        public string GetLoggedInUsername()
+        private void FadeTimer_Tick(object sender, EventArgs e)
         {
-            return loggedInUsername;
-        }
-
-        // Add this method to expose the logged-in role
-        public string GetLoggedInRole()
-        {
-            return loggedInRole;
-        }
-
-        private void passwordType_TextChanged(object sender, EventArgs e)
-        {
-            // When in hidden mode, we need to track the actual password
-            if (!isPasswordVisible)
+            if (this.Opacity < 1)
             {
-                // Get the current cursor position
-                int cursorPosition = passwordType.SelectionStart;
-
-                // Temporarily remove event handler to avoid recursion
-                passwordType.TextChanged -= passwordType_TextChanged;
-
-                // If the text changed and we're in hidden mode, the user might have pasted or something
-                // For simplicity, we'll just maintain the passwordText based on the displayed asterisks
-                // This is not perfect but works for basic typing
-
-                // Re-attach event handler
-                passwordType.TextChanged += passwordType_TextChanged;
+                this.Opacity += 0.05;
+            }
+            else
+            {
+                if (fadeTimer != null)
+                {
+                    fadeTimer.Stop();
+                    fadeTimer.Dispose();
+                    fadeTimer = null;
+                }
             }
         }
 
-        private void passwordType_KeyPress(object sender, KeyPressEventArgs e)
+        private void CreateShowPasswordIcon()
         {
-            if (!isPasswordVisible && !char.IsControl(e.KeyChar))
+            showPassIcon = new Label
             {
-                // Handle regular character input
-                int cursorPos = passwordType.SelectionStart;
+                Text = "👁️",
+                Location = new Point(txtPassword.Right - 35, txtPassword.Top + 8),
+                Size = new Size(30, 25),
+                Cursor = Cursors.Hand,
+                BackColor = Color.Transparent,
+                ForeColor = Color.FromArgb(120, 120, 120)
+            };
+            showPassIcon.Click += showPassIcon_Click;
+            this.panelLogin.Controls.Add(showPassIcon);
+            showPassIcon.BringToFront();
+        }
 
-                // Insert character at cursor position
+        private void SetupTextBoxes()
+        {
+            // Setup username textbox with placeholder
+            txtUsername.Text = "Enter your username";
+            txtUsername.ForeColor = Color.FromArgb(120, 120, 120);
+            txtUsername.GotFocus += RemoveUsernamePlaceholder;
+            txtUsername.LostFocus += AddUsernamePlaceholder;
+
+            // Setup password textbox with placeholder
+            txtPassword.Text = "Enter your password";
+            txtPassword.ForeColor = Color.FromArgb(120, 120, 120);
+            txtPassword.UseSystemPasswordChar = false;
+            txtPassword.GotFocus += RemovePasswordPlaceholder;
+            txtPassword.LostFocus += AddPasswordPlaceholder;
+        }
+
+        private void RemoveUsernamePlaceholder(object sender, EventArgs e)
+        {
+            if (txtUsername.Text == "Enter your username")
+            {
+                txtUsername.Text = "";
+                txtUsername.ForeColor = Color.White;
+            }
+        }
+
+        private void AddUsernamePlaceholder(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtUsername.Text))
+            {
+                txtUsername.Text = "Enter your username";
+                txtUsername.ForeColor = Color.FromArgb(120, 120, 120);
+            }
+        }
+
+        private void RemovePasswordPlaceholder(object sender, EventArgs e)
+        {
+            if (txtPassword.Text == "Enter your password")
+            {
+                txtPassword.Text = "";
+                txtPassword.ForeColor = Color.White;
+                txtPassword.UseSystemPasswordChar = true;
+                if (showPassIcon != null)
+                    showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+            }
+        }
+
+        private void AddPasswordPlaceholder(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtPassword.Text))
+            {
+                txtPassword.Text = "Enter your password";
+                txtPassword.ForeColor = Color.FromArgb(120, 120, 120);
+                txtPassword.UseSystemPasswordChar = false;
+                isPasswordVisible = false;
+                passwordText = "";
+                if (showPassIcon != null)
+                {
+                    showPassIcon.Text = "👁️";
+                    showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+                }
+            }
+        }
+
+        private void SetupHoverEffects()
+        {
+            // Sign In button hover effects
+            btnSignIn.MouseEnter += (s, e) => btnSignIn.BackColor = Color.FromArgb(248, 206, 114);
+            btnSignIn.MouseLeave += (s, e) => btnSignIn.BackColor = Color.FromArgb(228, 186, 94);
+
+            // Exit button hover
+            btnExit.MouseEnter += (s, e) =>
+            {
+                btnExit.ForeColor = Color.FromArgb(180, 180, 180);
+                btnExit.Font = new Font(btnExit.Font, FontStyle.Underline);
+            };
+            btnExit.MouseLeave += (s, e) =>
+            {
+                btnExit.ForeColor = Color.FromArgb(120, 120, 120);
+                btnExit.Font = new Font(btnExit.Font, FontStyle.Regular);
+            };
+
+            // Forgot password link hover
+            lblForgotPassword.MouseEnter += (s, e) =>
+            {
+                lblForgotPassword.ForeColor = Color.FromArgb(228, 186, 94);
+                lblForgotPassword.Font = new Font(lblForgotPassword.Font, FontStyle.Underline);
+            };
+            lblForgotPassword.MouseLeave += (s, e) =>
+            {
+                lblForgotPassword.ForeColor = Color.FromArgb(140, 140, 140);
+                lblForgotPassword.Font = new Font(lblForgotPassword.Font, FontStyle.Regular);
+            };
+
+            // Password toggle icon hover
+            if (showPassIcon != null)
+            {
+                showPassIcon.MouseEnter += (s, e) => showPassIcon.ForeColor = Color.FromArgb(228, 186, 94);
+                showPassIcon.MouseLeave += (s, e) => showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+            }
+        }
+
+        private void txtPassword_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!isPasswordVisible && txtPassword.Text != "Enter your password" && !char.IsControl(e.KeyChar))
+            {
+                int cursorPos = txtPassword.SelectionStart;
                 passwordText = passwordText.Insert(cursorPos, e.KeyChar.ToString());
-
-                // Show asterisk
-                passwordType.Text = passwordType.Text + "•"; // Simplified for now
-
-                // Move cursor to end
-                passwordType.SelectionStart = passwordType.Text.Length;
-
-                // Prevent the character from being added normally
+                txtPassword.Text = new string('•', passwordText.Length);
+                txtPassword.SelectionStart = cursorPos + 1;
                 e.Handled = true;
-
-                // Debug - show that passwordText is being updated
-                Console.WriteLine("Password text: " + passwordText);
             }
         }
 
-        private void passwordType_KeyDown(object sender, KeyEventArgs e)
+        private void txtPassword_KeyDown(object sender, KeyEventArgs e)
         {
-            if (!isPasswordVisible)
+            if (!isPasswordVisible && txtPassword.Text != "Enter your password")
             {
                 if (e.KeyCode == Keys.Back)
                 {
-                    // Handle backspace
-                    if (passwordText.Length > 0)
+                    if (passwordText.Length > 0 && txtPassword.SelectionStart > 0)
                     {
-                        passwordText = passwordText.Substring(0, passwordText.Length - 1);
-
-                        // Update display
-                        passwordType.Text = new string('•', passwordText.Length);
-                        passwordType.SelectionStart = passwordType.Text.Length;
+                        int cursorPos = txtPassword.SelectionStart;
+                        passwordText = passwordText.Remove(cursorPos - 1, 1);
+                        txtPassword.Text = new string('•', passwordText.Length);
+                        txtPassword.SelectionStart = cursorPos - 1;
                     }
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                 }
                 else if (e.KeyCode == Keys.Delete)
                 {
-                    // Handle delete - simplified, just ignore for now
+                    if (passwordText.Length > 0 && txtPassword.SelectionStart < passwordText.Length)
+                    {
+                        int cursorPos = txtPassword.SelectionStart;
+                        passwordText = passwordText.Remove(cursorPos, 1);
+                        txtPassword.Text = new string('•', passwordText.Length);
+                        txtPassword.SelectionStart = cursorPos;
+                    }
                     e.Handled = true;
                     e.SuppressKeyPress = true;
                 }
                 else if (e.KeyCode == Keys.Enter)
                 {
-                    signInBtn_Click(signInBtn, new EventArgs());
+                    btnSignIn_Click(btnSignIn, new EventArgs());
                     e.Handled = true;
                 }
             }
         }
 
-        private void showPassIcon_Click(object sender, EventArgs e)
-        {
-            // Toggle password visibility
-            isPasswordVisible = !isPasswordVisible;
-
-            if (isPasswordVisible)
-            {
-                // Show actual password
-                passwordType.Text = passwordText;
-                showPassIcon.Text = "👁️"; // Open eye
-                showPassIcon.ForeColor = Color.Blue;
-            }
-            else
-            {
-                // Show asterisks
-                passwordType.Text = new string('•', passwordText.Length);
-                showPassIcon.Text = "👁️‍🗨️"; // Closed eye
-                showPassIcon.ForeColor = Color.Gray;
-            }
-
-            // Move cursor to end
-            passwordType.SelectionStart = passwordType.Text.Length;
-
-            // Debug
-            Console.WriteLine("Toggle visibility: " + isPasswordVisible + ", Password: " + passwordText);
-        }
-
-        private void signInBtn_Click(object sender, EventArgs e)
-        {
-            string username = usernameType.Text.Trim();
-            string password = passwordText; // Always use passwordText which stores the actual password
-
-            // Debug
-            Console.WriteLine("Login attempt - Username: " + username + ", Password: " + password);
-
-            // Check credentials - Staff login (case insensitive username)
-            if (username.ToLower() == STAFF_USERNAME && password == STAFF_PASSWORD)
-            {
-                loggedInUsername = username;
-                loggedInRole = "Staff";
-
-                // Show POS coming soon message for staff
-                MessageBox.Show("POS is coming soon!",
-                    "Point of Sale System",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-
-                // Don't close the form - stay on login screen
-                // Clear password field for next attempt
-                passwordType.Text = "";
-                passwordText = "";
-                usernameType.Focus();
-                usernameType.SelectAll();
-
-                return;
-            }
-            // Check credentials - Admin login (case insensitive username)
-            else if (username.ToLower() == ADMIN_USERNAME && password == ADMIN_PASSWORD)
-            {
-                // Store which user logged in
-                loggedInUsername = username;
-                loggedInRole = "Admin";
-
-                // Login successful - set DialogResult to OK
-                this.DialogResult = DialogResult.OK;
-                this.Close();
-            }
-            else
-            {
-                // Show error message
-                MessageBox.Show("Invalid username or password!",
-                    "Login Failed",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-
-                // Clear password field
-                passwordType.Text = "";
-                passwordText = "";
-                usernameType.Focus();
-                usernameType.SelectAll();
-            }
-        }
-
-        private void usernameType_KeyDown(object sender, KeyEventArgs e)
+        private void txtUsername_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                passwordType.Focus();
+                txtPassword.Focus();
                 e.Handled = true;
             }
         }
 
-        private void Form2_FormClosing(object sender, FormClosingEventArgs e)
+        private void showPassIcon_Click(object sender, EventArgs e)
         {
-            // Only show exit confirmation if login wasn't successful
-            if (e.CloseReason == CloseReason.UserClosing && this.DialogResult != DialogResult.OK)
-            {
-                DialogResult result = MessageBox.Show("Are you sure you want to exit?",
-                    "Exit Application",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+            if (txtPassword.Text == "Enter your password")
+                return;
 
-                if (result == DialogResult.Yes)
+            isPasswordVisible = !isPasswordVisible;
+
+            if (isPasswordVisible)
+            {
+                txtPassword.Text = passwordText;
+                txtPassword.UseSystemPasswordChar = false;
+                if (showPassIcon != null)
                 {
-                    Application.Exit();
+                    showPassIcon.Text = "👁️‍🗨️";
+                    showPassIcon.ForeColor = Color.FromArgb(228, 186, 94);
                 }
-                else
+            }
+            else
+            {
+                txtPassword.Text = new string('•', passwordText.Length);
+                txtPassword.UseSystemPasswordChar = true;
+                if (showPassIcon != null)
                 {
-                    e.Cancel = true;
+                    showPassIcon.Text = "👁️";
+                    showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+                }
+            }
+
+            txtPassword.SelectionStart = txtPassword.Text.Length;
+        }
+
+        private void btnSignIn_Click(object sender, EventArgs e)
+        {
+            string username = txtUsername.Text.Trim();
+            string password = isPasswordVisible ? txtPassword.Text : passwordText;
+
+            // Remove placeholder values
+            if (username == "Enter your username") username = "";
+            if (txtPassword.Text == "Enter your password") password = "";
+
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                MessageBox.Show("Please enter both username and password", "Login Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check credentials and open appropriate form
+            // ADMIN - opens Form1 (Admin Dashboard)
+            if (username.ToLower() == ADMIN_USERNAME && password == ADMIN_PASSWORD)
+            {
+                this.Hide();
+                Form1 mainForm = new Form1();
+                mainForm.Closed += (s, args) => this.Close();
+                mainForm.Show();
+            }
+            // CASHIER - opens CashierForm (POS System)
+            else if (username.ToLower() == CASHIER_USERNAME && password == CASHIER_PASSWORD)
+            {
+                this.Hide();
+                KGHCashierPOS.CashierForm cashierForm = new KGHCashierPOS.CashierForm();
+                cashierForm.Closed += (s, args) => this.Close();
+                cashierForm.Show();
+            }
+            // STAFF - shows message
+            else if (username.ToLower() == STAFF_USERNAME && password == STAFF_PASSWORD)
+            {
+                MessageBox.Show("Staff access: Limited functionality.", "Staff Access",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearLoginFields();
+            }
+            else
+            {
+                MessageBox.Show("Invalid username or password", "Login Failed",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ClearLoginFields();
+            }
+        }
+
+        private void ClearLoginFields()
+        {
+            passwordText = "";
+            txtPassword.Text = "Enter your password";
+            txtPassword.ForeColor = Color.FromArgb(120, 120, 120);
+            txtPassword.UseSystemPasswordChar = false;
+            isPasswordVisible = false;
+            if (showPassIcon != null)
+            {
+                showPassIcon.Text = "👁️";
+                showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+            }
+
+            txtUsername.Focus();
+            if (txtUsername.Text != "Enter your username")
+            {
+                txtUsername.SelectAll();
+            }
+        }
+
+        private void lblForgotPassword_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(
+                "Please contact your system administrator to reset your password.\n\n" +
+                "📧 Email: admin@matchpoint.com\n" +
+                "📞 Phone: (123) 456-7890\n\n" +
+                "Test Credentials:\n" +
+                "Staff: staff / staff123\n" +
+                "Cashier: cashier / cashier123\n" +
+                "Admin: admin / admin123",
+                "Forgot Password",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
+        private void btnExit_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show("Are you sure you want to exit the application?",
+                "Confirm Exit",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                Application.Exit();
+            }
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (panelLogin != null)
+            {
+                panelLogin.Left = (this.ClientSize.Width - panelLogin.Width) / 2;
+                panelLogin.Top = (this.ClientSize.Height - panelLogin.Height) / 2;
+
+                if (showPassIcon != null && txtPassword != null)
+                {
+                    showPassIcon.Location = new Point(txtPassword.Right - 35, txtPassword.Top + 8);
                 }
             }
         }
 
-        private void pictureBox2_Click(object sender, EventArgs e)
-        {
-            // Your picture box click handler code here
-        }
-
-        private void usernameType_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label2_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void label3_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void signInBtn_Click_1(object sender, EventArgs e)
-        {
-
-        }
-
-        private void Form2_Load(object sender, EventArgs e)
-        {
-
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-
-            Application.Exit();
-        }
+        private void Form2_Load(object sender, EventArgs e) { }
     }
 }

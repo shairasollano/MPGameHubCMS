@@ -247,5 +247,11 @@
     <Content Include="Resources\MATCHPOINT %288%29.png" />
     <Content Include="Resources\MATCHPOINT %289%29.png" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\KGHCashierPOS\KGHCashierPOS\KGHCashierPOS.csproj">
+      <Project>{7813dfba-3401-4963-a42d-fb8ad330ce3c}</Project>
+      <Name>KGHCashierPOS</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
