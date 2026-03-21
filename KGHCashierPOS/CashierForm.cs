@@ -322,16 +322,27 @@ namespace KGHCashierPOS
 
         private void RefreshDisplay()
         {
-            if (rtbSelectedGames == null) return;
-
             rtbSelectedGames.Clear();
 
-            if (sessionManager == null || sessionManager.ActiveSessions.Count == 0)
+            if (sessionManager.ActiveSessions.Count == 0)
             {
-                rtbSelectedGames.Text = "\n\n          No games selected yet.\n\n          Select a game and duration to begin.";
-                if (lblTotal != null) lblTotal.Text = "₱0.00";
+                // ⭐ Improved empty state display
+                rtbSelectedGames.SelectionAlignment = HorizontalAlignment.Center;
+                rtbSelectedGames.SelectionFont = new Font("Segoe UI", 10, FontStyle.Bold);
+                rtbSelectedGames.SelectionColor = Color.Gray;
+
+                rtbSelectedGames.AppendText("\n\n\n");
+                rtbSelectedGames.AppendText("          No games selected yet.\n\n");
+                rtbSelectedGames.AppendText("      Select a game and duration to begin.");
+
+                lblTotal.Text = "₱0.00";
                 return;
             }
+
+            // ⭐ Set default formatting
+            rtbSelectedGames.SelectionFont = new Font("Courier New", 9);
+            rtbSelectedGames.SelectionColor = Color.Black;
+            rtbSelectedGames.SelectionAlignment = HorizontalAlignment.Left;
 
             StringBuilder summary = new StringBuilder();
 
@@ -341,11 +352,13 @@ namespace KGHCashierPOS
             summary.AppendLine();
 
             decimal totalAmount = 0;
+            int itemNumber = 1;
 
             foreach (var session in sessionManager.ActiveSessions.Values)
             {
                 string durationText = DurationFormatter.Format(session.TotalMinutes);
 
+                // Set times
                 session.StartTime = DateTime.Now.AddMinutes(3);
                 session.EndTime = session.StartTime.AddMinutes(session.TotalMinutes);
                 session.IsActive = true;
@@ -353,45 +366,57 @@ namespace KGHCashierPOS
                 decimal displayPrice = session.TotalPrice + session.EquipmentCost;
                 totalAmount += displayPrice;
 
-                summary.AppendLine($"  Game:             {session.GameName}");
-                summary.AppendLine($"  Duration:         {durationText}");
-                summary.AppendLine($"  Start Time:       {session.StartTime:hh:mm tt}");
-                summary.AppendLine($"  End Time:         {session.EndTime:hh:mm tt}");
-                summary.AppendLine($"  Game Price:       {PriceFormatter.Format(session.TotalPrice)}");
+                // ⭐ Item header with number
+                summary.AppendLine($"  ┌─ ITEM #{itemNumber} ─────────────────────────────────────────");
+                summary.AppendLine($"  │");
+                summary.AppendLine($"  │  Game:             {session.GameName}");
+                summary.AppendLine($"  │  Duration:         {durationText}");
+                summary.AppendLine($"  │  Start Time:       {session.StartTime:hh:mm tt}");
+                summary.AppendLine($"  │  End Time:         {session.EndTime:hh:mm tt}");
+                summary.AppendLine($"  │");
+                summary.AppendLine($"  │  Game Price:       {PriceFormatter.Format(session.TotalPrice)}");
 
+                // ⭐ Equipment details
                 if (session.Equipment != null && session.Equipment.Count > 0)
                 {
-                    summary.AppendLine("  Equipment:");
+                    summary.AppendLine($"  │");
+                    summary.AppendLine($"  │  Equipment:");
 
                     foreach (var eq in session.Equipment)
                     {
                         if (eq.DefaultQuantity > 0)
                         {
-                            summary.AppendLine($"    • {eq.Name} x{eq.DefaultQuantity} (Included)");
+                            summary.AppendLine($"  │    ✓ {eq.Name} x{eq.DefaultQuantity} (Included)");
                         }
                         if (eq.RentalQuantity > 0)
                         {
-                            summary.AppendLine($"    • {eq.Name} x{eq.RentalQuantity} ({eq.Type}) - {PriceFormatter.Format(eq.TotalCost)}");
+                            summary.AppendLine($"  │    • {eq.Name} x{eq.RentalQuantity} ({eq.Type}) - {PriceFormatter.Format(eq.TotalCost)}");
                         }
                     }
 
                     if (session.EquipmentCost > 0)
                     {
-                        summary.AppendLine($"  Equipment Cost:   {PriceFormatter.Format(session.EquipmentCost)}");
+                        summary.AppendLine($"  │");
+                        summary.AppendLine($"  │  Equipment Cost:   {PriceFormatter.Format(session.EquipmentCost)}");
                     }
                 }
 
-                summary.AppendLine("  ────────────────────────────────────────────────────");
-                summary.AppendLine($"  Subtotal:         {PriceFormatter.Format(displayPrice)}");
+                summary.AppendLine($"  │");
+                summary.AppendLine($"  │  ────────────────────────────────────────────────────");
+                summary.AppendLine($"  │  SUBTOTAL:         {PriceFormatter.Format(displayPrice)}");
+                summary.AppendLine($"  └──────────────────────────────────────────────────────");
                 summary.AppendLine();
+
+                itemNumber++;
             }
 
             summary.AppendLine("════════════════════════════════════════════════════════");
-            summary.AppendLine($"  TOTAL AMOUNT:     {PriceFormatter.Format(totalAmount)}");
+            summary.AppendLine($"  TOTAL ITEMS:       {sessionManager.ActiveSessions.Count}");
+            summary.AppendLine($"  TOTAL AMOUNT:      {PriceFormatter.Format(totalAmount)}");
             summary.AppendLine("════════════════════════════════════════════════════════");
 
             rtbSelectedGames.Text = summary.ToString();
-            if (lblTotal != null) lblTotal.Text = PriceFormatter.Format(totalAmount);
+            lblTotal.Text = PriceFormatter.Format(totalAmount);
         }
 
         // ============ REMOVE GAME ============
@@ -502,6 +527,8 @@ namespace KGHCashierPOS
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"=== Loading order: {orderNumber} ===");
+
                 var items = OrderRepository.LoadOrder(orderNumber);
 
                 if (items == null || items.Count == 0)
@@ -512,82 +539,38 @@ namespace KGHCashierPOS
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning
                     );
-                    if (txtOrderNumber != null)
-                    {
-                        txtOrderNumber.Clear();
-                        txtOrderNumber.Focus();
-                    }
+                    txtOrderNumber.Clear();
+                    txtOrderNumber.Focus();
                     return;
                 }
 
-                if (sessionManager != null)
-                {
-                    sessionManager.ClearAll();
-                }
-                if (rtbSelectedGames != null)
-                {
-                    rtbSelectedGames.Clear();
-                }
-
-                StringBuilder summary = new StringBuilder();
-                summary.AppendLine("════════════════════════════════════════════════════════");
-                summary.AppendLine($"              ORDER #{orderNumber}");
-                summary.AppendLine("════════════════════════════════════════════════════════");
-                summary.AppendLine();
-
-                decimal orderTotal = 0;
+                // ⭐ Clear current sessions and convert order items to sessions
+                sessionManager.ClearAll();
 
                 foreach (var item in items)
                 {
-                    GameSession session = new GameSession
-                    {
-                        GameName = item.GameName,
-                        TotalMinutes = item.Duration,
-                        TotalPrice = item.Price,
-                        EquipmentCost = item.EquipmentCost,
-                        Equipment = new List<Equipment>()
-                    };
-
-                    if (sessionManager != null)
-                    {
-                        sessionManager.ActiveSessions[item.GameName + Guid.NewGuid()] = session;
-                    }
-
-                    string durationText = DurationFormatter.Format(item.Duration);
-                    decimal itemTotal = item.TotalPrice;
-                    orderTotal += itemTotal;
-
-                    summary.AppendLine($"  Game:             {item.GameName}");
-                    summary.AppendLine($"  Duration:         {durationText}");
-                    summary.AppendLine($"  Game Price:       {PriceFormatter.Format(item.Price)}");
-
-                    if (item.EquipmentCost > 0)
-                    {
-                        summary.AppendLine($"  Equipment Cost:   {PriceFormatter.Format(item.EquipmentCost)}");
-                    }
-
-                    summary.AppendLine("  ────────────────────────────────────────────────────");
-                    summary.AppendLine($"  Subtotal:         {PriceFormatter.Format(itemTotal)}");
-                    summary.AppendLine();
+                    // ⭐ Convert OrderItemData to GameSession with equipment
+                    sessionManager.AddOrExtendSession(
+                        item.GameName,
+                        item.Duration,
+                        item.Equipment,  // ⭐ Pass equipment from database
+                        item.EquipmentCost
+                    );
                 }
 
-                summary.AppendLine("════════════════════════════════════════════════════════");
-                summary.AppendLine($"  TOTAL AMOUNT:     {PriceFormatter.Format(orderTotal)}");
-                summary.AppendLine("════════════════════════════════════════════════════════");
-
-                if (rtbSelectedGames != null) rtbSelectedGames.Text = summary.ToString();
-                if (lblTotal != null) lblTotal.Text = PriceFormatter.Format(orderTotal);
+                // ⭐ Refresh display using session manager
+                RefreshDisplay();
 
                 MessageBox.Show(
                     $"Order #{orderNumber} loaded successfully!\n\n" +
                     $"Items: {items.Count}\n" +
-                    $"Total: {PriceFormatter.Format(orderTotal)}",
+                    $"Total: {PriceFormatter.Format(sessionManager.TotalAmount)}",
                     "Order Loaded",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
                 );
 
-                if (txtOrderNumber != null) txtOrderNumber.Clear();
+                txtOrderNumber.Clear();
             }
             catch (Exception ex)
             {
@@ -597,17 +580,19 @@ namespace KGHCashierPOS
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error
                 );
+
+                System.Diagnostics.Debug.WriteLine($"❌ LoadOrder Exception: {ex.Message}");
             }
         }
+
+
 
         // ============ PROCEED TO PAYMENT ============
         private void btnProceedPayment_Click(object sender, EventArgs e)
         {
-            string orderNumberToPass = txtOrderNumber != null ? txtOrderNumber.Text.Trim() : "";
-
-            if (sessionManager == null || sessionManager.ActiveSessions.Count == 0)
+            if (sessionManager.ActiveSessions.Count == 0)
             {
-                if (rtbSelectedGames == null || string.IsNullOrWhiteSpace(rtbSelectedGames.Text) ||
+                if (string.IsNullOrWhiteSpace(rtbSelectedGames.Text) ||
                     rtbSelectedGames.Text.Contains("No games selected"))
                 {
                     MessageBox.Show("Please add games to order!", "No Items",
@@ -616,24 +601,14 @@ namespace KGHCashierPOS
                 }
             }
 
-            Dictionary<string, GameSession> sessions = new Dictionary<string, GameSession>();
+            // ⭐ Use sessions directly from sessionManager (already has equipment)
+            Dictionary<string, GameSession> sessions = sessionManager.ActiveSessions;
             decimal total = 0;
 
-            if (sessionManager != null && sessionManager.ActiveSessions.Count > 0)
+            // Calculate total including equipment
+            foreach (var session in sessions.Values)
             {
-                sessions = sessionManager.ActiveSessions;
-
-                foreach (var session in sessions.Values)
-                {
-                    total += session.TotalPrice + session.EquipmentCost;
-                }
-            }
-            else
-            {
-                if (lblTotal != null && decimal.TryParse(lblTotal.Text.Replace("₱", "").Replace(",", "").Trim(), out decimal parsedTotal))
-                {
-                    total = parsedTotal;
-                }
+                total += session.TotalPrice + session.EquipmentCost;
             }
 
             if (total <= 0)
@@ -643,33 +618,86 @@ namespace KGHCashierPOS
                 return;
             }
 
-            if (paymentControl != null)
+            string orderNumberToPass = txtOrderNumber.Text.Trim();
+
+            System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
+            System.Diagnostics.Debug.WriteLine("Proceeding to Payment");
+            System.Diagnostics.Debug.WriteLine($"Sessions: {sessions.Count}");
+            System.Diagnostics.Debug.WriteLine($"Total: {total:C}");
+
+            foreach (var session in sessions.Values)
             {
-                paymentControl.Visible = true;
-                paymentControl.BringToFront();
-                paymentControl.LoadPaymentData(sessions, total, orderNumberToPass);
+                System.Diagnostics.Debug.WriteLine($"  {session.GameName}:");
+                System.Diagnostics.Debug.WriteLine($"    Game: {session.TotalPrice:C}");
+                System.Diagnostics.Debug.WriteLine($"    Equipment: {session.EquipmentCost:C}");
+                System.Diagnostics.Debug.WriteLine($"    Equipment Items: {session.Equipment?.Count ?? 0}");
             }
+            System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
+
+            // Show payment
+            paymentControl.Visible = true;
+            paymentControl.BringToFront();
+            paymentControl.LoadPaymentData(sessions, total, orderNumberToPass);
         }
 
         // ============ CLEAR & RESET ============
         private void btnClearCashierForm_Click_1(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Clear all items?", "Confirm Clear",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            // Check if there's anything to clear
+            if (string.IsNullOrWhiteSpace(rtbSelectedGames.Text) ||
+                rtbSelectedGames.Text.Contains("No games selected"))
+            {
+                MessageBox.Show("Nothing to clear!", "Empty Order",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Confirm before clearing
+            DialogResult result = MessageBox.Show(
+                "Clear all items and reset the form?\n\nThis will remove:\n" +
+                "• All selected games\n" +
+                "• Current order number\n" +
+                "• All totals",
+                "Confirm Clear",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+
+            if (result == DialogResult.Yes)
             {
                 ResetTransaction();
+
+                MessageBox.Show("Form cleared successfully!", "Cleared",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
         public void ResetTransaction()
         {
-            if (txtOrderNumber != null) txtOrderNumber.Clear();
-            if (rtbSelectedGames != null) rtbSelectedGames.Clear();
-            if (lblTotal != null) lblTotal.Text = "₱0.00";
+            // Clear order number input
+            txtOrderNumber.Clear();
 
+            // Clear display
+            rtbSelectedGames.Clear();
+
+            // Reset total
+            lblTotal.Text = "₱0.00";
+
+            // Clear session manager
+            sessionManager.ClearAll();
+
+            // Reset game button colors
             ResetGameButtonColors();
+
+            // Reset display to initial state
             RefreshDisplay();
-            if (txtOrderNumber != null) txtOrderNumber.Focus();
+
+            // Focus on order number input
+            txtOrderNumber.Focus();
+
+            System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
+            System.Diagnostics.Debug.WriteLine("Cashier form cleared and reset");
+            System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
         }
 
         private void OnPaymentSuccessful()

@@ -295,5 +295,11 @@
   <ItemGroup>
     <None Include="Resources\MATCHPOINT1.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CASH.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\GCASH.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

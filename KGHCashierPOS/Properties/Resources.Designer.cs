@@ -113,6 +113,26 @@ namespace KGHCashierPOS.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CASH {
+            get {
+                object obj = ResourceManager.GetObject("CASH", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap GCASH {
+            get {
+                object obj = ResourceManager.GetObject("GCASH", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap MATCHPOINT {
             get {
                 object obj = ResourceManager.GetObject("MATCHPOINT", resourceCulture);
