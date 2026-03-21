@@ -18,6 +18,7 @@ namespace KGHCashierPOS
 
         private string selectedPaymentMethod = "Cash";
 
+
         // ============ EVENT ============
         public event Action PaymentSuccessful;
 
@@ -455,13 +456,10 @@ namespace KGHCashierPOS
                 System.Diagnostics.Debug.WriteLine("PROCESSING PAYMENT");
                 System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
 
-                // ⭐ Save sessions and payments to database
+                // Save sessions and payments to database
                 foreach (var session in _sessions.Values)
                 {
                     System.Diagnostics.Debug.WriteLine($"\nProcessing session: {session.GameName}");
-                    System.Diagnostics.Debug.WriteLine($"  Game Price: {session.TotalPrice:C}");
-                    System.Diagnostics.Debug.WriteLine($"  Equipment Cost: {session.EquipmentCost:C}");
-                    System.Diagnostics.Debug.WriteLine($"  Equipment Count: {session.Equipment?.Count ?? 0}");
 
                     // Save session (returns session_id)
                     int sessionId = PaymentRepository.SaveSession(session);
@@ -476,21 +474,24 @@ namespace KGHCashierPOS
                     {
                         SessionId = sessionId,
                         PaymentMethod = method,
-                        AmountPaid = calculator.Subtotal, // Total before discount
+                        AmountPaid = calculator.Subtotal,
                         DiscountType = discountManager.DiscountType,
                         DiscountAmount = discountManager.DiscountAmount,
-                        FinalAmount = calculator.GetFinalAmount(), // ⭐ Final amount from calculator
+                        FinalAmount = calculator.GetFinalAmount(),
                         ReceiptNo = receiptNo,
                         Reference = reference,
                         PaymentDate = DateTime.Now
                     });
                 }
 
-                // Update order status if from order
+                // ⭐ Update order status to 'Completed' if this payment is from an order
                 if (!string.IsNullOrEmpty(currentOrderNumber))
                 {
                     OrderRepository.UpdateOrderStatus(currentOrderNumber, "Completed");
-                    System.Diagnostics.Debug.WriteLine($"\n✓ Order {currentOrderNumber} marked as Completed");
+
+                    System.Diagnostics.Debug.WriteLine("");
+                    System.Diagnostics.Debug.WriteLine($"✓ Order {currentOrderNumber} marked as COMPLETED");
+                    System.Diagnostics.Debug.WriteLine("");
                 }
 
                 // Generate receipt
@@ -507,11 +508,17 @@ namespace KGHCashierPOS
                     GCashReference = reference
                 });
 
-                System.Diagnostics.Debug.WriteLine($"\n✓ Receipt generated: {receiptPath}");
+                System.Diagnostics.Debug.WriteLine($"✓ Receipt generated: {receiptPath}");
                 System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
 
-                MessageBox.Show("Payment successful!\nReceipt generated.", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    "Payment successful!\n" +
+                    "Receipt has been generated.\n\n" +
+                    (!string.IsNullOrEmpty(currentOrderNumber) ? $"Order #{currentOrderNumber} completed!" : ""),
+                    "Success",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
 
                 System.Diagnostics.Process.Start(receiptPath);
 
@@ -521,8 +528,12 @@ namespace KGHCashierPOS
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error processing payment:\n{ex.Message}\n\nPlease try again.", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    $"Error processing payment:\n{ex.Message}\n\nPlease try again.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
 
                 System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
                 System.Diagnostics.Debug.WriteLine($"❌ Payment Error: {ex.Message}");

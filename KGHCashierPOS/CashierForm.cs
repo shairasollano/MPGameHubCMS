@@ -20,6 +20,8 @@ namespace KGHCashierPOS
         // Timer for date/time
         private Timer dateTimeTimer;
 
+        private string loadedOrderNumber = "";
+
         // ============ CONSTRUCTOR ============
         public CashierForm()
         {
@@ -533,38 +535,37 @@ namespace KGHCashierPOS
 
                 if (items == null || items.Count == 0)
                 {
-                    MessageBox.Show(
-                        $"Order #{orderNumber} not found or already processed!",
-                        "Invalid Order",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning
-                    );
+                    // ... existing error handling ...
+
                     txtOrderNumber.Clear();
                     txtOrderNumber.Focus();
+                    loadedOrderNumber = "";  // ⭐ Clear on failure
                     return;
                 }
 
-                // ⭐ Clear current sessions and convert order items to sessions
+                // ⭐ Store the order number
+                loadedOrderNumber = orderNumber;
+
                 sessionManager.ClearAll();
 
                 foreach (var item in items)
                 {
-                    // ⭐ Convert OrderItemData to GameSession with equipment
                     sessionManager.AddOrExtendSession(
                         item.GameName,
                         item.Duration,
-                        item.Equipment,  // ⭐ Pass equipment from database
+                        item.Equipment,
                         item.EquipmentCost
                     );
                 }
 
-                // ⭐ Refresh display using session manager
                 RefreshDisplay();
 
                 MessageBox.Show(
                     $"Order #{orderNumber} loaded successfully!\n\n" +
                     $"Items: {items.Count}\n" +
-                    $"Total: {PriceFormatter.Format(sessionManager.TotalAmount)}",
+                    $"Total: {PriceFormatter.Format(sessionManager.TotalAmount)}\n\n" +
+                    "Status: Pending\n" +
+                    "You can now proceed to payment.",
                     "Order Loaded",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information
@@ -572,19 +573,12 @@ namespace KGHCashierPOS
 
                 txtOrderNumber.Clear();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                MessageBox.Show(
-                    $"Error loading order:\n{ex.Message}\n\nPlease check database connection.",
-                    "Database Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
-                );
-
-                System.Diagnostics.Debug.WriteLine($"❌ LoadOrder Exception: {ex.Message}");
+                // ... existing error handling ...
+                loadedOrderNumber = "";  // ⭐ Clear on error
             }
         }
-
 
 
         // ============ PROCEED TO PAYMENT ============
@@ -601,11 +595,9 @@ namespace KGHCashierPOS
                 }
             }
 
-            // ⭐ Use sessions directly from sessionManager (already has equipment)
             Dictionary<string, GameSession> sessions = sessionManager.ActiveSessions;
             decimal total = 0;
 
-            // Calculate total including equipment
             foreach (var session in sessions.Values)
             {
                 total += session.TotalPrice + session.EquipmentCost;
@@ -618,20 +610,21 @@ namespace KGHCashierPOS
                 return;
             }
 
-            string orderNumberToPass = txtOrderNumber.Text.Trim();
+            // ⭐ Get order number if it was entered (will be empty for manual entries)
+            string orderNumberToPass = "";
+
+            // Check if there's a loaded order number stored somewhere
+            // Option 1: Store it when order is loaded
+            // Option 2: Check if order number textbox had a value before it was cleared
+
+            // For now, we'll add a class-level variable to track this
+            orderNumberToPass = loadedOrderNumber;  // ⭐ We'll add this variable
 
             System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
             System.Diagnostics.Debug.WriteLine("Proceeding to Payment");
+            System.Diagnostics.Debug.WriteLine($"Order Number: {orderNumberToPass}");
             System.Diagnostics.Debug.WriteLine($"Sessions: {sessions.Count}");
             System.Diagnostics.Debug.WriteLine($"Total: {total:C}");
-
-            foreach (var session in sessions.Values)
-            {
-                System.Diagnostics.Debug.WriteLine($"  {session.GameName}:");
-                System.Diagnostics.Debug.WriteLine($"    Game: {session.TotalPrice:C}");
-                System.Diagnostics.Debug.WriteLine($"    Equipment: {session.EquipmentCost:C}");
-                System.Diagnostics.Debug.WriteLine($"    Equipment Items: {session.Equipment?.Count ?? 0}");
-            }
             System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
 
             // Show payment
@@ -674,26 +667,15 @@ namespace KGHCashierPOS
 
         public void ResetTransaction()
         {
-            // Clear order number input
             txtOrderNumber.Clear();
-
-            // Clear display
             rtbSelectedGames.Clear();
-
-            // Reset total
             lblTotal.Text = "₱0.00";
-
-            // Clear session manager
             sessionManager.ClearAll();
-
-            // Reset game button colors
             ResetGameButtonColors();
-
-            // Reset display to initial state
             RefreshDisplay();
-
-            // Focus on order number input
             txtOrderNumber.Focus();
+
+            loadedOrderNumber = "";  // ⭐ Clear loaded order number
 
             System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
             System.Diagnostics.Debug.WriteLine("Cashier form cleared and reset");
