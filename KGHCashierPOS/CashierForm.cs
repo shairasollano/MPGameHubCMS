@@ -535,7 +535,12 @@ namespace KGHCashierPOS
 
                 if (items == null || items.Count == 0)
                 {
-                    // ... existing error handling ...
+                    MessageBox.Show(
+                        $"Order #{orderNumber} not found or already processed!",
+                        "Invalid Order",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
 
                     txtOrderNumber.Clear();
                     txtOrderNumber.Focus();
@@ -573,9 +578,17 @@ namespace KGHCashierPOS
 
                 txtOrderNumber.Clear();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // ... existing error handling ...
+                MessageBox.Show(
+                   $"Error loading order:\n{ex.Message}\n\nPlease check database connection.",
+                   "Database Error",
+                   MessageBoxButtons.OK,
+                   MessageBoxIcon.Error
+               );
+
+                System.Diagnostics.Debug.WriteLine($"❌ LoadOrder Exception: {ex.Message}");
+                
                 loadedOrderNumber = "";  // ⭐ Clear on error
             }
         }
