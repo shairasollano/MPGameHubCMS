@@ -698,7 +698,7 @@ namespace KGHCashierPOS
 
             if (result == DialogResult.Yes)
             {
-                this.Close();
+                Application.Restart();
             }
         }
 

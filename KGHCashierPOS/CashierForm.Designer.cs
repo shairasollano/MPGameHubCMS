@@ -55,10 +55,18 @@
             this.btnTableTennis = new System.Windows.Forms.Button();
             this.btnScooter = new System.Windows.Forms.Button();
             this.btnBadminton = new System.Windows.Forms.Button();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tbCashierForm = new System.Windows.Forms.TabPage();
+            this.tbPaymentControl = new System.Windows.Forms.TabPage();
+            this.tbEquipment = new System.Windows.Forms.TabPage();
+            this.btnSignOut = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.tabControl1.SuspendLayout();
+            this.tbPaymentControl.SuspendLayout();
+            this.tbEquipment.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -406,6 +414,7 @@
             // 
             // rtbSelectedGames
             // 
+            this.rtbSelectedGames.BackColor = System.Drawing.Color.WhiteSmoke;
             this.rtbSelectedGames.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.rtbSelectedGames.Font = new System.Drawing.Font("Courier New", 9F);
             this.rtbSelectedGames.Location = new System.Drawing.Point(729, 112);
@@ -418,7 +427,7 @@
             // equipmentRentalControl1
             // 
             this.equipmentRentalControl1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.equipmentRentalControl1.Location = new System.Drawing.Point(371, 87);
+            this.equipmentRentalControl1.Location = new System.Drawing.Point(-4, 46);
             this.equipmentRentalControl1.Name = "equipmentRentalControl1";
             this.equipmentRentalControl1.Size = new System.Drawing.Size(498, 548);
             this.equipmentRentalControl1.TabIndex = 37;
@@ -427,7 +436,7 @@
             // paymentPanel
             // 
             this.paymentPanel.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
-            this.paymentPanel.Location = new System.Drawing.Point(0, 71);
+            this.paymentPanel.Location = new System.Drawing.Point(-599, -29);
             this.paymentPanel.Margin = new System.Windows.Forms.Padding(0);
             this.paymentPanel.Name = "paymentPanel";
             this.paymentPanel.Size = new System.Drawing.Size(1278, 637);
@@ -522,11 +531,70 @@
             this.btnBadminton.UseVisualStyleBackColor = false;
             this.btnBadminton.Click += new System.EventHandler(this.btnBadminton_Click);
             // 
+            // tabControl1
+            // 
+            this.tabControl1.Controls.Add(this.tbCashierForm);
+            this.tabControl1.Controls.Add(this.tbPaymentControl);
+            this.tabControl1.Controls.Add(this.tbEquipment);
+            this.tabControl1.Location = new System.Drawing.Point(12, 670);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(481, 35);
+            this.tabControl1.TabIndex = 38;
+            this.tabControl1.Visible = false;
+            // 
+            // tbCashierForm
+            // 
+            this.tbCashierForm.Location = new System.Drawing.Point(4, 29);
+            this.tbCashierForm.Name = "tbCashierForm";
+            this.tbCashierForm.Padding = new System.Windows.Forms.Padding(3);
+            this.tbCashierForm.Size = new System.Drawing.Size(473, 2);
+            this.tbCashierForm.TabIndex = 0;
+            this.tbCashierForm.Text = "tbCashierForm";
+            this.tbCashierForm.UseVisualStyleBackColor = true;
+            // 
+            // tbPaymentControl
+            // 
+            this.tbPaymentControl.Controls.Add(this.paymentPanel);
+            this.tbPaymentControl.Location = new System.Drawing.Point(4, 29);
+            this.tbPaymentControl.Name = "tbPaymentControl";
+            this.tbPaymentControl.Padding = new System.Windows.Forms.Padding(3);
+            this.tbPaymentControl.Size = new System.Drawing.Size(473, 32);
+            this.tbPaymentControl.TabIndex = 1;
+            this.tbPaymentControl.Text = "tbPaymentControl";
+            this.tbPaymentControl.UseVisualStyleBackColor = true;
+            // 
+            // tbEquipment
+            // 
+            this.tbEquipment.Controls.Add(this.equipmentRentalControl1);
+            this.tbEquipment.Location = new System.Drawing.Point(4, 29);
+            this.tbEquipment.Name = "tbEquipment";
+            this.tbEquipment.Padding = new System.Windows.Forms.Padding(3);
+            this.tbEquipment.Size = new System.Drawing.Size(473, 32);
+            this.tbEquipment.TabIndex = 2;
+            this.tbEquipment.Text = "tbEquipment";
+            this.tbEquipment.UseVisualStyleBackColor = true;
+            // 
+            // btnSignOut
+            // 
+            this.btnSignOut.BackColor = System.Drawing.Color.Silver;
+            this.btnSignOut.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSignOut.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
+            this.btnSignOut.Location = new System.Drawing.Point(1103, 660);
+            this.btnSignOut.Name = "btnSignOut";
+            this.btnSignOut.Size = new System.Drawing.Size(125, 41);
+            this.btnSignOut.TabIndex = 39;
+            this.btnSignOut.Text = "LOG OUT";
+            this.btnSignOut.UseVisualStyleBackColor = false;
+            this.btnSignOut.Click += new System.EventHandler(this.btnSignOut_Click);
+            // 
             // CashierForm
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1252, 717);
+            this.Controls.Add(this.btnSignOut);
+            this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.rtbSelectedGames);
             this.Controls.Add(this.totalValue);
             this.Controls.Add(this.btnEnter);
@@ -550,8 +618,6 @@
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.panel3);
             this.Controls.Add(this.panel2);
-            this.Controls.Add(this.equipmentRentalControl1);
-            this.Controls.Add(this.paymentPanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "CashierForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -563,6 +629,9 @@
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.tabControl1.ResumeLayout(false);
+            this.tbPaymentControl.ResumeLayout(false);
+            this.tbEquipment.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -608,5 +677,10 @@
         private paymentControl1 paymentPanel;
         private System.Windows.Forms.RichTextBox rtbSelectedGames;
         private EquipmentRentalControl equipmentRentalControl1;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tbCashierForm;
+        private System.Windows.Forms.TabPage tbPaymentControl;
+        private System.Windows.Forms.TabPage tbEquipment;
+        private System.Windows.Forms.Button btnSignOut;
     }
 }
