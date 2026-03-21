@@ -32,6 +32,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
       <HintPath>..\packages\BouncyCastle.Cryptography.2.6.2\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
@@ -246,6 +250,12 @@
     <Content Include="Resources\MATCHPOINT %287%29.png" />
     <Content Include="Resources\MATCHPOINT %288%29.png" />
     <Content Include="Resources\MATCHPOINT %289%29.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\KGHCashierPOS\KGHCashierPOS.csproj">
+      <Project>{7813dfba-3401-4963-a42d-fb8ad330ce3c}</Project>
+      <Name>KGHCashierPOS</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
