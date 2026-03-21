@@ -1277,7 +1277,6 @@ namespace cms
                     WrapContents = false
                 };
 
-                // FIX: Set DialogResult for Cancel button
                 Button btnCancel = new Button
                 {
                     Text = "Cancel",
@@ -1287,8 +1286,7 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Margin = new Padding(10, 5, 0, 5),
-                    Cursor = Cursors.Hand,
-                    DialogResult = DialogResult.Cancel  // This makes the cancel button work
+                    Cursor = Cursors.Hand
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
 
@@ -1324,9 +1322,6 @@ namespace cms
                 tlp.Controls.Add(buttonPanel, 1, 7);
 
                 editDialog.Controls.Add(tlp);
-
-                // FIX: Set the CancelButton property of the form
-                editDialog.CancelButton = btnCancel;
 
                 btnSave.Click += (s, args) =>
                 {
@@ -1423,7 +1418,6 @@ namespace cms
                         MessageBox.Show("Game rate updated successfully!", "Success",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        editDialog.DialogResult = DialogResult.OK;
                         editDialog.Close();
                     }
                     catch (Exception ex)
@@ -1469,7 +1463,6 @@ namespace cms
 
                             MessageBox.Show("Game rate deleted successfully!", "Success",
                                 MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            editDialog.DialogResult = DialogResult.OK;
                             editDialog.Close();
                         }
                         catch (Exception ex)
@@ -1688,8 +1681,7 @@ namespace cms
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Margin = new Padding(10, 5, 0, 5),
-                    Cursor = Cursors.Hand,
-                    DialogResult = DialogResult.Cancel
+                    Cursor = Cursors.Hand
                 };
                 btnCancel.FlatAppearance.BorderSize = 0;
 
@@ -1711,7 +1703,6 @@ namespace cms
                 tlp.Controls.Add(buttonPanel, 1, 7);
 
                 addRateDialog.Controls.Add(tlp);
-                addRateDialog.CancelButton = btnCancel;
 
                 btnAdd.Click += (s, args) =>
                 {
@@ -2152,4 +2143,4 @@ namespace cms
             }
         }
     }
-} 
+}

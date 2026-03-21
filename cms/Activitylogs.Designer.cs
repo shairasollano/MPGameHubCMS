@@ -997,7 +997,7 @@
             this.moduleColumn});
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle2.BackColor = System.Drawing.Color.White;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 9F);
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 10F);
             dataGridViewCellStyle2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(55)))), ((int)(((byte)(65)))), ((int)(((byte)(81)))));
             dataGridViewCellStyle2.Padding = new System.Windows.Forms.Padding(10, 5, 10, 5);
             dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(231)))), ((int)(((byte)(255)))));
@@ -1062,7 +1062,6 @@
             this.severityColumn.MinimumWidth = 6;
             this.severityColumn.Name = "severityColumn";
             this.severityColumn.ReadOnly = true;
-            this.severityColumn.Width = 125;
             // 
             // moduleColumn
             // 
@@ -1070,7 +1069,6 @@
             this.moduleColumn.MinimumWidth = 6;
             this.moduleColumn.Name = "moduleColumn";
             this.moduleColumn.ReadOnly = true;
-            this.moduleColumn.Width = 125;
             // 
             // Activitylogs
             // 
