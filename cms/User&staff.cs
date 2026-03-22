@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.EntityFrameworkCore;
+using MySql.Data.MySqlClient;
 
 namespace cms
 {
@@ -24,131 +24,202 @@ namespace cms
         public DateTime? LastModifiedDate { get; set; }
     }
 
-    // =========================== DATABASE CONTEXT ===========================
-    public class MatchpointDbContext : DbContext
-    {
-        public DbSet<User> Users { get; set; }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            // Connection string for local SQL Server
-            optionsBuilder.UseSqlServer(@"Server=(localdb)\MSSQLLocalDB;Database=matchpoint_db;Trusted_Connection=True;");
-        }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Username)
-                .IsUnique();
-        }
-    }
-
-    // =========================== DATABASE HELPER CLASS ===========================
+    // =========================== DATABASE HELPER CLASS WITH AUTO CREATE TABLE ===========================
     public class DatabaseHelper
     {
-        private static MatchpointDbContext _context;
+        private static string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
 
         public static void InitializeDatabase()
         {
             try
             {
-                _context = new MatchpointDbContext();
-
-                // Create database if it doesn't exist
-                _context.Database.EnsureCreated();
-
-                // Check if users table is empty
-                if (!_context.Users.Any())
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    CreateStaticAccounts();
+                    conn.Open();
+
+                    // Create database if it doesn't exist
+                    string createDbQuery = "CREATE DATABASE IF NOT EXISTS matchpoint_db";
+                    using (MySqlCommand cmd = new MySqlCommand(createDbQuery, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Switch to matchpoint_db
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    // Check if users table exists
+                    string checkTableQuery = "SHOW TABLES LIKE 'users'";
+                    using (MySqlCommand cmd = new MySqlCommand(checkTableQuery, conn))
+                    {
+                        object result = cmd.ExecuteScalar();
+
+                        if (result == null)
+                        {
+                            // Create users table with all required columns
+                            string createTableQuery = @"
+                                CREATE TABLE users (
+                                    Id INT PRIMARY KEY AUTO_INCREMENT,
+                                    UserId VARCHAR(20) NOT NULL UNIQUE,
+                                    Username VARCHAR(50) NOT NULL UNIQUE,
+                                    Password VARCHAR(100) NOT NULL,
+                                    Role VARCHAR(20) NOT NULL,
+                                    Status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
+                                    CreatedDate DATETIME NOT NULL,
+                                    LastModifiedDate DATETIME
+                                )";
+
+                            using (MySqlCommand createCmd = new MySqlCommand(createTableQuery, conn))
+                            {
+                                createCmd.ExecuteNonQuery();
+                            }
+
+                            // Insert static accounts
+                            CreateStaticAccounts(conn);
+                        }
+                        else
+                        {
+                            // Check if table is empty
+                            string checkEmptyQuery = "SELECT COUNT(*) FROM users";
+                            using (MySqlCommand countCmd = new MySqlCommand(checkEmptyQuery, conn))
+                            {
+                                int userCount = Convert.ToInt32(countCmd.ExecuteScalar());
+                                if (userCount == 0)
+                                {
+                                    CreateStaticAccounts(conn);
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Database initialization error: {ex.Message}",
+                MessageBox.Show($"Database initialization error: {ex.Message}\n\n" +
+                    "Please make sure XAMPP is running and MySQL is started.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private static void CreateStaticAccounts()
+        private static void CreateStaticAccounts(MySqlConnection conn)
         {
-            var staticUsers = new List<User>
+            string insertQuery = @"
+                INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) 
+                VALUES (@UserId, @Username, @Password, @Role, @Status, @CreatedDate)";
+
+            var staticUsers = new[]
             {
-                new User
-                {
-                    UserId = "USR001",
-                    Username = "admin",
-                    Password = "admin123",
-                    Role = "ADMIN",
-                    Status = "ACTIVE",
-                    CreatedDate = DateTime.Now
-                },
-                new User
-                {
-                    UserId = "USR002",
-                    Username = "manager",
-                    Password = "manager123",
-                    Role = "MANAGER",
-                    Status = "ACTIVE",
-                    CreatedDate = DateTime.Now
-                },
-                new User
-                {
-                    UserId = "USR003",
-                    Username = "staff",
-                    Password = "staff123",
-                    Role = "STAFF",
-                    Status = "ACTIVE",
-                    CreatedDate = DateTime.Now
-                }
+                new { UserId = "USR001", Username = "admin", Password = "admin123", Role = "ADMIN" },
+                new { UserId = "USR002", Username = "manager", Password = "manager123", Role = "MANAGER" },
+                new { UserId = "USR003", Username = "staff", Password = "staff123", Role = "STAFF" }
             };
 
-            _context.Users.AddRange(staticUsers);
-            _context.SaveChanges();
+            foreach (var user in staticUsers)
+            {
+                using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", user.UserId);
+                    cmd.Parameters.AddWithValue("@Username", user.Username);
+                    cmd.Parameters.AddWithValue("@Password", user.Password);
+                    cmd.Parameters.AddWithValue("@Role", user.Role);
+                    cmd.Parameters.AddWithValue("@Status", "ACTIVE");
+                    cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Now);
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
         public static List<User> GetAllUsers()
         {
+            List<User> users = new List<User>();
+
             try
             {
-                return _context.Users.ToList();
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    string query = "SELECT * FROM users ORDER BY Id";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                users.Add(new User
+                                {
+                                    Id = Convert.ToInt32(reader["Id"]),
+                                    UserId = reader["UserId"].ToString(),
+                                    Username = reader["Username"].ToString(),
+                                    Password = reader["Password"].ToString(),
+                                    Role = reader["Role"].ToString(),
+                                    Status = reader["Status"].ToString(),
+                                    CreatedDate = Convert.ToDateTime(reader["CreatedDate"]),
+                                    LastModifiedDate = reader["LastModifiedDate"] != DBNull.Value ?
+                                        Convert.ToDateTime(reader["LastModifiedDate"]) : (DateTime?)null
+                                });
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading users: {ex.Message}",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return new List<User>();
             }
+
+            return users;
         }
 
         public static bool AddUser(string username, string role, string password = "12345")
         {
             try
             {
-                // Check if username already exists
-                if (_context.Users.Any(u => u.Username == username))
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    MessageBox.Show("Username already exists!", "Duplicate User",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return false;
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    // Check if username already exists
+                    string checkQuery = "SELECT COUNT(*) FROM users WHERE Username = @username";
+                    using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
+                    {
+                        checkCmd.Parameters.AddWithValue("@username", username);
+                        int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                        if (count > 0)
+                        {
+                            MessageBox.Show("Username already exists!", "Duplicate User",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return false;
+                        }
+                    }
+
+                    // Get next UserId
+                    string idQuery = "SELECT COUNT(*) FROM users";
+                    using (MySqlCommand idCmd = new MySqlCommand(idQuery, conn))
+                    {
+                        int nextId = Convert.ToInt32(idCmd.ExecuteScalar()) + 1;
+                        string userId = $"USR{nextId:D3}";
+
+                        string insertQuery = @"
+                            INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) 
+                            VALUES (@UserId, @Username, @Password, @Role, @Status, @CreatedDate)";
+
+                        using (MySqlCommand insertCmd = new MySqlCommand(insertQuery, conn))
+                        {
+                            insertCmd.Parameters.AddWithValue("@UserId", userId);
+                            insertCmd.Parameters.AddWithValue("@Username", username);
+                            insertCmd.Parameters.AddWithValue("@Password", password);
+                            insertCmd.Parameters.AddWithValue("@Role", role);
+                            insertCmd.Parameters.AddWithValue("@Status", "ACTIVE");
+                            insertCmd.Parameters.AddWithValue("@CreatedDate", DateTime.Now);
+                            insertCmd.ExecuteNonQuery();
+                        }
+                    }
                 }
 
-                // Generate new UserId
-                int nextId = _context.Users.Count() + 1;
-                string userId = $"USR{nextId:D3}";
-
-                var newUser = new User
-                {
-                    UserId = userId,
-                    Username = username,
-                    Password = password,
-                    Role = role,
-                    Status = "ACTIVE",
-                    CreatedDate = DateTime.Now
-                };
-
-                _context.Users.Add(newUser);
-                _context.SaveChanges();
                 return true;
             }
             catch (Exception ex)
@@ -163,24 +234,45 @@ namespace cms
         {
             try
             {
-                var user = _context.Users.FirstOrDefault(u => u.Username == oldUsername);
-                if (user != null)
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
+
                     // Check if new username already exists (if changed)
-                    if (oldUsername != newUsername && _context.Users.Any(u => u.Username == newUsername))
+                    if (oldUsername != newUsername)
                     {
-                        MessageBox.Show("Username already exists!", "Duplicate User",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return false;
+                        string checkQuery = "SELECT COUNT(*) FROM users WHERE Username = @username";
+                        using (MySqlCommand checkCmd = new MySqlCommand(checkQuery, conn))
+                        {
+                            checkCmd.Parameters.AddWithValue("@username", newUsername);
+                            int count = Convert.ToInt32(checkCmd.ExecuteScalar());
+
+                            if (count > 0)
+                            {
+                                MessageBox.Show("Username already exists!", "Duplicate User",
+                                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return false;
+                            }
+                        }
                     }
 
-                    user.Username = newUsername;
-                    user.Role = role;
-                    user.LastModifiedDate = DateTime.Now;
-                    _context.SaveChanges();
-                    return true;
+                    string updateQuery = @"
+                        UPDATE users 
+                        SET Username = @newUsername, Role = @role, LastModifiedDate = @lastModified 
+                        WHERE Username = @oldUsername";
+
+                    using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@newUsername", newUsername);
+                        cmd.Parameters.AddWithValue("@role", role);
+                        cmd.Parameters.AddWithValue("@lastModified", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@oldUsername", oldUsername);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
                 }
-                return false;
             }
             catch (Exception ex)
             {
@@ -194,14 +286,19 @@ namespace cms
         {
             try
             {
-                var user = _context.Users.FirstOrDefault(u => u.Username == username);
-                if (user != null)
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    _context.Users.Remove(user);
-                    _context.SaveChanges();
-                    return true;
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    string deleteQuery = "DELETE FROM users WHERE Username = @username";
+                    using (MySqlCommand cmd = new MySqlCommand(deleteQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", username);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
                 }
-                return false;
             }
             catch (Exception ex)
             {
@@ -215,15 +312,26 @@ namespace cms
         {
             try
             {
-                var user = _context.Users.FirstOrDefault(u => u.Username == username);
-                if (user != null)
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    user.Status = status;
-                    user.LastModifiedDate = DateTime.Now;
-                    _context.SaveChanges();
-                    return true;
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    string updateQuery = @"
+                        UPDATE users 
+                        SET Status = @status, LastModifiedDate = @lastModified 
+                        WHERE Username = @username";
+
+                    using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@status", status);
+                        cmd.Parameters.AddWithValue("@lastModified", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@username", username);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
                 }
-                return false;
             }
             catch (Exception ex)
             {
@@ -237,15 +345,26 @@ namespace cms
         {
             try
             {
-                var user = _context.Users.FirstOrDefault(u => u.Username == username);
-                if (user != null)
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    user.Password = newPassword;
-                    user.LastModifiedDate = DateTime.Now;
-                    _context.SaveChanges();
-                    return true;
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    string updateQuery = @"
+                        UPDATE users 
+                        SET Password = @password, LastModifiedDate = @lastModified 
+                        WHERE Username = @username";
+
+                    using (MySqlCommand cmd = new MySqlCommand(updateQuery, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@password", newPassword);
+                        cmd.Parameters.AddWithValue("@lastModified", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@username", username);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
                 }
-                return false;
             }
             catch (Exception ex)
             {
@@ -256,7 +375,7 @@ namespace cms
         }
     }
 
-    // =========================== USER_STAFF FORM (UPDATED) ===========================
+    // =========================== USER_STAFF FORM ===========================
     public partial class User_staff : Form
     {
         public User_staff()
@@ -294,7 +413,7 @@ namespace cms
         {
             frmAddUser addWindow = new frmAddUser();
             addWindow.ShowDialog();
-            RefreshUserGrid(); // Refresh after adding
+            RefreshUserGrid();
         }
 
         private void uPDATEUSERToolStripMenuItem_Click(object sender, EventArgs e)
@@ -313,7 +432,7 @@ namespace cms
                 }
 
                 updateWindow.ShowDialog();
-                RefreshUserGrid(); // Refresh after update
+                RefreshUserGrid();
             }
         }
 
@@ -364,12 +483,12 @@ namespace cms
 
         private void STATUS_SelectedIndexChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0 && e.ColumnIndex == 3) // Status column index
+            if (e.RowIndex >= 0 && e.ColumnIndex == 3)
             {
                 string username = datagrd.Rows[e.RowIndex].Cells[1].Value.ToString();
                 string newStatus = datagrd.Rows[e.RowIndex].Cells[3].Value.ToString();
 
-                if (username != "admin") // Don't allow status change for admin
+                if (username != "admin")
                 {
                     DatabaseHelper.UpdateUserStatus(username, newStatus);
                 }
@@ -377,7 +496,7 @@ namespace cms
                 {
                     MessageBox.Show("Cannot change status of admin account!", "Action Denied",
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    RefreshUserGrid(); // Revert the change
+                    RefreshUserGrid();
                 }
             }
         }
@@ -391,287 +510,6 @@ namespace cms
         }
     }
 
-    // =========================== FRMUPDATEUSER (UPDATED) ===========================
-    public partial class frmUpdateUser : Form
-    {
-        private string oldUsername;
-
-        public frmUpdateUser()
-        {
-            InitializeComponent();
-        }
-
-        private void btnConfirm_Click(object sender, EventArgs e)
-        {
-            string oldUsername = txtUpdateUsername.Text; // Store old username
-            string newUsername = txtUpdateUsername.Text;
-            string newRole = cmbRole.Text;
-
-            if (string.IsNullOrWhiteSpace(newUsername))
-            {
-                MessageBox.Show("Username cannot be empty!", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (DatabaseHelper.UpdateUser(oldUsername, newUsername, newRole))
-            {
-                MessageBox.Show("User updated successfully!", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.Close();
-            }
-        }
-
-        private void btnCancel_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-        }
-    }
-
-    // =========================== FRMADDUSER (UPDATED) ===========================
-    public partial class frmAddUser : Form
-    {
-        public frmAddUser()
-        {
-            InitializeComponent();
-        }
-
-        private void frmAddUser_Load(object sender, EventArgs e)
-        {
-            cmbRole.Items.Clear();
-            cmbRole.Items.Add("MANAGER");
-            cmbRole.Items.Add("STAFF");
-            cmbRole.SelectedIndex = 0; // Select MANAGER by default
-        }
-
-        private void btnConfirm_Click(object sender, EventArgs e)
-        {
-            string username = txtUsername.Text.Trim();
-            string role = cmbRole.Text;
-
-            if (string.IsNullOrWhiteSpace(username))
-            {
-                MessageBox.Show("Please enter a username!", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string defaultPassword = "12345";
-
-            if (DatabaseHelper.AddUser(username, role, defaultPassword))
-            {
-                MessageBox.Show($"User {username} created successfully!\nDefault password is: {defaultPassword}",
-                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.Close();
-            }
-        }
-
-        private void btnCancel_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private void label1_Click(object sender, EventArgs e)
-        {
-        }
-    }
-
-    // =========================== FRMCHANGEPASSWORD (NEW FORM) ===========================
-    public partial class frmChangePassword : Form
-    {
-        private string username;
-
-        public frmChangePassword(string user)
-        {
-            InitializeComponent();
-            username = user;
-            lblUsername.Text = $"Changing password for: {username}";
-        }
-
-        private void btnConfirm_Click(object sender, EventArgs e)
-        {
-            if (txtNewPassword.Text != txtConfirmPassword.Text)
-            {
-                MessageBox.Show("Passwords do not match!", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtNewPassword.Text))
-            {
-                MessageBox.Show("Password cannot be empty!", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (DatabaseHelper.ChangePassword(username, txtNewPassword.Text))
-            {
-                MessageBox.Show("Password changed successfully!", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                this.Close();
-            }
-        }
-
-        private void btnCancel_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-    }
-
-    // Add this partial class for frmChangePassword designer
-    public partial class frmChangePassword
-    {
-        private System.ComponentModel.IContainer components = null;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label lblUsername;
-        private System.Windows.Forms.TextBox txtNewPassword;
-        private System.Windows.Forms.TextBox txtConfirmPassword;
-        private System.Windows.Forms.Button btnConfirm;
-        private System.Windows.Forms.Button btnCancel;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label3;
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
-        private void InitializeComponent()
-        {
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.label1 = new System.Windows.Forms.Label();
-            this.lblUsername = new System.Windows.Forms.Label();
-            this.txtNewPassword = new System.Windows.Forms.TextBox();
-            this.txtConfirmPassword = new System.Windows.Forms.TextBox();
-            this.btnConfirm = new System.Windows.Forms.Button();
-            this.btnCancel = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.panel1.SuspendLayout();
-            this.SuspendLayout();
-            // 
-            // panel1
-            // 
-            this.panel1.BackColor = System.Drawing.Color.Maroon;
-            this.panel1.Controls.Add(this.label1);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(432, 71);
-            this.panel1.TabIndex = 0;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI", 16.2F, System.Drawing.FontStyle.Bold);
-            this.label1.Location = new System.Drawing.Point(97, 20);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(238, 38);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "CHANGE PASSWORD";
-            // 
-            // lblUsername
-            // 
-            this.lblUsername.AutoSize = true;
-            this.lblUsername.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
-            this.lblUsername.ForeColor = System.Drawing.Color.Maroon;
-            this.lblUsername.Location = new System.Drawing.Point(48, 84);
-            this.lblUsername.Name = "lblUsername";
-            this.lblUsername.Size = new System.Drawing.Size(0, 23);
-            this.lblUsername.TabIndex = 1;
-            // 
-            // txtNewPassword
-            // 
-            this.txtNewPassword.Font = new System.Drawing.Font("Segoe UI", 12F);
-            this.txtNewPassword.Location = new System.Drawing.Point(52, 164);
-            this.txtNewPassword.Name = "txtNewPassword";
-            this.txtNewPassword.PasswordChar = '*';
-            this.txtNewPassword.Size = new System.Drawing.Size(329, 34);
-            this.txtNewPassword.TabIndex = 2;
-            // 
-            // txtConfirmPassword
-            // 
-            this.txtConfirmPassword.Font = new System.Drawing.Font("Segoe UI", 12F);
-            this.txtConfirmPassword.Location = new System.Drawing.Point(52, 243);
-            this.txtConfirmPassword.Name = "txtConfirmPassword";
-            this.txtConfirmPassword.PasswordChar = '*';
-            this.txtConfirmPassword.Size = new System.Drawing.Size(329, 34);
-            this.txtConfirmPassword.TabIndex = 3;
-            // 
-            // btnConfirm
-            // 
-            this.btnConfirm.BackColor = System.Drawing.Color.Green;
-            this.btnConfirm.Location = new System.Drawing.Point(61, 313);
-            this.btnConfirm.Name = "btnConfirm";
-            this.btnConfirm.Size = new System.Drawing.Size(141, 55);
-            this.btnConfirm.TabIndex = 4;
-            this.btnConfirm.Text = "CONFIRM";
-            this.btnConfirm.UseVisualStyleBackColor = false;
-            this.btnConfirm.Click += new System.EventHandler(this.btnConfirm_Click);
-            // 
-            // btnCancel
-            // 
-            this.btnCancel.BackColor = System.Drawing.Color.Red;
-            this.btnCancel.Location = new System.Drawing.Point(217, 313);
-            this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(141, 55);
-            this.btnCancel.TabIndex = 5;
-            this.btnCancel.Text = "CANCEL";
-            this.btnCancel.UseVisualStyleBackColor = false;
-            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.ForeColor = System.Drawing.Color.Maroon;
-            this.label2.Location = new System.Drawing.Point(48, 138);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(135, 23);
-            this.label2.TabIndex = 6;
-            this.label2.Text = "NEW PASSWORD";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.ForeColor = System.Drawing.Color.Maroon;
-            this.label3.Location = new System.Drawing.Point(48, 217);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(203, 23);
-            this.label3.TabIndex = 7;
-            this.label3.Text = "CONFIRM PASSWORD";
-            // 
-            // frmChangePassword
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 23F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.MistyRose;
-            this.ClientSize = new System.Drawing.Size(432, 400);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.btnConfirm);
-            this.Controls.Add(this.txtConfirmPassword);
-            this.Controls.Add(this.txtNewPassword);
-            this.Controls.Add(this.lblUsername);
-            this.Controls.Add(this.panel1);
-            this.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
-            this.ForeColor = System.Drawing.Color.White;
-            this.Name = "frmChangePassword";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Change Password";
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-        }
-    }
+    // Keep the rest of your forms (frmUpdateUser, frmAddUser, frmChangePassword) as they are
+    // They already use DatabaseHelper methods which now work with MySQL
 }
