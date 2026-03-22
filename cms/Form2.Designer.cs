@@ -67,9 +67,9 @@
             this.btnExit.BackColor = System.Drawing.Color.Transparent;
             this.btnExit.FlatAppearance.BorderSize = 0;
             this.btnExit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnExit.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold);
+            this.btnExit.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnExit.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(120)))), ((int)(((byte)(120)))));
-            this.btnExit.Location = new System.Drawing.Point(1899, 23);
+            this.btnExit.Location = new System.Drawing.Point(1888, 23);
             this.btnExit.Name = "btnExit";
             this.btnExit.Size = new System.Drawing.Size(43, 33);
             this.btnExit.TabIndex = 2;
@@ -113,7 +113,7 @@
             this.panelLogin.Controls.Add(this.btnSignIn);
             this.panelLogin.Controls.Add(this.lblForgotPassword);
             this.panelLogin.Controls.Add(this.lblErrorMessage);
-            this.panelLogin.Location = new System.Drawing.Point(770, 200);
+            this.panelLogin.Location = new System.Drawing.Point(685, 200);
             this.panelLogin.Name = "panelLogin";
             this.panelLogin.Size = new System.Drawing.Size(550, 680);
             this.panelLogin.TabIndex = 1;
@@ -123,15 +123,16 @@
             this.btnShowPassword.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(38)))));
             this.btnShowPassword.FlatAppearance.BorderSize = 0;
             this.btnShowPassword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnShowPassword.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.btnShowPassword.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
             this.btnShowPassword.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.btnShowPassword.Location = new System.Drawing.Point(460, 430);
             this.btnShowPassword.Name = "btnShowPassword";
             this.btnShowPassword.Size = new System.Drawing.Size(35, 34);
             this.btnShowPassword.TabIndex = 10;
             this.btnShowPassword.Text = "👁";
+            this.btnShowPassword.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.btnShowPassword.UseVisualStyleBackColor = false;
-            this.btnShowPassword.Click += new System.EventHandler(this.btnShowPassword_Click);
+            this.btnShowPassword.Visible = false; // Hidden because we use Label in code-behind
             // 
             // logoSmall
             // 
@@ -260,6 +261,7 @@
             this.Controls.Add(this.panelBackground);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "Form2";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MatchPoint - Login";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.Form2_Load);
