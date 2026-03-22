@@ -118,11 +118,14 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="MATCHPOINT (14)" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\MATCHPOINT (14).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="MATCHPOINT (3)" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\MATCHPOINT (3).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="MATCHPOINT (14)" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\MATCHPOINT (14).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="MATCHPOINT (17)" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\MATCHPOINT (17).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="MATCHPOINT (7)" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\MATCHPOINT (7).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -145,6 +148,9 @@
   <data name="MATCHPOINT (4)" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\MATCHPOINT (4).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Game Rates (6)" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Game Rates (6).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="MATCHPOINT (6)" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\MATCHPOINT (6).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -163,7 +169,7 @@
   <data name="MATCHPOINT (9)" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\MATCHPOINT (9).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="MATCHPOINT (17)" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\MATCHPOINT (17).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="MATCHPOINT (18)" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\MATCHPOINT (18).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

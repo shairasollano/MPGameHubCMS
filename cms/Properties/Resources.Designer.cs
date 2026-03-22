@@ -63,6 +63,16 @@ namespace cms.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Game_Rates__6_ {
+            get {
+                object obj = ResourceManager.GetObject("Game Rates (6)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap MATCHPOINT__10_ {
             get {
                 object obj = ResourceManager.GetObject("MATCHPOINT (10)", resourceCulture);
@@ -136,6 +146,16 @@ namespace cms.Properties {
         internal static System.Drawing.Bitmap MATCHPOINT__17_ {
             get {
                 object obj = ResourceManager.GetObject("MATCHPOINT (17)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap MATCHPOINT__18_ {
+            get {
+                object obj = ResourceManager.GetObject("MATCHPOINT (18)", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
