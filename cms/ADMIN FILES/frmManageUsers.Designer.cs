@@ -40,10 +40,10 @@
             // 
             this.lblUserInfo.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.lblUserInfo.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblUserInfo.Location = new System.Drawing.Point(34, 60);
+            this.lblUserInfo.Location = new System.Drawing.Point(34, 78);
             this.lblUserInfo.Margin = new System.Windows.Forms.Padding(2);
             this.lblUserInfo.Name = "lblUserInfo";
-            this.lblUserInfo.Size = new System.Drawing.Size(417, 171);
+            this.lblUserInfo.Size = new System.Drawing.Size(417, 153);
             this.lblUserInfo.TabIndex = 27;
             this.lblUserInfo.Text = "";
             // 
@@ -104,10 +104,10 @@
             this.cmbUsers.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmbUsers.ForeColor = System.Drawing.SystemColors.MenuText;
             this.cmbUsers.FormattingEnabled = true;
-            this.cmbUsers.Location = new System.Drawing.Point(38, 29);
+            this.cmbUsers.Location = new System.Drawing.Point(34, 29);
             this.cmbUsers.Margin = new System.Windows.Forms.Padding(2);
             this.cmbUsers.Name = "cmbUsers";
-            this.cmbUsers.Size = new System.Drawing.Size(413, 27);
+            this.cmbUsers.Size = new System.Drawing.Size(417, 27);
             this.cmbUsers.TabIndex = 19;
             this.cmbUsers.SelectedIndexChanged += new System.EventHandler(this.cmbUsers_SelectedIndexChanged);
             // 
@@ -116,7 +116,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(483, 462);
+            this.ClientSize = new System.Drawing.Size(483, 383);
             this.Controls.Add(this.lblUserInfo);
             this.Controls.Add(this.btnReactivateUser);
             this.Controls.Add(this.btnDeactivateUser);

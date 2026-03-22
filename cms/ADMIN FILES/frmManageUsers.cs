@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using MySql.Data.MySqlClient;
 
 namespace cms.lastsuper
 {
@@ -134,47 +135,52 @@ namespace cms.lastsuper
 
             Form addForm = new Form();
             addForm.Text = "Add New Staff";
-            addForm.Size = new Size(500, 480);
+            addForm.Size = new Size(550, 550);
             addForm.StartPosition = FormStartPosition.CenterParent;
             addForm.FormBorderStyle = FormBorderStyle.FixedDialog;
             addForm.BackColor = Color.White;
 
-            Label lblUsername = new Label { Text = "Username:", Location = new Point(30, 40), AutoSize = true };
-            TextBox txtUsername = new TextBox { Location = new Point(150, 37), Size = new Size(300, 27) };
+            // Username
+            Label lblUsername = new Label { Text = "Username:", Location = new Point(30, 30), AutoSize = true, Font = new System.Drawing.Font("Segoe UI", 10) };
+            TextBox txtUsername = new TextBox { Location = new Point(150, 27), Size = new Size(350, 27), Font = new System.Drawing.Font("Segoe UI", 10) };
             LimitTextBoxLength(txtUsername, 25);
 
-            Label lblFullName = new Label { Text = "Full Name:", Location = new Point(30, 80), AutoSize = true };
-            TextBox txtFullName = new TextBox { Location = new Point(150, 77), Size = new Size(300, 27) };
-            LimitTextBoxLength(txtFullName, 25);
+            // Last Name
+            Label lblLastName = new Label { Text = "Last Name:", Location = new Point(30, 70), AutoSize = true, Font = new System.Drawing.Font("Segoe UI", 10) };
+            TextBox txtLastName = new TextBox { Location = new Point(150, 67), Size = new Size(350, 27), Font = new System.Drawing.Font("Segoe UI", 10) };
+            LimitTextBoxLength(txtLastName, 25);
 
-            Label lblPassword = new Label { Text = "Password:", Location = new Point(30, 120), AutoSize = true };
-            TextBox txtPassword = new TextBox { Location = new Point(150, 117), Size = new Size(300, 27), PasswordChar = '*' };
-            LimitTextBoxLength(txtPassword, 25);
+            // First Name
+            Label lblFirstName = new Label { Text = "First Name:", Location = new Point(30, 110), AutoSize = true, Font = new System.Drawing.Font("Segoe UI", 10) };
+            TextBox txtFirstName = new TextBox { Location = new Point(150, 107), Size = new Size(350, 27), Font = new System.Drawing.Font("Segoe UI", 10) };
+            LimitTextBoxLength(txtFirstName, 25);
 
-            Label lblConfirm = new Label { Text = "Confirm:", Location = new Point(30, 160), AutoSize = true };
-            TextBox txtConfirm = new TextBox { Location = new Point(150, 157), Size = new Size(300, 27), PasswordChar = '*' };
-            LimitTextBoxLength(txtConfirm, 25);
+            // Middle Initial
+            Label lblMiddleInitial = new Label { Text = "M.I.:", Location = new Point(30, 150), AutoSize = true, Font = new System.Drawing.Font("Segoe UI", 10) };
+            TextBox txtMiddleInitial = new TextBox { Location = new Point(150, 147), Size = new Size(60, 27), Font = new System.Drawing.Font("Segoe UI", 10), MaxLength = 1 };
 
-            CheckBox chkShowPass = new CheckBox
+            // Note about password
+            Label lblPasswordNote = new Label
             {
-                Text = "Show Password",
-                Location = new Point(150, 190),
-                AutoSize = true
-            };
-            chkShowPass.CheckedChanged += (s, ev) =>
-            {
-                txtPassword.PasswordChar = chkShowPass.Checked ? '\0' : '*';
-                txtConfirm.PasswordChar = chkShowPass.Checked ? '\0' : '*';
+                Text = "⚠️ Default password will be set to: MatchPoint123!\n   User must change password on first login.",
+                Location = new Point(30, 200),
+                Size = new Size(470, 45),
+                Font = new System.Drawing.Font("Segoe UI", 9),
+                ForeColor = Color.FromArgb(108, 117, 125),
+                TextAlign = ContentAlignment.MiddleLeft
             };
 
+            // Buttons
             Button btnSave = new Button
             {
                 Text = "CREATE STAFF",
                 BackColor = Color.FromArgb(46, 184, 92),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(150, 240),
-                Size = new Size(140, 40)
+                Location = new Point(150, 280),
+                Size = new Size(140, 40),
+                Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
+                Cursor = Cursors.Hand
             };
 
             Button btnCancel = new Button
@@ -183,58 +189,153 @@ namespace cms.lastsuper
                 BackColor = Color.FromArgb(108, 117, 125),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(310, 240),
-                Size = new Size(140, 40)
+                Location = new Point(310, 280),
+                Size = new Size(140, 40),
+                Font = new System.Drawing.Font("Segoe UI", 10),
+                Cursor = Cursors.Hand
             };
             btnCancel.Click += (s, ev) => addForm.Close();
 
+            // Real-time validation for name fields (no special characters)
+            void AddNameValidation(TextBox textBox, Label label)
+            {
+                textBox.TextChanged += (s, ev) =>
+                {
+                    if (!string.IsNullOrEmpty(textBox.Text) && !IsValidName(textBox.Text))
+                    {
+                        textBox.BackColor = Color.LightPink;
+                        label.ForeColor = Color.Red;
+                    }
+                    else
+                    {
+                        textBox.BackColor = Color.White;
+                        label.ForeColor = Color.Black;
+                    }
+                };
+            }
+
+            AddNameValidation(txtLastName, lblLastName);
+            AddNameValidation(txtFirstName, lblFirstName);
+            AddNameValidation(txtMiddleInitial, lblMiddleInitial);
+
             btnSave.Click += (s, ev) =>
             {
+                // Validate Username
                 if (string.IsNullOrWhiteSpace(txtUsername.Text))
                 {
                     MessageBox.Show("Username is required.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                if (txtPassword.Text != txtConfirm.Text)
-                {
-                    MessageBox.Show("Passwords do not match.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                if (txtPassword.Text.Length < 6)
-                {
-                    MessageBox.Show("Password must be at least 6 characters.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtUsername.Focus();
                     return;
                 }
 
+                if (txtUsername.Text.Length > 25)
+                {
+                    MessageBox.Show("Username cannot exceed 25 characters.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtUsername.Focus();
+                    return;
+                }
+
+                // Validate Last Name
+                if (string.IsNullOrWhiteSpace(txtLastName.Text))
+                {
+                    MessageBox.Show("Last Name is required.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtLastName.Focus();
+                    return;
+                }
+
+                if (!IsValidName(txtLastName.Text))
+                {
+                    MessageBox.Show("Last Name can only contain letters, spaces, hyphens, and apostrophes.",
+                        "Invalid Characters", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtLastName.Focus();
+                    return;
+                }
+
+                // Validate First Name
+                if (string.IsNullOrWhiteSpace(txtFirstName.Text))
+                {
+                    MessageBox.Show("First Name is required.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtFirstName.Focus();
+                    return;
+                }
+
+                if (!IsValidName(txtFirstName.Text))
+                {
+                    MessageBox.Show("First Name can only contain letters, spaces, hyphens, and apostrophes.",
+                        "Invalid Characters", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtFirstName.Focus();
+                    return;
+                }
+
+                // Validate Middle Initial (optional, but if entered must be a single letter)
+                string middleInitial = txtMiddleInitial.Text.Trim();
+                if (!string.IsNullOrEmpty(middleInitial))
+                {
+                    if (middleInitial.Length > 1)
+                    {
+                        MessageBox.Show("Middle Initial must be a single character.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtMiddleInitial.Focus();
+                        return;
+                    }
+                    if (!char.IsLetter(middleInitial[0]))
+                    {
+                        MessageBox.Show("Middle Initial must be a letter.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtMiddleInitial.Focus();
+                        return;
+                    }
+                    middleInitial = middleInitial.ToUpper() + ".";
+                }
+
+                // Check for duplicate username
                 var existingUsers = parentControl.GetAllUsers();
                 if (existingUsers.Any(u => u.Username.Equals(txtUsername.Text.Trim(), StringComparison.OrdinalIgnoreCase)))
                 {
                     MessageBox.Show($"Username '{txtUsername.Text}' already exists.", "Duplicate", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtUsername.Focus();
                     return;
                 }
+
+                // Build Full Name: Last, First M.I.
+                string fullName = $"{txtLastName.Text.Trim()}, {txtFirstName.Text.Trim()}";
+                if (!string.IsNullOrEmpty(middleInitial))
+                {
+                    fullName += $" {middleInitial}";
+                }
+
+                string defaultPassword = "MatchPoint123!";
 
                 var newUser = new UserManagementControl.UserData
                 {
                     ID = GenerateNewID(),
                     Username = txtUsername.Text.Trim(),
-                    FullName = txtFullName.Text.Trim(),
+                    FullName = fullName,
                     Role = "STAFF",
                     Status = "ACTIVE",
-                    Password = txtPassword.Text,
+                    Password = defaultPassword,
                     LastLogin = DateTime.Now
                 };
 
                 parentControl.AddUser(newUser);
-                MessageBox.Show($"Staff {newUser.Username} created successfully!\nID: {newUser.ID}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                MessageBox.Show($"Staff {newUser.Username} created successfully!\n\n" +
+                    $"ID: {newUser.ID}\n" +
+                    $"Name: {fullName}\n" +
+                    $"Default Password: {defaultPassword}\n\n" +
+                    $"Please inform the user to change their password on first login.",
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                 addForm.Close();
                 LoadUsersIntoComboBox();
             };
 
             addForm.Controls.AddRange(new Control[] {
-                lblUsername, txtUsername, lblFullName, txtFullName,
-                lblPassword, txtPassword, lblConfirm, txtConfirm,
-                chkShowPass, btnSave, btnCancel
-            });
+        lblUsername, txtUsername,
+        lblLastName, txtLastName,
+        lblFirstName, txtFirstName,
+        lblMiddleInitial, txtMiddleInitial,
+        lblPasswordNote,
+        btnSave, btnCancel
+    });
 
             addForm.ShowDialog();
         }
@@ -258,29 +359,63 @@ namespace cms.lastsuper
 
             Form editForm = new Form();
             editForm.Text = $"Edit Staff - {selectedUser.Username}";
-            editForm.Size = new Size(500, 480);
+            editForm.Size = new Size(550, 580);
             editForm.StartPosition = FormStartPosition.CenterParent;
             editForm.FormBorderStyle = FormBorderStyle.FixedDialog;
             editForm.BackColor = Color.White;
 
+            // Parse existing full name to get components
+            string lastName = "";
+            string firstName = "";
+            string middleInitial = "";
+
+            string fullName = selectedUser.FullName;
+            if (fullName.Contains(","))
+            {
+                var parts = fullName.Split(',');
+                lastName = parts[0].Trim();
+
+                string remaining = parts[1].Trim();
+                // Check if there's a middle initial (ends with dot)
+                int lastSpaceIndex = remaining.LastIndexOf(' ');
+                if (lastSpaceIndex > 0 && remaining.EndsWith("."))
+                {
+                    firstName = remaining.Substring(0, lastSpaceIndex).Trim();
+                    middleInitial = remaining.Substring(lastSpaceIndex + 1).Trim();
+                }
+                else
+                {
+                    firstName = remaining;
+                    middleInitial = "";
+                }
+            }
+            else
+            {
+                // Fallback: if format is different, just use as is
+                firstName = fullName;
+            }
+
             // Store original values to detect changes
-            string originalFullName = selectedUser.FullName;
+            string originalUsername = selectedUser.Username;
+            string originalLastName = lastName;
+            string originalFirstName = firstName;
+            string originalMiddleInitial = middleInitial;
             string originalPassword = selectedUser.Password;
             bool passwordReset = false;
-            bool isSaved = false; // Flag to track if changes were saved
+            bool isSaved = false;
 
             // User ID (read-only)
             Label lblIDTitle = new Label
             {
                 Text = "User ID:",
-                Location = new Point(30, 30),
+                Location = new Point(30, 20),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold)
             };
             Label lblID = new Label
             {
                 Text = selectedUser.ID,
-                Location = new Point(150, 30),
+                Location = new Point(150, 20),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10)
             };
@@ -289,49 +424,83 @@ namespace cms.lastsuper
             Label lblUsername = new Label
             {
                 Text = "Username:",
-                Location = new Point(30, 70),
+                Location = new Point(30, 60),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10)
             };
             TextBox txtUsername = new TextBox
             {
-                Location = new Point(150, 67),
-                Size = new Size(300, 27),
+                Location = new Point(150, 57),
+                Size = new Size(350, 27),
                 Text = selectedUser.Username,
                 ReadOnly = true,
                 BackColor = Color.LightGray,
                 Font = new System.Drawing.Font("Segoe UI", 10)
             };
 
-            // Full Name (editable)
-            Label lblFullName = new Label
+            // Last Name
+            Label lblLastName = new Label
             {
-                Text = "Full Name:",
-                Location = new Point(30, 110),
+                Text = "Last Name:",
+                Location = new Point(30, 100),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10)
             };
-            TextBox txtFullName = new TextBox
+            TextBox txtLastName = new TextBox
             {
-                Location = new Point(150, 107),
-                Size = new Size(300, 27),
-                Text = selectedUser.FullName,
+                Location = new Point(150, 97),
+                Size = new Size(350, 27),
+                Text = lastName,
                 Font = new System.Drawing.Font("Segoe UI", 10)
             };
-            LimitTextBoxLength(txtFullName, 25);
+            LimitTextBoxLength(txtLastName, 25);
+
+            // First Name
+            Label lblFirstName = new Label
+            {
+                Text = "First Name:",
+                Location = new Point(30, 140),
+                AutoSize = true,
+                Font = new System.Drawing.Font("Segoe UI", 10)
+            };
+            TextBox txtFirstName = new TextBox
+            {
+                Location = new Point(150, 137),
+                Size = new Size(350, 27),
+                Text = firstName,
+                Font = new System.Drawing.Font("Segoe UI", 10)
+            };
+            LimitTextBoxLength(txtFirstName, 25);
+
+            // Middle Initial
+            Label lblMiddleInitial = new Label
+            {
+                Text = "M.I.:",
+                Location = new Point(30, 180),
+                AutoSize = true,
+                Font = new System.Drawing.Font("Segoe UI", 10)
+            };
+            TextBox txtMiddleInitial = new TextBox
+            {
+                Location = new Point(150, 177),
+                Size = new Size(60, 27),
+                Text = middleInitial.Replace(".", ""),
+                Font = new System.Drawing.Font("Segoe UI", 10),
+                MaxLength = 1
+            };
 
             // Status (read-only display)
             Label lblStatus = new Label
             {
                 Text = "Status:",
-                Location = new Point(30, 150),
+                Location = new Point(30, 220),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10)
             };
             Label lblStatusValue = new Label
             {
                 Text = selectedUser.Status == "ACTIVE" ? "🟢 ACTIVE" : "🔴 INACTIVE",
-                Location = new Point(150, 150),
+                Location = new Point(150, 220),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10, selectedUser.Status == "ACTIVE" ? FontStyle.Bold : FontStyle.Regular),
                 ForeColor = selectedUser.Status == "ACTIVE" ? Color.Green : Color.Red
@@ -341,7 +510,7 @@ namespace cms.lastsuper
             Label lblSeparator = new Label
             {
                 Text = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-                Location = new Point(30, 190),
+                Location = new Point(30, 260),
                 AutoSize = true,
                 ForeColor = Color.Gray,
                 Font = new System.Drawing.Font("Segoe UI", 9)
@@ -351,7 +520,7 @@ namespace cms.lastsuper
             Label lblResetTitle = new Label
             {
                 Text = "SECURITY",
-                Location = new Point(30, 220),
+                Location = new Point(30, 290),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(108, 117, 125)
@@ -363,7 +532,7 @@ namespace cms.lastsuper
                 BackColor = Color.FromArgb(108, 117, 125),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(150, 250),
+                Location = new Point(150, 320),
                 Size = new Size(200, 45),
                 Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
                 Cursor = Cursors.Hand
@@ -376,7 +545,7 @@ namespace cms.lastsuper
                 BackColor = Color.FromArgb(23, 162, 184),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(150, 330),
+                Location = new Point(150, 400),
                 Size = new Size(140, 40),
                 Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
                 Cursor = Cursors.Hand
@@ -388,28 +557,33 @@ namespace cms.lastsuper
                 BackColor = Color.FromArgb(108, 117, 125),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(310, 330),
+                Location = new Point(310, 400),
                 Size = new Size(140, 40),
                 Font = new System.Drawing.Font("Segoe UI", 10),
                 Cursor = Cursors.Hand
             };
 
-            // Real-time validation for Full Name (no special characters)
-            txtFullName.TextChanged += (s, ev) =>
+            // Real-time validation for name fields
+            void AddNameValidation(TextBox textBox, Label label)
             {
-                if (!string.IsNullOrEmpty(txtFullName.Text) && !IsValidName(txtFullName.Text))
+                textBox.TextChanged += (s, ev) =>
                 {
-                    txtFullName.BackColor = Color.LightPink;
-                    lblFullName.ForeColor = Color.Red;
-                    lblFullName.Text = "Full Name: (No special characters!)";
-                }
-                else
-                {
-                    txtFullName.BackColor = Color.White;
-                    lblFullName.ForeColor = Color.Black;
-                    lblFullName.Text = "Full Name:";
-                }
-            };
+                    if (!string.IsNullOrEmpty(textBox.Text) && !IsValidName(textBox.Text))
+                    {
+                        textBox.BackColor = Color.LightPink;
+                        label.ForeColor = Color.Red;
+                    }
+                    else
+                    {
+                        textBox.BackColor = Color.White;
+                        label.ForeColor = Color.Black;
+                    }
+                };
+            }
+
+            AddNameValidation(txtLastName, lblLastName);
+            AddNameValidation(txtFirstName, lblFirstName);
+            AddNameValidation(txtMiddleInitial, lblMiddleInitial);
 
             // Reset Password Button Click
             btnResetPassword.Click += (s, ev) =>
@@ -432,30 +606,78 @@ namespace cms.lastsuper
             // Function to check if there are unsaved changes
             bool HasUnsavedChanges()
             {
-                bool fullNameChanged = txtFullName.Text.Trim() != originalFullName;
+                bool lastNameChanged = txtLastName.Text.Trim() != originalLastName;
+                bool firstNameChanged = txtFirstName.Text.Trim() != originalFirstName;
+                bool middleInitialChanged = txtMiddleInitial.Text.Trim() != originalMiddleInitial;
                 bool passwordChanged = passwordReset;
-                return fullNameChanged || passwordChanged;
+                return lastNameChanged || firstNameChanged || middleInitialChanged || passwordChanged;
+            }
+
+            // Function to build full name
+            string BuildFullName()
+            {
+                string full = $"{txtLastName.Text.Trim()}, {txtFirstName.Text.Trim()}";
+                string mi = txtMiddleInitial.Text.Trim();
+                if (!string.IsNullOrEmpty(mi))
+                {
+                    full += $" {mi.ToUpper()}.";
+                }
+                return full;
             }
 
             // Function to validate and save changes
             bool ValidateAndSave()
             {
-                // Validate Full Name
-                if (!IsValidName(txtFullName.Text))
+                // Validate Last Name
+                if (string.IsNullOrWhiteSpace(txtLastName.Text))
                 {
-                    MessageBox.Show("Full Name can only contain letters, numbers, spaces, hyphens, and apostrophes.",
+                    MessageBox.Show("Last Name is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtLastName.Focus();
+                    return false;
+                }
+                if (!IsValidName(txtLastName.Text))
+                {
+                    MessageBox.Show("Last Name can only contain letters, spaces, hyphens, and apostrophes.",
                         "Invalid Characters", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtLastName.Focus();
                     return false;
                 }
 
-                if (string.IsNullOrWhiteSpace(txtFullName.Text))
+                // Validate First Name
+                if (string.IsNullOrWhiteSpace(txtFirstName.Text))
                 {
-                    MessageBox.Show("Full Name cannot be empty.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("First Name is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtFirstName.Focus();
                     return false;
+                }
+                if (!IsValidName(txtFirstName.Text))
+                {
+                    MessageBox.Show("First Name can only contain letters, spaces, hyphens, and apostrophes.",
+                        "Invalid Characters", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtFirstName.Focus();
+                    return false;
+                }
+
+                // Validate Middle Initial (optional)
+                string mi = txtMiddleInitial.Text.Trim();
+                if (!string.IsNullOrEmpty(mi))
+                {
+                    if (mi.Length > 1)
+                    {
+                        MessageBox.Show("Middle Initial must be a single character.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtMiddleInitial.Focus();
+                        return false;
+                    }
+                    if (!char.IsLetter(mi[0]))
+                    {
+                        MessageBox.Show("Middle Initial must be a letter.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtMiddleInitial.Focus();
+                        return false;
+                    }
                 }
 
                 // Save changes
-                selectedUser.FullName = txtFullName.Text.Trim();
+                selectedUser.FullName = BuildFullName();
                 parentControl.UpdateUser(selectedUser);
 
                 if (passwordReset)
@@ -463,13 +685,13 @@ namespace cms.lastsuper
                     MessageBox.Show($"Staff {selectedUser.Username} updated successfully!\n\nPassword has been reset to: MatchPoint123!",
                         "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                else if (txtFullName.Text.Trim() != originalFullName)
+                else
                 {
                     MessageBox.Show($"Staff {selectedUser.Username} updated successfully!",
                         "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
-                isSaved = true; // Mark as saved
+                isSaved = true;
                 return true;
             }
 
@@ -503,7 +725,6 @@ namespace cms.lastsuper
                     {
                         editForm.Close();
                     }
-                    // Cancel: do nothing, stay on form
                 }
                 else
                 {
@@ -514,7 +735,6 @@ namespace cms.lastsuper
             // Form Closing event (X button)
             editForm.FormClosing += (s, ev) =>
             {
-                // Only show warning if there are unsaved changes AND not already saved
                 if (HasUnsavedChanges() && !isSaved)
                 {
                     DialogResult result = MessageBox.Show("You have unsaved changes.\n\nDo you want to save your changes before closing?",
@@ -535,7 +755,7 @@ namespace cms.lastsuper
                     {
                         // Close without saving
                     }
-                    else // Cancel
+                    else
                     {
                         ev.Cancel = true;
                     }
@@ -543,9 +763,14 @@ namespace cms.lastsuper
             };
 
             editForm.Controls.AddRange(new Control[] {
-        lblIDTitle, lblID, lblUsername, txtUsername,
-        lblFullName, txtFullName, lblStatus, lblStatusValue,
-        lblSeparator, lblResetTitle, btnResetPassword,
+        lblIDTitle, lblID,
+        lblUsername, txtUsername,
+        lblLastName, txtLastName,
+        lblFirstName, txtFirstName,
+        lblMiddleInitial, txtMiddleInitial,
+        lblStatus, lblStatusValue,
+        lblSeparator,
+        lblResetTitle, btnResetPassword,
         btnSaveChanges, btnCancel
     });
 
