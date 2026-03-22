@@ -116,6 +116,12 @@
     <Compile Include="Activitylogs.Designer.cs">
       <DependentUpon>Activitylogs.cs</DependentUpon>
     </Compile>
+    <Compile Include="ADMIN FILES\frmManageUsers.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ADMIN FILES\frmManageUsers.Designer.cs">
+      <DependentUpon>frmManageUsers.cs</DependentUpon>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -161,17 +167,14 @@
     <Compile Include="UserControl2.Designer.cs">
       <DependentUpon>UserControl2.cs</DependentUpon>
     </Compile>
-    <Compile Include="UserSuperAdminSide.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="UserSuperAdminSide.Designer.cs">
-      <DependentUpon>UserSuperAdminSide.cs</DependentUpon>
-    </Compile>
-    <Compile Include="USERSMAINFORM.cs">
+    <Compile Include="ADMINSIDEUSER.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <EmbeddedResource Include="Activitylogs.resx">
       <DependentUpon>Activitylogs.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ADMIN FILES\frmManageUsers.resx">
+      <DependentUpon>frmManageUsers.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
@@ -201,11 +204,8 @@
     <EmbeddedResource Include="UserControl2.resx">
       <DependentUpon>UserControl2.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="USERSMAINFORM.resx">
-      <DependentUpon>USERSMAINFORM.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="UserSuperAdminSide.resx">
-      <DependentUpon>UserSuperAdminSide.cs</DependentUpon>
+    <EmbeddedResource Include="ADMINSIDEUSER.resx">
+      <DependentUpon>ADMINSIDEUSER.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
