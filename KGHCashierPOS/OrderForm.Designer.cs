@@ -66,6 +66,8 @@
             // 
             // panel1
             // 
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
             this.panel1.Controls.Add(this.label4);
             this.panel1.Controls.Add(this.label1);
@@ -76,7 +78,7 @@
             this.panel1.Controls.Add(this.pictureBox1);
             this.panel1.Location = new System.Drawing.Point(-8, -1);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1271, 71);
+            this.panel1.Size = new System.Drawing.Size(1276, 71);
             this.panel1.TabIndex = 1;
             // 
             // label4
@@ -158,7 +160,7 @@
             // 
             this.lblTotalValue.AutoSize = true;
             this.lblTotalValue.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotalValue.Location = new System.Drawing.Point(934, 575);
+            this.lblTotalValue.Location = new System.Drawing.Point(953, 611);
             this.lblTotalValue.Name = "lblTotalValue";
             this.lblTotalValue.Size = new System.Drawing.Size(120, 32);
             this.lblTotalValue.TabIndex = 44;
@@ -168,7 +170,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(838, 575);
+            this.label6.Location = new System.Drawing.Point(867, 611);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(99, 32);
             this.label6.TabIndex = 43;
@@ -193,7 +195,7 @@
             this.btnPayCashier.BackColor = System.Drawing.Color.LimeGreen;
             this.btnPayCashier.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPayCashier.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnPayCashier.Location = new System.Drawing.Point(844, 625);
+            this.btnPayCashier.Location = new System.Drawing.Point(860, 658);
             this.btnPayCashier.Name = "btnPayCashier";
             this.btnPayCashier.Size = new System.Drawing.Size(362, 51);
             this.btnPayCashier.TabIndex = 40;
@@ -205,16 +207,16 @@
             // 
             this.lbDisplay.FormattingEnabled = true;
             this.lbDisplay.ItemHeight = 20;
-            this.lbDisplay.Location = new System.Drawing.Point(835, 128);
+            this.lbDisplay.Location = new System.Drawing.Point(860, 136);
             this.lbDisplay.Name = "lbDisplay";
-            this.lbDisplay.Size = new System.Drawing.Size(371, 444);
+            this.lbDisplay.Size = new System.Drawing.Size(371, 464);
             this.lbDisplay.TabIndex = 39;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(829, 87);
+            this.label5.Location = new System.Drawing.Point(854, 86);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(202, 32);
             this.label5.TabIndex = 38;

@@ -245,10 +245,11 @@
             // 
             this.txtDiscountAmount.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtDiscountAmount.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
-            this.txtDiscountAmount.Location = new System.Drawing.Point(437, 303);
+            this.txtDiscountAmount.Location = new System.Drawing.Point(16, 553);
             this.txtDiscountAmount.Name = "txtDiscountAmount";
             this.txtDiscountAmount.Size = new System.Drawing.Size(218, 44);
             this.txtDiscountAmount.TabIndex = 109;
+            this.txtDiscountAmount.Visible = false;
             // 
             // btnApplyDiscount
             // 
@@ -377,11 +378,12 @@
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Nirmala Text", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.SystemColors.Control;
-            this.label7.Location = new System.Drawing.Point(433, 279);
+            this.label7.Location = new System.Drawing.Point(12, 529);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(231, 21);
             this.label7.TabIndex = 118;
             this.label7.Text = "Enter Promo Code (Optional)";
+            this.label7.Visible = false;
             // 
             // label6
             // 
