@@ -16,7 +16,12 @@
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
-            this.lblUser = new System.Windows.Forms.Label();
+            this.tabControl1 = new System.Windows.Forms.TabControl();
+            this.tbCashierForm = new System.Windows.Forms.TabPage();
+            this.tbPaymentControl = new System.Windows.Forms.TabPage();
+            this.tbEquipment = new System.Windows.Forms.TabPage();
+            this.btnSignOut = new System.Windows.Forms.Button();
+            this.lblCashierName = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.lblDate = new System.Windows.Forms.Label();
             this.lblTime = new System.Windows.Forms.Label();
@@ -53,21 +58,16 @@
             this.totalValue = new System.Windows.Forms.Label();
             this.btnClearCashierForm = new System.Windows.Forms.Button();
             this.rtbSelectedGames = new System.Windows.Forms.RichTextBox();
-            this.equipmentRentalControl1 = new KGHCashierPOS.EquipmentRentalControl();
-            this.paymentPanel = new KGHCashierPOS.paymentControl1();
-            this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tbCashierForm = new System.Windows.Forms.TabPage();
-            this.tbPaymentControl = new System.Windows.Forms.TabPage();
-            this.tbEquipment = new System.Windows.Forms.TabPage();
-            this.btnSignOut = new System.Windows.Forms.Button();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.paymentPanel = new KGHCashierPOS.paymentControl1();
+            this.equipmentRentalControl1 = new KGHCashierPOS.EquipmentRentalControl();
             this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            this.panel2.SuspendLayout();
-            this.panel3.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tbPaymentControl.SuspendLayout();
             this.tbEquipment.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.panel2.SuspendLayout();
+            this.panel3.SuspendLayout();
             this.panel4.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -76,7 +76,7 @@
             this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
             this.panel1.Controls.Add(this.tabControl1);
             this.panel1.Controls.Add(this.btnSignOut);
-            this.panel1.Controls.Add(this.lblUser);
+            this.panel1.Controls.Add(this.lblCashierName);
             this.panel1.Controls.Add(this.label2);
             this.panel1.Controls.Add(this.lblDate);
             this.panel1.Controls.Add(this.lblTime);
@@ -89,22 +89,79 @@
             this.panel1.Size = new System.Drawing.Size(1252, 71);
             this.panel1.TabIndex = 0;
             // 
-            // lblUser
+            // tabControl1
             // 
-            this.lblUser.AutoSize = true;
-            this.lblUser.ForeColor = System.Drawing.SystemColors.Control;
-            this.lblUser.Location = new System.Drawing.Point(1083, 47);
-            this.lblUser.Name = "lblUser";
-            this.lblUser.Size = new System.Drawing.Size(58, 20);
-            this.lblUser.TabIndex = 35;
-            this.lblUser.Text = "lblUser";
+            this.tabControl1.Controls.Add(this.tbCashierForm);
+            this.tabControl1.Controls.Add(this.tbPaymentControl);
+            this.tabControl1.Controls.Add(this.tbEquipment);
+            this.tabControl1.Location = new System.Drawing.Point(424, 12);
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(412, 35);
+            this.tabControl1.TabIndex = 38;
+            this.tabControl1.Visible = false;
+            // 
+            // tbCashierForm
+            // 
+            this.tbCashierForm.Location = new System.Drawing.Point(4, 29);
+            this.tbCashierForm.Name = "tbCashierForm";
+            this.tbCashierForm.Padding = new System.Windows.Forms.Padding(3);
+            this.tbCashierForm.Size = new System.Drawing.Size(404, 2);
+            this.tbCashierForm.TabIndex = 0;
+            this.tbCashierForm.Text = "tbCashierForm";
+            this.tbCashierForm.UseVisualStyleBackColor = true;
+            // 
+            // tbPaymentControl
+            // 
+            this.tbPaymentControl.Controls.Add(this.paymentPanel);
+            this.tbPaymentControl.Location = new System.Drawing.Point(4, 29);
+            this.tbPaymentControl.Name = "tbPaymentControl";
+            this.tbPaymentControl.Padding = new System.Windows.Forms.Padding(3);
+            this.tbPaymentControl.Size = new System.Drawing.Size(404, 2);
+            this.tbPaymentControl.TabIndex = 1;
+            this.tbPaymentControl.Text = "tbPaymentControl";
+            this.tbPaymentControl.UseVisualStyleBackColor = true;
+            // 
+            // tbEquipment
+            // 
+            this.tbEquipment.Controls.Add(this.equipmentRentalControl1);
+            this.tbEquipment.Location = new System.Drawing.Point(4, 29);
+            this.tbEquipment.Name = "tbEquipment";
+            this.tbEquipment.Padding = new System.Windows.Forms.Padding(3);
+            this.tbEquipment.Size = new System.Drawing.Size(404, 2);
+            this.tbEquipment.TabIndex = 2;
+            this.tbEquipment.Text = "tbEquipment";
+            this.tbEquipment.UseVisualStyleBackColor = true;
+            // 
+            // btnSignOut
+            // 
+            this.btnSignOut.BackColor = System.Drawing.Color.Silver;
+            this.btnSignOut.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSignOut.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
+            this.btnSignOut.Location = new System.Drawing.Point(1157, 38);
+            this.btnSignOut.Name = "btnSignOut";
+            this.btnSignOut.Size = new System.Drawing.Size(83, 26);
+            this.btnSignOut.TabIndex = 39;
+            this.btnSignOut.Text = "LOG OUT";
+            this.btnSignOut.UseVisualStyleBackColor = false;
+            this.btnSignOut.Click += new System.EventHandler(this.btnSignOut_Click);
+            // 
+            // lblCashierName
+            // 
+            this.lblCashierName.AutoSize = true;
+            this.lblCashierName.ForeColor = System.Drawing.SystemColors.Control;
+            this.lblCashierName.Location = new System.Drawing.Point(1037, 48);
+            this.lblCashierName.Name = "lblCashierName";
+            this.lblCashierName.Size = new System.Drawing.Size(58, 20);
+            this.lblCashierName.TabIndex = 35;
+            this.lblCashierName.Text = "lblUser";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Nirmala Text", 8F, System.Drawing.FontStyle.Bold);
             this.label2.ForeColor = System.Drawing.SystemColors.Control;
-            this.label2.Location = new System.Drawing.Point(967, 46);
+            this.label2.Location = new System.Drawing.Point(917, 46);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(114, 21);
             this.label2.TabIndex = 7;
@@ -516,14 +573,16 @@
             this.rtbSelectedGames.TabIndex = 36;
             this.rtbSelectedGames.Text = "";
             // 
-            // equipmentRentalControl1
+            // panel4
             // 
-            this.equipmentRentalControl1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.equipmentRentalControl1.Location = new System.Drawing.Point(-12, -258);
-            this.equipmentRentalControl1.Name = "equipmentRentalControl1";
-            this.equipmentRentalControl1.Size = new System.Drawing.Size(498, 548);
-            this.equipmentRentalControl1.TabIndex = 37;
-            this.equipmentRentalControl1.Visible = false;
+            this.panel4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.panel4.Controls.Add(this.rtbSelectedGames);
+            this.panel4.Controls.Add(this.lblTotal);
+            this.panel4.Controls.Add(this.totalValue);
+            this.panel4.Location = new System.Drawing.Point(813, 77);
+            this.panel4.Name = "panel4";
+            this.panel4.Size = new System.Drawing.Size(427, 659);
+            this.panel4.TabIndex = 114;
             // 
             // paymentPanel
             // 
@@ -535,73 +594,14 @@
             this.paymentPanel.TabIndex = 35;
             this.paymentPanel.Visible = false;
             // 
-            // tabControl1
+            // equipmentRentalControl1
             // 
-            this.tabControl1.Controls.Add(this.tbCashierForm);
-            this.tabControl1.Controls.Add(this.tbPaymentControl);
-            this.tabControl1.Controls.Add(this.tbEquipment);
-            this.tabControl1.Location = new System.Drawing.Point(424, 12);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(412, 35);
-            this.tabControl1.TabIndex = 38;
-            this.tabControl1.Visible = false;
-            // 
-            // tbCashierForm
-            // 
-            this.tbCashierForm.Location = new System.Drawing.Point(4, 29);
-            this.tbCashierForm.Name = "tbCashierForm";
-            this.tbCashierForm.Padding = new System.Windows.Forms.Padding(3);
-            this.tbCashierForm.Size = new System.Drawing.Size(473, 2);
-            this.tbCashierForm.TabIndex = 0;
-            this.tbCashierForm.Text = "tbCashierForm";
-            this.tbCashierForm.UseVisualStyleBackColor = true;
-            // 
-            // tbPaymentControl
-            // 
-            this.tbPaymentControl.Controls.Add(this.paymentPanel);
-            this.tbPaymentControl.Location = new System.Drawing.Point(4, 29);
-            this.tbPaymentControl.Name = "tbPaymentControl";
-            this.tbPaymentControl.Padding = new System.Windows.Forms.Padding(3);
-            this.tbPaymentControl.Size = new System.Drawing.Size(192, 67);
-            this.tbPaymentControl.TabIndex = 1;
-            this.tbPaymentControl.Text = "tbPaymentControl";
-            this.tbPaymentControl.UseVisualStyleBackColor = true;
-            // 
-            // tbEquipment
-            // 
-            this.tbEquipment.Controls.Add(this.equipmentRentalControl1);
-            this.tbEquipment.Location = new System.Drawing.Point(4, 29);
-            this.tbEquipment.Name = "tbEquipment";
-            this.tbEquipment.Padding = new System.Windows.Forms.Padding(3);
-            this.tbEquipment.Size = new System.Drawing.Size(404, 2);
-            this.tbEquipment.TabIndex = 2;
-            this.tbEquipment.Text = "tbEquipment";
-            this.tbEquipment.UseVisualStyleBackColor = true;
-            // 
-            // btnSignOut
-            // 
-            this.btnSignOut.BackColor = System.Drawing.Color.Silver;
-            this.btnSignOut.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnSignOut.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
-            this.btnSignOut.Location = new System.Drawing.Point(1157, 38);
-            this.btnSignOut.Name = "btnSignOut";
-            this.btnSignOut.Size = new System.Drawing.Size(83, 26);
-            this.btnSignOut.TabIndex = 39;
-            this.btnSignOut.Text = "LOG OUT";
-            this.btnSignOut.UseVisualStyleBackColor = false;
-            this.btnSignOut.Click += new System.EventHandler(this.btnSignOut_Click);
-            // 
-            // panel4
-            // 
-            this.panel4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
-            this.panel4.Controls.Add(this.rtbSelectedGames);
-            this.panel4.Controls.Add(this.lblTotal);
-            this.panel4.Controls.Add(this.totalValue);
-            this.panel4.Location = new System.Drawing.Point(813, 77);
-            this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(427, 659);
-            this.panel4.TabIndex = 114;
+            this.equipmentRentalControl1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.equipmentRentalControl1.Location = new System.Drawing.Point(-47, -273);
+            this.equipmentRentalControl1.Name = "equipmentRentalControl1";
+            this.equipmentRentalControl1.Size = new System.Drawing.Size(498, 548);
+            this.equipmentRentalControl1.TabIndex = 37;
+            this.equipmentRentalControl1.Visible = false;
             // 
             // CashierForm
             // 
@@ -635,14 +635,14 @@
             this.Load += new System.EventHandler(this.CashierForm_Load);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
+            this.tabControl1.ResumeLayout(false);
+            this.tbPaymentControl.ResumeLayout(false);
+            this.tbEquipment.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
-            this.tabControl1.ResumeLayout(false);
-            this.tbPaymentControl.ResumeLayout(false);
-            this.tbEquipment.ResumeLayout(false);
             this.panel4.ResumeLayout(false);
             this.panel4.PerformLayout();
             this.ResumeLayout(false);
@@ -683,7 +683,7 @@
         private System.Windows.Forms.Button btn0;
         private System.Windows.Forms.Button btnEnter;
         private System.Windows.Forms.Label totalValue;
-        private System.Windows.Forms.Label lblUser;
+        private System.Windows.Forms.Label lblCashierName;
         private System.Windows.Forms.Button btnClearCashierForm;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;

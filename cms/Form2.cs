@@ -1,22 +1,16 @@
-﻿using System;
+﻿using cms;
+using KGHCashierPOS;
+using Mysqlx.Crud;
+using System;
+using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 using Font = System.Drawing.Font;
-
 
 namespace cms
 {
     public partial class Form2 : Form
     {
-        // Hardcoded credentials
-        private const string STAFF_USERNAME = "staff";
-        private const string STAFF_PASSWORD = "staff123";
-        private const string ADMIN_USERNAME = "admin";
-        private const string ADMIN_PASSWORD = "admin123";
-        private const string CASHIER_USERNAME = "cashier";
-        private const string CASHIER_PASSWORD = "cashier123";
-
         // Track password visibility state
         private bool isPasswordVisible = false;
         private string passwordText = "";
@@ -295,12 +289,12 @@ namespace cms
             txtPassword.SelectionStart = txtPassword.Text.Length;
         }
 
+        // ⭐ UPDATED - Database Authentication
         private void btnSignIn_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();
             string password = isPasswordVisible ? txtPassword.Text : passwordText;
 
-            // Remove placeholder values
             if (username == "Enter your username") username = "";
             if (txtPassword.Text == "Enter your password") password = "";
 
@@ -311,35 +305,93 @@ namespace cms
                 return;
             }
 
-            // Check credentials and open appropriate form
-            // ADMIN - opens Form1 (Admin Dashboard)
-            if (username.ToLower() == ADMIN_USERNAME && password == ADMIN_PASSWORD)
+            this.Cursor = Cursors.WaitCursor;
+            btnSignIn.Enabled = false;
+
+            try
             {
-                this.Hide();
-                Form1 mainForm = new Form1();
-                mainForm.Closed += (s, args) => this.Close();
-                mainForm.Show();
+                // ⭐ ONLY call AuthenticateUser - it handles all logging internally
+                LoginResult result = AuthenticationRepository.AuthenticateUser(username, password);
+
+                this.Cursor = Cursors.Default;
+                btnSignIn.Enabled = true;
+
+                if (result.Success)
+                {
+                    // ⭐ Just debug output - NO database logging here
+                    System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
+                    System.Diagnostics.Debug.WriteLine($"Login Successful:");
+                    System.Diagnostics.Debug.WriteLine($"  User: {UserSession.Username}");
+                    System.Diagnostics.Debug.WriteLine($"  Role: {UserSession.RoleName}");
+                    System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
+
+                    this.Hide();
+
+                    // ⭐ Route to appropriate form - NO logging here
+                    switch (result.RoleId)
+                    {
+                        case 1: // Super Admin
+                            Form1 superAdminForm = new Form1();
+                            superAdminForm.Closed += (s, args) =>
+                            {
+                                AuthenticationRepository.LogoutUser();
+                                this.Close();
+                            };
+                            superAdminForm.Show();
+                            break;
+
+                        case 2: // Admin
+                            Form1 adminForm = new Form1();
+                            adminForm.Closed += (s, args) =>
+                            {
+                                AuthenticationRepository.LogoutUser();
+                                this.Close();
+                            };
+                            adminForm.Show();
+                            break;
+
+                        case 3: // Cashier
+                            KGHCashierPOS.CashierForm cashierForm = new KGHCashierPOS.CashierForm();
+                            cashierForm.Closed += (s, args) =>
+                            {
+                                AuthenticationRepository.LogoutUser();
+                                this.Close();
+                            };
+                            cashierForm.Show();
+                            break;
+
+                        case 4: // Customer
+                            KGHCashierPOS.OrderForm orderForm = new KGHCashierPOS.OrderForm();
+                            orderForm.Closed += (s, args) =>
+                            {
+                                AuthenticationRepository.LogoutUser();
+                                this.Close();
+                            };
+                            orderForm.Show();
+                            break;
+
+                        default:
+                            MessageBox.Show("Invalid user role.", "Access Denied",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            this.Show();
+                            ClearLoginFields();
+                            break;
+                    }
+                }
+                else
+                {
+                    // Failed login - already logged in AuthenticateUser
+                    MessageBox.Show(result.Message, "Login Failed",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    ClearLoginFields();
+                }
             }
-            // CASHIER - opens CashierForm (POS System)
-            else if (username.ToLower() == CASHIER_USERNAME && password == CASHIER_PASSWORD)
+            catch (Exception ex)
             {
-                this.Hide();
-                KGHCashierPOS.CashierForm cashierForm = new KGHCashierPOS.CashierForm();
-                cashierForm.Closed += (s, args) => this.Close();
-                cashierForm.Show();
-            }
-            // STAFF - shows message
-            else if (username.ToLower() == STAFF_USERNAME && password == STAFF_PASSWORD)
-            {
-                MessageBox.Show("Staff access: Limited functionality.", "Staff Access",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                ClearLoginFields();
-            }
-            else
-            {
-                MessageBox.Show("Invalid username or password", "Login Failed",
+                this.Cursor = Cursors.Default;
+                btnSignIn.Enabled = true;
+                MessageBox.Show($"Login error:\n{ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
-                ClearLoginFields();
             }
         }
 
@@ -368,11 +420,12 @@ namespace cms
             MessageBox.Show(
                 "Please contact your system administrator to reset your password.\n\n" +
                 "📧 Email: admin@matchpoint.com\n" +
-                "📞 Phone: (123) 456-7890\n\n" +
-                "Test Credentials:\n" +
-                "Staff: staff / staff123\n" +
+                "📞 Phone: (02) 8123-4567\n\n" +
+                "Test Credentials (from database):\n" +
+                "Super Admin: superadmin / super123\n" +
+                "Admin: admin / admin123\n" +
                 "Cashier: cashier / cashier123\n" +
-                "Admin: admin / admin123",
+                "Kiosk: kiosk / kiosk123",
                 "Forgot Password",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);

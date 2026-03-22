@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace KGHCashierPOS
 {
@@ -77,9 +78,9 @@ namespace KGHCashierPOS
         private void UpdateCashierDisplay()
         {
             // Update user label
-            if (lblUser != null)
+            if (lblCashierName != null)
             {
-                lblUser.Text = currentUsername;
+                lblCashierName.Text = currentUsername;
             }
 
             // Update form title
@@ -124,8 +125,20 @@ namespace KGHCashierPOS
             dateTimeTimer.Interval = 1000;
             dateTimeTimer.Tick += DateTimeTimer_Tick;
             dateTimeTimer.Start();
+            DisplayLoggedInUser();
 
             RefreshDisplay();
+        }
+
+        private void DisplayLoggedInUser()
+        {
+            // If you have a label for showing logged-in user
+            if (lblCashierName != null)  // Add this label to your form
+            {
+                lblCashierName.Text = $"Cashier: {UserSession.Username} ({UserSession.RoleName}";
+            }
+
+            System.Diagnostics.Debug.WriteLine($"Cashier: {UserSession.Username} ({UserSession.RoleName})");
         }
 
         private void DateTimeTimer_Tick(object sender, EventArgs e)
