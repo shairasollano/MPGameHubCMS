@@ -29,7 +29,12 @@
         private void InitializeComponent()
         {
             this.panelBackground = new System.Windows.Forms.Panel();
+            this.btnExit = new System.Windows.Forms.Button();
+            this.pictureBoxBg = new System.Windows.Forms.PictureBox();
+            this.logoOverlay = new System.Windows.Forms.PictureBox();
             this.panelLogin = new System.Windows.Forms.Panel();
+            this.btnShowPassword = new System.Windows.Forms.Button();
+            this.logoSmall = new System.Windows.Forms.PictureBox();
             this.lblWelcomeTitle = new System.Windows.Forms.Label();
             this.lblWelcomeSubtitle = new System.Windows.Forms.Label();
             this.lblUsername = new System.Windows.Forms.Label();
@@ -39,15 +44,11 @@
             this.btnSignIn = new System.Windows.Forms.Button();
             this.lblForgotPassword = new System.Windows.Forms.Label();
             this.lblErrorMessage = new System.Windows.Forms.Label();
-            this.btnExit = new System.Windows.Forms.Button();
-            this.logoSmall = new System.Windows.Forms.PictureBox();
-            this.pictureBoxBg = new System.Windows.Forms.PictureBox();
-            this.logoOverlay = new System.Windows.Forms.PictureBox();
             this.panelBackground.SuspendLayout();
-            this.panelLogin.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.logoSmall)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBg)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.logoOverlay)).BeginInit();
+            this.panelLogin.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.logoSmall)).BeginInit();
             this.SuspendLayout();
             // 
             // panelBackground
@@ -61,9 +62,47 @@
             this.panelBackground.Size = new System.Drawing.Size(1920, 1080);
             this.panelBackground.TabIndex = 0;
             // 
+            // btnExit
+            // 
+            this.btnExit.BackColor = System.Drawing.Color.Transparent;
+            this.btnExit.FlatAppearance.BorderSize = 0;
+            this.btnExit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnExit.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnExit.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(120)))), ((int)(((byte)(120)))));
+            this.btnExit.Location = new System.Drawing.Point(1888, 23);
+            this.btnExit.Name = "btnExit";
+            this.btnExit.Size = new System.Drawing.Size(43, 33);
+            this.btnExit.TabIndex = 2;
+            this.btnExit.Text = "x";
+            this.btnExit.UseVisualStyleBackColor = false;
+            this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
+            // 
+            // pictureBoxBg
+            // 
+            this.pictureBoxBg.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pictureBoxBg.Image = global::cms.Properties.Resources.Game_Rates__6_;
+            this.pictureBoxBg.Location = new System.Drawing.Point(0, 0);
+            this.pictureBoxBg.Name = "pictureBoxBg";
+            this.pictureBoxBg.Size = new System.Drawing.Size(1920, 1080);
+            this.pictureBoxBg.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pictureBoxBg.TabIndex = 0;
+            this.pictureBoxBg.TabStop = false;
+            // 
+            // logoOverlay
+            // 
+            this.logoOverlay.BackColor = System.Drawing.Color.Transparent;
+            this.logoOverlay.Image = global::cms.Properties.Resources.MATCHPOINT__10_;
+            this.logoOverlay.Location = new System.Drawing.Point(50, 50);
+            this.logoOverlay.Name = "logoOverlay";
+            this.logoOverlay.Size = new System.Drawing.Size(300, 150);
+            this.logoOverlay.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.logoOverlay.TabIndex = 1;
+            this.logoOverlay.TabStop = false;
+            // 
             // panelLogin
             // 
             this.panelLogin.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(18)))), ((int)(((byte)(19)))), ((int)(((byte)(17)))));
+            this.panelLogin.Controls.Add(this.btnShowPassword);
             this.panelLogin.Controls.Add(this.logoSmall);
             this.panelLogin.Controls.Add(this.lblWelcomeTitle);
             this.panelLogin.Controls.Add(this.lblWelcomeSubtitle);
@@ -78,6 +117,33 @@
             this.panelLogin.Name = "panelLogin";
             this.panelLogin.Size = new System.Drawing.Size(550, 680);
             this.panelLogin.TabIndex = 1;
+            // 
+            // btnShowPassword
+            // 
+            this.btnShowPassword.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(38)))));
+            this.btnShowPassword.FlatAppearance.BorderSize = 0;
+            this.btnShowPassword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnShowPassword.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
+            this.btnShowPassword.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.btnShowPassword.Location = new System.Drawing.Point(460, 430);
+            this.btnShowPassword.Name = "btnShowPassword";
+            this.btnShowPassword.Size = new System.Drawing.Size(35, 34);
+            this.btnShowPassword.TabIndex = 10;
+            this.btnShowPassword.Text = "👁";
+            this.btnShowPassword.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.btnShowPassword.UseVisualStyleBackColor = false;
+            this.btnShowPassword.Visible = false; // Hidden because we use Label in code-behind
+            // 
+            // logoSmall
+            // 
+            this.logoSmall.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(18)))), ((int)(((byte)(19)))), ((int)(((byte)(17)))));
+            this.logoSmall.Image = global::cms.Properties.Resources.MATCHPOINT__18_;
+            this.logoSmall.Location = new System.Drawing.Point(182, -18);
+            this.logoSmall.Name = "logoSmall";
+            this.logoSmall.Size = new System.Drawing.Size(195, 222);
+            this.logoSmall.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.logoSmall.TabIndex = 0;
+            this.logoSmall.TabStop = false;
             // 
             // lblWelcomeTitle
             // 
@@ -185,54 +251,6 @@
             this.lblErrorMessage.TabIndex = 9;
             this.lblErrorMessage.Visible = false;
             // 
-            // btnExit
-            // 
-            this.btnExit.BackColor = System.Drawing.Color.Transparent;
-            this.btnExit.FlatAppearance.BorderSize = 0;
-            this.btnExit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnExit.Font = new System.Drawing.Font("Segoe UI", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnExit.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(120)))), ((int)(((byte)(120)))), ((int)(((byte)(120)))));
-            this.btnExit.Location = new System.Drawing.Point(1888, 23);
-            this.btnExit.Name = "btnExit";
-            this.btnExit.Size = new System.Drawing.Size(43, 33);
-            this.btnExit.TabIndex = 2;
-            this.btnExit.Text = "x";
-            this.btnExit.UseVisualStyleBackColor = false;
-            this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
-            // 
-            // logoSmall
-            // 
-            this.logoSmall.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(18)))), ((int)(((byte)(19)))), ((int)(((byte)(17)))));
-            this.logoSmall.Image = global::cms.Properties.Resources.MATCHPOINT__18_;
-            this.logoSmall.Location = new System.Drawing.Point(182, -18);
-            this.logoSmall.Name = "logoSmall";
-            this.logoSmall.Size = new System.Drawing.Size(195, 222);
-            this.logoSmall.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.logoSmall.TabIndex = 0;
-            this.logoSmall.TabStop = false;
-            // 
-            // pictureBoxBg
-            // 
-            this.pictureBoxBg.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pictureBoxBg.Image = global::cms.Properties.Resources.Game_Rates__6_;
-            this.pictureBoxBg.Location = new System.Drawing.Point(0, 0);
-            this.pictureBoxBg.Name = "pictureBoxBg";
-            this.pictureBoxBg.Size = new System.Drawing.Size(1920, 1080);
-            this.pictureBoxBg.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBoxBg.TabIndex = 0;
-            this.pictureBoxBg.TabStop = false;
-            // 
-            // logoOverlay
-            // 
-            this.logoOverlay.BackColor = System.Drawing.Color.Transparent;
-            this.logoOverlay.Image = global::cms.Properties.Resources.MATCHPOINT__10_;
-            this.logoOverlay.Location = new System.Drawing.Point(50, 50);
-            this.logoOverlay.Name = "logoOverlay";
-            this.logoOverlay.Size = new System.Drawing.Size(300, 150);
-            this.logoOverlay.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.logoOverlay.TabIndex = 1;
-            this.logoOverlay.TabStop = false;
-            // 
             // Form2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -248,11 +266,11 @@
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.Load += new System.EventHandler(this.Form2_Load);
             this.panelBackground.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBg)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.logoOverlay)).EndInit();
             this.panelLogin.ResumeLayout(false);
             this.panelLogin.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.logoSmall)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBoxBg)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.logoOverlay)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -274,5 +292,6 @@
         private System.Windows.Forms.Label lblForgotPassword;
         private System.Windows.Forms.Label lblErrorMessage;
         private System.Windows.Forms.Button btnExit;
+        private System.Windows.Forms.Button btnShowPassword;
     }
 }

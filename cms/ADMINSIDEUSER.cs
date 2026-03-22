@@ -1,4 +1,5 @@
 ﻿
+using MySql.Data.MySqlClient;
 using cms.lastsuper;
 using System;
 using System.Collections.Generic;
@@ -14,14 +15,15 @@ namespace finaluserandstaff
         // User Data Class
         public class UserData
         {
+            public int DbId { get; set; }
             public string ID { get; set; }
             public string Username { get; set; }
+            public string Password { get; set; }
             public string FullName { get; set; }
             public string Role { get; set; }
             public string Status { get; set; }
             public DateTime LastLogin { get; set; }
             public string Email { get; set; }
-            public string Password { get; set; }
         }
 
         // Role Enum
@@ -39,7 +41,10 @@ namespace finaluserandstaff
         // Current logged-in user
         private UserData currentLoggedInUser;
 
-        // UI Controls (matching your designer)
+        // Database connection string
+        private string connectionString = "Server=localhost;Database=cms;Uid=root;Pwd=;";
+
+        // UI Controls
         private Label lblTotalUsers;
         private Panel cardActiveAdmins;
         private Label lblActiveValue;
@@ -85,25 +90,813 @@ namespace finaluserandstaff
                 FullName = "Administrator",
                 Role = "ADMIN",
                 Status = "ACTIVE",
-                Password = "Admin123!"
+                Password = "admin123"
             };
 
-            // Set card titles for Admin side
+            // Set card titles
             if (lblTotalUsers != null) lblTotalUsers.Text = "Total Users";
             if (lblActiveAdmins != null) lblActiveAdmins.Text = "Active Admins";
             if (lblInactiveAcc != null) lblInactiveAcc.Text = "Inactive Accounts";
-            if (lblOnlineNow != null) lblOnlineNow.Text = "Active Users";  // Changed from "Online Now"
+            if (lblOnlineNow != null) lblOnlineNow.Text = "Active Users";
 
             LoadSampleData();
             SetupEvents();
             RefreshUserList();
             UpdateStatistics();
             ApplyRolePermissions();
-
             HighlightCurrentUser();
         }
 
-        private void InitializeComponent()
+        // ==================== DATABASE METHODS ====================
+
+        // Update the LoadUsersFromDatabase query
+        private List<UserData> LoadUsersFromDatabase()
+        {
+            List<UserData> users = new List<UserData>();
+
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = @"SELECT ID, Username, password, full_name, ROLE, STATUS, last_login, custom_id 
+                            FROM users 
+                            ORDER BY FIELD(ROLE, 'SUPER ADMIN', 'ADMIN', 'STAFF'), custom_id";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    using (MySqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            users.Add(new UserData
+                            {
+                                ID = reader["custom_id"]?.ToString() ?? reader["ID"]?.ToString() ?? "",
+                                Username = reader["Username"]?.ToString() ?? "",
+                                Password = reader["password"]?.ToString() ?? "",
+                                FullName = reader["full_name"]?.ToString() ?? "",
+                                Role = reader["ROLE"]?.ToString() ?? "STAFF",
+                                Status = reader["STATUS"]?.ToString() ?? "ACTIVE",
+                                LastLogin = reader["last_login"] != DBNull.Value ? Convert.ToDateTime(reader["last_login"]) : DateTime.Now
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Database error: {ex.Message}\n\nMake sure MySQL is running in XAMPP",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return users;
+        }
+        private void SaveUserToDatabase(UserData user, bool isNew)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    if (isNew)
+                    {
+                        string query = @"INSERT INTO users (ID, Username, password, full_name, ROLE, STATUS, last_login, custom_id) 
+                                VALUES (@ID, @Username, @password, @full_name, @ROLE, @STATUS, @last_login, @custom_id)";
+
+                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@ID", user.ID);
+                            cmd.Parameters.AddWithValue("@Username", user.Username);
+                            cmd.Parameters.AddWithValue("@password", user.Password);
+                            cmd.Parameters.AddWithValue("@full_name", user.FullName);
+                            cmd.Parameters.AddWithValue("@ROLE", user.Role);
+                            cmd.Parameters.AddWithValue("@STATUS", user.Status);
+                            cmd.Parameters.AddWithValue("@last_login", user.LastLogin);
+                            cmd.Parameters.AddWithValue("@custom_id", user.ID);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    else
+                    {
+                        string query = @"UPDATE users 
+                                SET full_name = @full_name, ROLE = @ROLE, STATUS = @STATUS
+                                WHERE custom_id = @custom_id";
+
+                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@full_name", user.FullName);
+                            cmd.Parameters.AddWithValue("@ROLE", user.Role);
+                            cmd.Parameters.AddWithValue("@STATUS", user.Status);
+                            cmd.Parameters.AddWithValue("@custom_id", user.ID);
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Database error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private void DeleteUserFromDatabase(string customId)
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = "DELETE FROM users WHERE custom_id = @custom_id";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@custom_id", customId);
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Database error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string GenerateNewID(string role)
+        {
+            string prefix = role == "SUPER ADMIN" ? "SA" : role == "ADMIN" ? "AD" : "ST";
+
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    string query = $"SELECT custom_id FROM users WHERE custom_id LIKE '{prefix}%' ORDER BY custom_id DESC LIMIT 1";
+
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        object result = cmd.ExecuteScalar();
+
+                        if (result == null || result == DBNull.Value)
+                            return $"{prefix}001";
+
+                        string lastID = result.ToString();
+                        if (lastID.Length >= 3 && int.TryParse(lastID.Substring(2), out int number))
+                        {
+                            return $"{prefix}{(number + 1):D3}";
+                        }
+                        return $"{prefix}001";
+                    }
+                }
+            }
+            catch
+            {
+                return $"{prefix}001";
+            }
+        }
+
+        // ==================== DATA METHODS ====================
+
+        private void LoadSampleData()
+        {
+            // Load from database
+            allUsers = LoadUsersFromDatabase();
+
+            // If database is empty, create sample data
+            if (allUsers.Count == 0)
+            {
+                // Super Admin
+                allUsers.Add(new UserData
+                {
+                    ID = "SA001",
+                    Username = "superadmin",
+                    FullName = "Super Administrator",
+                    Role = "SUPER ADMIN",
+                    Status = "ACTIVE",
+                    LastLogin = DateTime.Now,
+                    Password = "super123"
+                });
+
+                // Admin
+                allUsers.Add(new UserData
+                {
+                    ID = "AD001",
+                    Username = "admin",
+                    FullName = "System Administrator",
+                    Role = "ADMIN",
+                    Status = "ACTIVE",
+                    LastLogin = DateTime.Now,
+                    Password = "admin123"
+                });
+
+                // Cashier
+                allUsers.Add(new UserData
+                {
+                    ID = "CA001",
+                    Username = "cashier",
+                    FullName = "Cashier User",
+                    Role = "CASHIER",
+                    Status = "ACTIVE",
+                    LastLogin = DateTime.Now,
+                    Password = "cashier123"
+                });
+
+                // Customer (Kiosk)
+                allUsers.Add(new UserData
+                {
+                    ID = "CU001",
+                    Username = "kiosk",
+                    FullName = "Kiosk Customer",
+                    Role = "CUSTOMER",
+                    Status = "ACTIVE",
+                    LastLogin = DateTime.Now,
+                    Password = "kiosk123"
+                });
+
+                // Staff members
+                for (int i = 1; i <= 15; i++)
+                {
+                    allUsers.Add(new UserData
+                    {
+                        ID = $"ST{i:D3}",
+                        Username = $"staff{i:00}",
+                        FullName = $"Staff Member {i}",
+                        Role = "STAFF",
+                        Status = i % 3 == 0 ? "INACTIVE" : "ACTIVE",
+                        LastLogin = DateTime.Now.AddHours(-i),
+                        Password = "staff123"
+                    });
+                }
+
+                // Save all to database
+                foreach (var user in allUsers)
+                {
+                    SaveUserToDatabase(user, true);
+                }
+            }
+
+            allUsers = SortUsersByRole(allUsers);
+        }
+
+        private void SetupEvents()
+        {
+            // Search box
+            if (txtSearch != null)
+            {
+                txtSearch.TextChanged += TxtSearch_TextChanged;
+                txtSearch.Enter += TxtSearch_Enter;
+                txtSearch.Leave += TxtSearch_Leave;
+
+                if (string.IsNullOrWhiteSpace(txtSearch.Text))
+                {
+                    txtSearch.Text = "Search keyword...";
+                    txtSearch.ForeColor = Color.Gray;
+                    txtSearch.Font = new System.Drawing.Font(txtSearch.Font, FontStyle.Italic);
+                }
+            }
+
+            // DataGridView events
+            if (dgvUsers != null)
+            {
+                dgvUsers.CellValueChanged += DgvUsers_CellValueChanged;
+                dgvUsers.CurrentCellDirtyStateChanged += DgvUsers_CurrentCellDirtyStateChanged;
+                dgvUsers.CellFormatting += DgvUsers_CellFormatting;
+                dgvUsers.CellBeginEdit += DgvUsers_CellBeginEdit;
+                dgvUsers.EditingControlShowing += DgvUsers_EditingControlShowing;
+            }
+
+            // Buttons
+            if (btnExport != null)
+                btnExport.Click += BtnExport_Click;
+
+            if (btnManageUsers != null)
+                btnManageUsers.Click += BtnManageUsers_Click;
+        }
+
+        private void TxtSearch_Enter(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == "Search keyword..." && txtSearch.ForeColor == Color.Gray)
+            {
+                txtSearch.Text = "";
+                txtSearch.ForeColor = Color.Black;
+                txtSearch.Font = new System.Drawing.Font(txtSearch.Font, FontStyle.Regular);
+            }
+        }
+
+        private void TxtSearch_Leave(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txtSearch.Text))
+            {
+                txtSearch.Text = "Search keyword...";
+                txtSearch.ForeColor = Color.Gray;
+                txtSearch.Font = new System.Drawing.Font(txtSearch.Font, FontStyle.Italic);
+            }
+        }
+
+        private void TxtSearch_TextChanged(object sender, EventArgs e)
+        {
+            if (txtSearch.Text == "Search keyword..." || txtSearch.ForeColor == Color.Gray)
+            {
+                displayedUsers = new List<UserData>(allUsers);
+                RefreshUserList();
+                return;
+            }
+            RefreshUserList();
+        }
+
+        private void ApplyRolePermissions()
+        {
+            UserRole currentRole = GetRoleFromString(currentLoggedInUser.Role);
+
+            if (btnManageUsers != null)
+            {
+                btnManageUsers.Text = currentRole == UserRole.SuperAdmin ? "MANAGE USERS" : "MANAGE STAFF";
+            }
+        }
+
+        private UserRole GetRoleFromString(string role)
+        {
+            switch (role.ToUpper())
+            {
+                case "SUPER ADMIN":
+                    return UserRole.SuperAdmin;
+                case "ADMIN":
+                    return UserRole.Admin;
+                default:
+                    return UserRole.Staff;
+            }
+        }
+
+        private bool CanModifyUser(UserData targetUser)
+        {
+            UserRole currentRole = GetRoleFromString(currentLoggedInUser.Role);
+            UserRole targetRole = GetRoleFromString(targetUser.Role);
+
+            if (currentRole == UserRole.SuperAdmin)
+            {
+                return true;
+            }
+
+            if (currentRole == UserRole.Admin && targetRole == UserRole.Staff)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private void RefreshUserList()
+        {
+            if (dgvUsers == null) return;
+
+            dgvUsers.Rows.Clear();
+
+            string searchText = txtSearch?.Text.Trim().ToLower() ?? "";
+            bool isSearching = !string.IsNullOrWhiteSpace(searchText) && searchText != "search keyword...";
+
+            var filtered = allUsers.AsEnumerable();
+
+            if (isSearching)
+            {
+                filtered = filtered.Where(u =>
+                    u.ID.ToLower().Contains(searchText) ||
+                    u.Username.ToLower().Contains(searchText) ||
+                    u.FullName.ToLower().Contains(searchText) ||
+                    u.Role.ToLower().Contains(searchText) ||
+                    u.Status.ToLower().Contains(searchText) ||
+                    u.LastLogin.ToString("MMM dd, yyyy HH:mm").ToLower().Contains(searchText) ||
+                    u.LastLogin.ToString("MMM dd, yyyy").ToLower().Contains(searchText) ||
+                    u.LastLogin.ToString("HH:mm").ToLower().Contains(searchText)
+                );
+            }
+
+            displayedUsers = SortUsersByRole(filtered.ToList());
+
+            foreach (var user in displayedUsers)
+            {
+                int rowIndex = dgvUsers.Rows.Add(
+                    user.ID,
+                    user.FullName,
+                    user.Username,
+                    user.Role,
+                    user.Status,
+                    user.LastLogin.ToString("MMM dd, yyyy HH:mm")
+                );
+                dgvUsers.Rows[rowIndex].Tag = user;
+            }
+
+            if (lblUserList != null)
+            {
+                lblUserList.Text = $"User List ({displayedUsers.Count} of {allUsers.Count})";
+            }
+
+            UpdateStatistics();
+            HighlightCurrentUser();
+        }
+
+        private void UpdateStatistics()
+        {
+            int totalUsers = displayedUsers.Count;
+            int activeAdmins = displayedUsers.Count(u => u.Status == "ACTIVE" && u.Role == "ADMIN");
+            int inactiveAccounts = displayedUsers.Count(u => u.Status == "INACTIVE");
+            int activeUsers = displayedUsers.Count(u => u.Status == "ACTIVE");
+
+            if (lblTotalValue != null) lblTotalValue.Text = $"{totalUsers} users";
+            if (lblActiveValue != null) lblActiveValue.Text = $"{activeAdmins} admins";
+            if (lblInactiveValue != null) lblInactiveValue.Text = $"{inactiveAccounts} accounts";
+            if (lblOnlineValue != null) lblOnlineValue.Text = $"{activeUsers} users";
+        }
+
+        private void HighlightCurrentUser()
+        {
+            if (dgvUsers == null || currentLoggedInUser == null) return;
+
+            for (int i = 0; i < dgvUsers.Rows.Count; i++)
+            {
+                var user = dgvUsers.Rows[i].Tag as UserData;
+                if (user != null && user.ID == currentLoggedInUser.ID)
+                {
+                    dgvUsers.Rows[i].DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
+                    dgvUsers.Rows[i].DefaultCellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
+                    dgvUsers.Rows[i].DefaultCellStyle.SelectionBackColor = Color.FromArgb(228, 186, 94);
+                    break;
+                }
+            }
+        }
+
+        private void DgvUsers_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+        {
+            if (e.ColumnIndex >= 0 && dgvUsers.Columns[e.ColumnIndex].Name == "statusColumn")
+            {
+                var user = dgvUsers.Rows[e.RowIndex].Tag as UserData;
+                if (user != null)
+                {
+                    if (!CanModifyUser(user))
+                    {
+                        MessageBox.Show($"You cannot change the status of {user.Role} users!",
+                            "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                        e.Cancel = true;
+                    }
+                }
+            }
+        }
+
+        private void DgvUsers_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                string columnName = dgvUsers.Columns[e.ColumnIndex].Name;
+
+                if (columnName == "statusColumn")
+                {
+                    var user = dgvUsers.Rows[e.RowIndex].Tag as UserData;
+                    if (user != null)
+                    {
+                        string newStatus = dgvUsers.Rows[e.RowIndex].Cells["statusColumn"].Value?.ToString();
+                        if (!string.IsNullOrEmpty(newStatus) && user.Status != newStatus)
+                        {
+                            user.Status = newStatus;
+                            SaveUserToDatabase(user, false);
+                            MessageBox.Show($"Status changed to {newStatus} for {user.Username}",
+                                "Status Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            RefreshUserList();
+                        }
+                    }
+                }
+            }
+        }
+
+        private void DgvUsers_CurrentCellDirtyStateChanged(object sender, EventArgs e)
+        {
+            if (dgvUsers.IsCurrentCellDirty)
+            {
+                dgvUsers.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+        }
+
+        private void DgvUsers_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                var row = dgvUsers.Rows[e.RowIndex];
+                var user = row.Tag as UserData;
+
+                if (user != null)
+                {
+                    bool isCurrentUser = (user.ID == currentLoggedInUser?.ID);
+
+                    if (isCurrentUser)
+                    {
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
+                        row.DefaultCellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
+                        row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(228, 186, 94);
+                    }
+                    else
+                    {
+                        if (user.Role == "SUPER ADMIN")
+                        {
+                            row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
+                            row.DefaultCellStyle.ForeColor = Color.FromArgb(228, 186, 94);
+                            row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(60, 61, 54);
+                            row.DefaultCellStyle.SelectionForeColor = Color.FromArgb(228, 186, 94);
+                        }
+                        else if (user.Role == "ADMIN")
+                        {
+                            row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+                            row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 220, 220);
+                            row.DefaultCellStyle.SelectionForeColor = Color.Black;
+                        }
+                        else
+                        {
+                            row.DefaultCellStyle.BackColor = Color.White;
+                            row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 220, 220);
+                            row.DefaultCellStyle.SelectionForeColor = Color.Black;
+                        }
+                    }
+                }
+
+                if (dgvUsers.Columns[e.ColumnIndex].Name == "statusColumn")
+                {
+                    var statusUser = dgvUsers.Rows[e.RowIndex].Tag as UserData;
+                    if (statusUser != null)
+                    {
+                        if (statusUser.Status == "ACTIVE")
+                        {
+                            e.CellStyle.ForeColor = Color.Green;
+                            e.CellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
+                            e.CellStyle.SelectionForeColor = Color.Green;
+                        }
+                        else
+                        {
+                            e.CellStyle.ForeColor = Color.Red;
+                            e.CellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
+                            e.CellStyle.SelectionForeColor = Color.Red;
+                        }
+                        e.CellStyle.SelectionBackColor = Color.FromArgb(220, 220, 220);
+                    }
+                }
+            }
+        }
+
+        private void DgvUsers_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (dgvUsers.CurrentCell.ColumnIndex == dgvUsers.Columns["statusColumn"].Index)
+            {
+                ComboBox comboBox = e.Control as ComboBox;
+                if (comboBox != null)
+                {
+                    comboBox.DrawMode = DrawMode.OwnerDrawFixed;
+                    comboBox.DrawItem += (s, ev) =>
+                    {
+                        if (ev.Index < 0) return;
+                        string itemText = comboBox.Items[ev.Index].ToString();
+                        ev.DrawBackground();
+                        Brush textBrush = itemText == "ACTIVE" ? Brushes.Green : Brushes.Red;
+                        if ((ev.State & DrawItemState.Selected) == DrawItemState.Selected)
+                        {
+                            ev.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 220, 220)), ev.Bounds);
+                        }
+                        ev.Graphics.DrawString(itemText, comboBox.Font, textBrush, ev.Bounds.X, ev.Bounds.Y);
+                        ev.DrawFocusRectangle();
+                    };
+                }
+            }
+        }
+
+        private void BtnExport_Click(object sender, EventArgs e)
+        {
+            using (SaveFileDialog saveDialog = new SaveFileDialog())
+            {
+                saveDialog.Filter = "CSV Files (*.csv)|*.csv|Excel Files (*.xlsx)|*.xlsx";
+                saveDialog.FilterIndex = 1;
+                saveDialog.FileName = $"UserExport_{DateTime.Now:yyyyMMdd_HHmmss}";
+                saveDialog.Title = "Export User Data";
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        if (saveDialog.FileName.EndsWith(".csv"))
+                        {
+                            ExportToCSV(saveDialog.FileName);
+                        }
+                        else
+                        {
+                            ExportToExcel(saveDialog.FileName);
+                        }
+                        MessageBox.Show($"Export successful!\nSaved to: {saveDialog.FileName}",
+                            "Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Export failed: {ex.Message}", "Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void ExportToCSV(string filePath)
+        {
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine("\"ID\",\"FULL NAME\",\"USERNAME\",\"ROLE\",\"STATUS\",\"LAST LOGIN\"");
+                foreach (var user in displayedUsers)
+                {
+                    writer.WriteLine($"\"{user.ID}\",\"{user.FullName}\",\"{user.Username}\"," +
+                        $"\"{user.Role}\",\"{user.Status}\",\"{user.LastLogin:MMM dd, yyyy HH:mm}\"");
+                }
+            }
+        }
+
+        private void ExportToExcel(string filePath)
+        {
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine("<html><head><meta charset='UTF-8'></head><body>");
+                writer.WriteLine("<h2>User Export - MatchPoint Gaming Hub</h2>");
+                writer.WriteLine($"<p>Exported on: {DateTime.Now:MMMM dd, yyyy HH:mm}</p>");
+                writer.WriteLine("<table border='1' cellpadding='5' cellspacing='0'>");
+                writer.WriteLine("<tr style='background-color:#F8F9FA;'>");
+                writer.WriteLine("<th>ID</th><th>FULL NAME</th><th>USERNAME</th><th>ROLE</th><th>STATUS</th><th>LAST LOGIN</th>");
+                writer.WriteLine("</tr>");
+                foreach (var user in displayedUsers)
+                {
+                    string rowColor = user.Role == "SUPER ADMIN" ? "#E4BA5E" : "white";
+                    writer.WriteLine($"<tr style='background-color:{rowColor};'>");
+                    writer.WriteLine($"<td>{user.ID}</td>");
+                    writer.WriteLine($"<td>{user.FullName}</td>");
+                    writer.WriteLine($"<td>{user.Username}</td>");
+                    writer.WriteLine($"<td>{user.Role}</td>");
+                    writer.WriteLine($"<td style='color:{(user.Status == "ACTIVE" ? "green" : "red")};font-weight:bold;'>{user.Status}</td>");
+                    writer.WriteLine($"<td>{user.LastLogin:MMM dd, yyyy HH:mm}</td>");
+                    writer.WriteLine("</tr>");
+                }
+                writer.WriteLine("</table>");
+                writer.WriteLine($"<p>Total Users: {displayedUsers.Count}</p>");
+                writer.WriteLine("</body></html>");
+            }
+        }
+
+        private List<UserData> SortUsersByRole(List<UserData> users)
+        {
+            return users.OrderBy(u =>
+                u.Role == "SUPER ADMIN" ? 1 :
+                u.Role == "ADMIN" ? 2 :
+                3
+            ).ThenBy(u => u.ID).ToList();
+        }
+
+        public UserData GetCurrentLoggedInUser()
+        {
+            return currentLoggedInUser;
+        }
+
+        private void BtnManageUsers_Click(object sender, EventArgs e)
+        {
+            using (frmManageUsers manageForm = new frmManageUsers(this))
+            {
+                manageForm.ShowDialog();
+            }
+            RefreshUserList();
+            UpdateStatistics();
+        }
+
+        public void RefreshData()
+        {
+            RefreshUserList();
+            UpdateStatistics();
+        }
+
+        public List<UserData> GetAllUsers()
+        {
+            return allUsers;
+        }
+
+        public void AddUser(UserData newUser)
+        {
+            if (string.IsNullOrEmpty(newUser.ID))
+            {
+                newUser.ID = GenerateNewID(newUser.Role);
+            }
+            SaveUserToDatabase(newUser, true);
+            allUsers = LoadUsersFromDatabase();
+            allUsers = SortUsersByRole(allUsers);
+            RefreshUserList();
+            UpdateStatistics();
+            HighlightNewUser(newUser.ID);
+        }
+
+        private void HighlightNewUser(string userId)
+        {
+            if (dgvUsers == null) return;
+            for (int i = 0; i < dgvUsers.Rows.Count; i++)
+            {
+                var user = dgvUsers.Rows[i].Tag as UserData;
+                if (user != null && user.ID == userId)
+                {
+                    dgvUsers.ClearSelection();
+                    dgvUsers.Rows[i].Selected = true;
+                    dgvUsers.FirstDisplayedScrollingRowIndex = i;
+                    FlashRow(i);
+                    break;
+                }
+            }
+        }
+
+        private System.Windows.Forms.Timer flashTimer;
+        private int flashRowIndex;
+        private int flashCount;
+
+        private void FlashRow(int rowIndex)
+        {
+            flashRowIndex = rowIndex;
+            flashCount = 0;
+            if (flashTimer == null)
+            {
+                flashTimer = new System.Windows.Forms.Timer();
+                flashTimer.Interval = 200;
+                flashTimer.Tick += FlashTimer_Tick;
+            }
+            flashTimer.Start();
+        }
+
+        private void FlashTimer_Tick(object sender, EventArgs e)
+        {
+            if (flashRowIndex >= 0 && flashRowIndex < dgvUsers.Rows.Count)
+            {
+                var row = dgvUsers.Rows[flashRowIndex];
+                var user = row.Tag as UserData;
+                if (flashCount % 2 == 0)
+                {
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
+                }
+                else
+                {
+                    if (user?.Role == "SUPER ADMIN")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
+                    }
+                    else if (user?.Role == "ADMIN")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+                    }
+                    else
+                    {
+                        row.DefaultCellStyle.BackColor = Color.White;
+                    }
+                }
+                flashCount++;
+                if (flashCount >= 10)
+                {
+                    flashTimer.Stop();
+                    if (user?.Role == "SUPER ADMIN")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
+                    }
+                    else if (user?.Role == "ADMIN")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+                    }
+                    else
+                    {
+                        row.DefaultCellStyle.BackColor = Color.White;
+                    }
+                }
+            }
+            else
+            {
+                flashTimer.Stop();
+            }
+        }
+
+        public void UpdateUser(UserData updatedUser)
+        {
+            SaveUserToDatabase(updatedUser, false);
+            allUsers = LoadUsersFromDatabase();
+            allUsers = SortUsersByRole(allUsers);
+            RefreshUserList();
+            UpdateStatistics();
+        }
+
+        public void DeleteUser(string userId)
+        {
+            DeleteUserFromDatabase(userId);
+            allUsers = LoadUsersFromDatabase();
+            allUsers = SortUsersByRole(allUsers);
+            RefreshUserList();
+            UpdateStatistics();
+        }
+
+        private void txtSearch_TextChanged_1(object sender, EventArgs e)
+        {
+            TxtSearch_TextChanged(sender, e);
+        }
+
+        private void UserManagementControl_Load(object sender, EventArgs e)
+        {
+        }
+
+       
+private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UserManagementControl));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -576,650 +1369,7 @@ namespace finaluserandstaff
             this.PerformLayout();
         }
 
-        private void LoadSampleData()
-        {
-            allUsers.Clear();
 
-            // Current Admin (logged-in user)
-            allUsers.Add(new UserData
-            {
-                ID = "AD001",
-                Username = "admin",
-                FullName = "Administrator",
-                Role = "ADMIN",
-                Status = "ACTIVE",
-                LastLogin = DateTime.Now.AddHours(-2),
-                Password = "Admin123!"
-            });
 
-            // Additional Admins for testing (5 more)
-            for (int i = 2; i <= 6; i++)
-            {
-                allUsers.Add(new UserData
-                {
-                    ID = $"AD00{i}",
-                    Username = $"admin{i:00}",
-                    FullName = $"Admin {i}",
-                    Role = "ADMIN",
-                    Status = "ACTIVE",
-                    LastLogin = DateTime.Now.AddHours(-i),
-                    Password = "Admin123!"
-                });
-            }
-
-            // Staff (15 members)
-            for (int i = 1; i <= 15; i++)
-            {
-                allUsers.Add(new UserData
-                {
-                    ID = $"ST{i:D3}",
-                    Username = $"staff{i:00}",
-                    FullName = $"Staff Member {i}",
-                    Role = "STAFF",
-                    Status = i % 3 == 0 ? "INACTIVE" : "ACTIVE",
-                    LastLogin = DateTime.Now.AddHours(-i),
-                    Password = "Staff123!"
-                });
-            }
-
-            // Sort users by role
-            allUsers = SortUsersByRole(allUsers);
-        }
-
-        private void SetupEvents()
-        {
-            // Search box - Smart Filter with placeholder
-            if (txtSearch != null)
-            {
-                txtSearch.TextChanged += TxtSearch_TextChanged;
-                txtSearch.Enter += TxtSearch_Enter;
-                txtSearch.Leave += TxtSearch_Leave;
-
-                if (string.IsNullOrWhiteSpace(txtSearch.Text))
-                {
-                    txtSearch.Text = "Search keyword...";
-                    txtSearch.ForeColor = Color.Gray;
-                    txtSearch.Font = new System.Drawing.Font(txtSearch.Font, FontStyle.Italic);
-                }
-            }
-
-            // DataGridView events
-            if (dgvUsers != null)
-            {
-                dgvUsers.CellValueChanged += DgvUsers_CellValueChanged;
-                dgvUsers.CurrentCellDirtyStateChanged += DgvUsers_CurrentCellDirtyStateChanged;
-                dgvUsers.CellFormatting += DgvUsers_CellFormatting;
-                dgvUsers.CellBeginEdit += DgvUsers_CellBeginEdit;
-                dgvUsers.EditingControlShowing += DgvUsers_EditingControlShowing;
-            }
-
-            // Buttons
-            if (btnExport != null)
-                btnExport.Click += BtnExport_Click;
-
-            if (btnManageUsers != null)
-                btnManageUsers.Click += BtnManageUsers_Click;
-        }
-
-        private void TxtSearch_Enter(object sender, EventArgs e)
-        {
-            if (txtSearch.Text == "Search keyword..." && txtSearch.ForeColor == Color.Gray)
-            {
-                txtSearch.Text = "";
-                txtSearch.ForeColor = Color.Black;
-                txtSearch.Font = new System.Drawing.Font(txtSearch.Font, FontStyle.Regular);
-            }
-        }
-
-        private void TxtSearch_Leave(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txtSearch.Text))
-            {
-                txtSearch.Text = "Search keyword...";
-                txtSearch.ForeColor = Color.Gray;
-                txtSearch.Font = new System.Drawing.Font(txtSearch.Font, FontStyle.Italic);
-            }
-        }
-
-        private void TxtSearch_TextChanged(object sender, EventArgs e)
-        {
-            if (txtSearch.Text == "Search keyword..." || txtSearch.ForeColor == Color.Gray)
-            {
-                displayedUsers = new List<UserData>(allUsers);
-                RefreshUserList();
-                return;
-            }
-            RefreshUserList();
-        }
-
-        private void ApplyRolePermissions()
-        {
-            UserRole currentRole = GetRoleFromString(currentLoggedInUser.Role);
-
-            if (btnManageUsers != null)
-            {
-                btnManageUsers.Text = currentRole == UserRole.SuperAdmin ? "MANAGE USERS" : "MANAGE STAFF";
-            }
-        }
-
-        private UserRole GetRoleFromString(string role)
-        {
-            switch (role.ToUpper())
-            {
-                case "SUPER ADMIN":
-                    return UserRole.SuperAdmin;
-                case "ADMIN":
-                    return UserRole.Admin;
-                default:
-                    return UserRole.Staff;
-            }
-        }
-
-        private bool CanModifyUser(UserData targetUser)
-        {
-            UserRole currentRole = GetRoleFromString(currentLoggedInUser.Role);
-            UserRole targetRole = GetRoleFromString(targetUser.Role);
-
-            if (currentRole == UserRole.SuperAdmin)
-            {
-                return true;
-            }
-
-            if (currentRole == UserRole.Admin && targetRole == UserRole.Staff)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private void RefreshUserList()
-        {
-            if (dgvUsers == null) return;
-
-            dgvUsers.Rows.Clear();
-
-            string searchText = txtSearch?.Text.Trim().ToLower() ?? "";
-            bool isSearching = !string.IsNullOrWhiteSpace(searchText) && searchText != "search keyword...";
-
-            var filtered = allUsers.AsEnumerable();
-
-            if (isSearching)
-            {
-                filtered = filtered.Where(u =>
-                    u.ID.ToLower().Contains(searchText) ||
-                    u.Username.ToLower().Contains(searchText) ||
-                    u.FullName.ToLower().Contains(searchText) ||
-                    u.Role.ToLower().Contains(searchText) ||
-                    u.Status.ToLower().Contains(searchText) ||
-                    (u.Email != null && u.Email.ToLower().Contains(searchText)) ||
-                    u.LastLogin.ToString("MMM dd, yyyy HH:mm").ToLower().Contains(searchText) ||
-                    u.LastLogin.ToString("MMM dd, yyyy").ToLower().Contains(searchText) ||
-                    u.LastLogin.ToString("HH:mm").ToLower().Contains(searchText) ||
-                    u.LastLogin.ToString("dd MMM yyyy").ToLower().Contains(searchText) ||
-                    u.LastLogin.ToString("MMMM").ToLower().Contains(searchText) ||
-                    u.LastLogin.ToString("dddd").ToLower().Contains(searchText) ||
-                    u.LastLogin.Day.ToString().Contains(searchText) ||
-                    u.LastLogin.Month.ToString().Contains(searchText) ||
-                    u.LastLogin.Year.ToString().Contains(searchText) ||
-                    u.LastLogin.Hour.ToString().Contains(searchText) ||
-                    u.LastLogin.Minute.ToString().Contains(searchText)
-                );
-            }
-
-            displayedUsers = SortUsersByRole(filtered.ToList());
-
-            foreach (var user in displayedUsers)
-            {
-                int rowIndex = dgvUsers.Rows.Add(
-                    user.ID,
-                    user.FullName,
-                    user.Username,
-                    user.Role,
-                    user.Status,
-                    user.LastLogin.ToString("MMM dd, yyyy HH:mm")
-                );
-                dgvUsers.Rows[rowIndex].Tag = user;
-            }
-
-            if (lblUserList != null)
-            {
-                lblUserList.Text = $"User List ({displayedUsers.Count} of {allUsers.Count})";
-            }
-
-            UpdateStatistics();
-
-            HighlightCurrentUser();
-        }
-
-        private void UpdateStatistics()
-        {
-            // Use displayedUsers (filtered users)
-            int totalUsers = displayedUsers.Count;
-
-            // Active Admins - count only ADMIN role with ACTIVE status
-            int activeAdmins = displayedUsers.Count(u => u.Status == "ACTIVE" && u.Role == "ADMIN");
-
-            // Inactive Accounts - count all users with INACTIVE status
-            int inactiveAccounts = displayedUsers.Count(u => u.Status == "INACTIVE");
-
-            // Active Users - count ALL users with ACTIVE status (regardless of role)
-            int activeUsers = displayedUsers.Count(u => u.Status == "ACTIVE");
-
-            // Update value labels
-            if (lblTotalValue != null) lblTotalValue.Text = $"{totalUsers} users";
-            if (lblActiveValue != null) lblActiveValue.Text = $"{activeAdmins} admins";
-            if (lblInactiveValue != null) lblInactiveValue.Text = $"{inactiveAccounts} accounts";
-            if (lblOnlineValue != null) lblOnlineValue.Text = $"{activeUsers} users";
-        }
-
-        private void HighlightCurrentUser()
-        {
-            if (dgvUsers == null || currentLoggedInUser == null) return;
-
-            for (int i = 0; i < dgvUsers.Rows.Count; i++)
-            {
-                var user = dgvUsers.Rows[i].Tag as UserData;
-                if (user != null && user.ID == currentLoggedInUser.ID)
-                {
-                    // Highlight the current user row
-                    dgvUsers.Rows[i].DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
-                    dgvUsers.Rows[i].DefaultCellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
-
-                    // Also set selection colors
-                    dgvUsers.Rows[i].DefaultCellStyle.SelectionBackColor = Color.FromArgb(228, 186, 94);
-                    break;
-                }
-            }
-        }
-
-        private void DgvUsers_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
-        {
-            if (e.ColumnIndex >= 0 && dgvUsers.Columns[e.ColumnIndex].Name == "statusColumn")
-            {
-                var user = dgvUsers.Rows[e.RowIndex].Tag as UserData;
-                if (user != null)
-                {
-                    if (!CanModifyUser(user))
-                    {
-                        MessageBox.Show($"You cannot change the status of {user.Role} users!",
-                            "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Stop);
-                        e.Cancel = true;
-                    }
-                }
-            }
-        }
-
-        private void DgvUsers_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
-            {
-                string columnName = dgvUsers.Columns[e.ColumnIndex].Name;
-
-                if (columnName == "statusColumn")
-                {
-                    var user = dgvUsers.Rows[e.RowIndex].Tag as UserData;
-                    if (user != null)
-                    {
-                        string newStatus = dgvUsers.Rows[e.RowIndex].Cells["statusColumn"].Value?.ToString();
-                        if (!string.IsNullOrEmpty(newStatus) && user.Status != newStatus)
-                        {
-                            user.Status = newStatus;
-                            MessageBox.Show($"Status changed to {newStatus} for {user.Username}",
-                                "Status Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            RefreshUserList();
-                        }
-                    }
-                }
-            }
-        }
-
-        private void DgvUsers_CurrentCellDirtyStateChanged(object sender, EventArgs e)
-        {
-            if (dgvUsers.IsCurrentCellDirty)
-            {
-                dgvUsers.CommitEdit(DataGridViewDataErrorContexts.Commit);
-            }
-        }
-
-        private void DgvUsers_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                var row = dgvUsers.Rows[e.RowIndex];
-                var user = row.Tag as UserData;
-
-                if (user != null)
-                {
-                    // Check if this is the current logged-in user
-                    bool isCurrentUser = (user.ID == currentLoggedInUser?.ID);
-
-                    if (isCurrentUser)
-                    {
-                        // Keep the highlight for current user
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
-                        row.DefaultCellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
-                        row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(228, 186, 94);
-                    }
-                    else
-                    {
-                        // Role-based styling for other users
-                        if (user.Role == "SUPER ADMIN")
-                        {
-                            row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
-                            row.DefaultCellStyle.ForeColor = Color.FromArgb(228, 186, 94);
-                            row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(60, 61, 54);
-                            row.DefaultCellStyle.SelectionForeColor = Color.FromArgb(228, 186, 94);
-                        }
-                        else if (user.Role == "ADMIN")
-                        {
-                            row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
-                            row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 220, 220);
-                            row.DefaultCellStyle.SelectionForeColor = Color.Black;
-                        }
-                        else
-                        {
-                            row.DefaultCellStyle.BackColor = Color.White;
-                            row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 220, 220);
-                            row.DefaultCellStyle.SelectionForeColor = Color.Black;
-                        }
-                    }
-                }
-
-                // Status column styling
-                if (dgvUsers.Columns[e.ColumnIndex].Name == "statusColumn")
-                {
-                    var statusUser = dgvUsers.Rows[e.RowIndex].Tag as UserData;
-                    if (statusUser != null)
-                    {
-                        if (statusUser.Status == "ACTIVE")
-                        {
-                            e.CellStyle.ForeColor = Color.Green;
-                            e.CellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
-                            e.CellStyle.SelectionForeColor = Color.Green;
-                        }
-                        else if (statusUser.Status == "INACTIVE")
-                        {
-                            e.CellStyle.ForeColor = Color.Red;
-                            e.CellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
-                            e.CellStyle.SelectionForeColor = Color.Red;
-                        }
-                        e.CellStyle.SelectionBackColor = Color.FromArgb(220, 220, 220);
-                    }
-                }
-            }
-        }
-
-        private void DgvUsers_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
-        {
-            if (dgvUsers.CurrentCell.ColumnIndex == dgvUsers.Columns["statusColumn"].Index)
-            {
-                ComboBox comboBox = e.Control as ComboBox;
-                if (comboBox != null)
-                {
-                    comboBox.DrawMode = DrawMode.OwnerDrawFixed;
-                    comboBox.DrawItem += (s, ev) =>
-                    {
-                        if (ev.Index < 0) return;
-                        string itemText = comboBox.Items[ev.Index].ToString();
-                        ev.DrawBackground();
-                        Brush textBrush;
-                        if (itemText == "ACTIVE")
-                        {
-                            textBrush = Brushes.Green;
-                        }
-                        else if (itemText == "INACTIVE")
-                        {
-                            textBrush = Brushes.Red;
-                        }
-                        else
-                        {
-                            textBrush = Brushes.Black;
-                        }
-                        if ((ev.State & DrawItemState.Selected) == DrawItemState.Selected)
-                        {
-                            ev.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 220, 220)), ev.Bounds);
-                        }
-                        ev.Graphics.DrawString(itemText, comboBox.Font, textBrush, ev.Bounds.X, ev.Bounds.Y);
-                        ev.DrawFocusRectangle();
-                    };
-                }
-            }
-        }
-
-        private void BtnExport_Click(object sender, EventArgs e)
-        {
-            using (SaveFileDialog saveDialog = new SaveFileDialog())
-            {
-                saveDialog.Filter = "CSV Files (*.csv)|*.csv|Excel Files (*.xlsx)|*.xlsx";
-                saveDialog.FilterIndex = 1;
-                saveDialog.FileName = $"UserExport_{DateTime.Now:yyyyMMdd_HHmmss}";
-                saveDialog.Title = "Export User Data";
-
-                if (saveDialog.ShowDialog() == DialogResult.OK)
-                {
-                    try
-                    {
-                        if (saveDialog.FileName.EndsWith(".csv"))
-                        {
-                            ExportToCSV(saveDialog.FileName);
-                        }
-                        else
-                        {
-                            ExportToExcel(saveDialog.FileName);
-                        }
-                        MessageBox.Show($"Export successful!\nSaved to: {saveDialog.FileName}",
-                            "Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Export failed: {ex.Message}", "Error",
-                            MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                }
-            }
-        }
-
-        private void ExportToCSV(string filePath)
-        {
-            using (StreamWriter writer = new StreamWriter(filePath))
-            {
-                writer.WriteLine("\"ID\",\"FULL NAME\",\"USERNAME\",\"ROLE\",\"STATUS\",\"LAST LOGIN\",\"EMAIL\"");
-                foreach (var user in displayedUsers)
-                {
-                    writer.WriteLine($"\"{user.ID}\",\"{user.FullName}\",\"{user.Username}\"," +
-                        $"\"{user.Role}\",\"{user.Status}\",\"{user.LastLogin:MMM dd, yyyy HH:mm}\"," +
-                        $"\"{user.Email}\"");
-                }
-            }
-        }
-
-        private void ExportToExcel(string filePath)
-        {
-            using (StreamWriter writer = new StreamWriter(filePath))
-            {
-                writer.WriteLine("<html><head><meta charset='UTF-8'></head><body>");
-                writer.WriteLine("<h2>User Export - MatchPoint Gaming Hub</h2>");
-                writer.WriteLine($"<p>Exported on: {DateTime.Now:MMMM dd, yyyy HH:mm}</p>");
-                writer.WriteLine("<table border='1' cellpadding='5' cellspacing='0'>");
-                writer.WriteLine("<tr style='background-color:#F8F9FA;'>");
-                writer.WriteLine("<th>ID</th><th>FULL NAME</th><th>USERNAME</th><th>ROLE</th><th>STATUS</th><th>LAST LOGIN</th><th>EMAIL</th>");
-                writer.WriteLine("<tr>");
-                foreach (var user in displayedUsers)
-                {
-                    string rowColor = user.Role == "SUPER ADMIN" ? "#E4BA5E" : "white";
-                    writer.WriteLine($"<tr style='background-color:{rowColor};'>");
-                    writer.WriteLine($"<td>{user.ID}</td>");
-                    writer.WriteLine($"<td>{user.FullName}</td>");
-                    writer.WriteLine($"<td>{user.Username}</td>");
-                    writer.WriteLine($"<td>{user.Role}</td>");
-                    writer.WriteLine($"<td style='color:{(user.Status == "ACTIVE" ? "green" : "red")};font-weight:bold;'>{user.Status}</td>");
-                    writer.WriteLine($"<td>{user.LastLogin:MMM dd, yyyy HH:mm}</td>");
-                    writer.WriteLine($"<td>{user.Email}</td>");
-                    writer.WriteLine("</tr>");
-                }
-                writer.WriteLine("</table>");
-                writer.WriteLine($"<p>Total Users: {displayedUsers.Count}</p>");
-                writer.WriteLine("</body></html>");
-            }
-        }
-
-        private List<UserData> SortUsersByRole(List<UserData> users)
-        {
-            return users.OrderBy(u =>
-                u.Role == "SUPER ADMIN" ? 1 :
-                u.Role == "ADMIN" ? 2 :
-                3
-            ).ThenBy(u => u.ID).ToList();
-        }
-
-        public UserData GetCurrentLoggedInUser()
-        {
-            return currentLoggedInUser;
-        }
-
-        private void BtnManageUsers_Click(object sender, EventArgs e)
-        {
-            using (frmManageUsers manageForm = new frmManageUsers(this))
-            {
-                manageForm.ShowDialog();
-            }
-            RefreshUserList();
-            UpdateStatistics();
-        }
-
-        public void RefreshData()
-        {
-            RefreshUserList();
-            UpdateStatistics();
-        }
-
-        public List<UserData> GetAllUsers()
-        {
-            return allUsers;
-        }
-
-        public void AddUser(UserData newUser)
-        {
-            allUsers.Add(newUser);
-            allUsers = SortUsersByRole(allUsers);
-            RefreshUserList();
-            UpdateStatistics();
-            HighlightNewUser(newUser.ID);
-        }
-
-        private void HighlightNewUser(string userId)
-        {
-            if (dgvUsers == null) return;
-            for (int i = 0; i < dgvUsers.Rows.Count; i++)
-            {
-                var user = dgvUsers.Rows[i].Tag as UserData;
-                if (user != null && user.ID == userId)
-                {
-                    dgvUsers.ClearSelection();
-                    dgvUsers.Rows[i].Selected = true;
-                    dgvUsers.FirstDisplayedScrollingRowIndex = i;
-                    FlashRow(i);
-                    break;
-                }
-            }
-        }
-
-        private System.Windows.Forms.Timer flashTimer;
-        private int flashRowIndex;
-        private int flashCount;
-
-        private void FlashRow(int rowIndex)
-        {
-            flashRowIndex = rowIndex;
-            flashCount = 0;
-            if (flashTimer == null)
-            {
-                flashTimer = new System.Windows.Forms.Timer();
-                flashTimer.Interval = 200;
-                flashTimer.Tick += FlashTimer_Tick;
-            }
-            flashTimer.Start();
-        }
-
-        private void FlashTimer_Tick(object sender, EventArgs e)
-        {
-            if (flashRowIndex >= 0 && flashRowIndex < dgvUsers.Rows.Count)
-            {
-                var row = dgvUsers.Rows[flashRowIndex];
-                var user = row.Tag as UserData;
-                if (flashCount % 2 == 0)
-                {
-                    row.DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
-                }
-                else
-                {
-                    if (user?.Role == "SUPER ADMIN")
-                    {
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
-                    }
-                    else if (user?.Role == "ADMIN")
-                    {
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
-                    }
-                    else
-                    {
-                        row.DefaultCellStyle.BackColor = Color.White;
-                    }
-                }
-                flashCount++;
-                if (flashCount >= 10)
-                {
-                    flashTimer.Stop();
-                    if (user?.Role == "SUPER ADMIN")
-                    {
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
-                    }
-                    else if (user?.Role == "ADMIN")
-                    {
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
-                    }
-                    else
-                    {
-                        row.DefaultCellStyle.BackColor = Color.White;
-                    }
-                }
-            }
-            else
-            {
-                flashTimer.Stop();
-            }
-        }
-
-        public void UpdateUser(UserData updatedUser)
-        {
-            var index = allUsers.FindIndex(u => u.ID == updatedUser.ID);
-            if (index >= 0)
-            {
-                allUsers[index] = updatedUser;
-                RefreshUserList();
-                UpdateStatistics();
-            }
-        }
-
-        public void DeleteUser(string userId)
-        {
-            var user = allUsers.FirstOrDefault(u => u.ID == userId);
-            if (user != null)
-            {
-                allUsers.Remove(user);
-                RefreshUserList();
-                UpdateStatistics();
-            }
-        }
-
-        private void txtSearch_TextChanged_1(object sender, EventArgs e)
-        {
-            TxtSearch_TextChanged(sender, e);
-        }
-
-        private void UserManagementControl_Load(object sender, EventArgs e)
-        {
-        }
     }
 }

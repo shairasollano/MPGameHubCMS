@@ -100,7 +100,8 @@ namespace cms
             {
                 new { UserId = "USR001", Username = "admin", Password = "admin123", Role = "ADMIN" },
                 new { UserId = "USR002", Username = "manager", Password = "manager123", Role = "MANAGER" },
-                new { UserId = "USR003", Username = "staff", Password = "staff123", Role = "STAFF" }
+                new { UserId = "USR003", Username = "staff", Password = "staff123", Role = "STAFF" },
+                new { UserId = "USR004", Username = "customer", Password = "customer123", Role = "CUSTOMER" }
             };
 
             foreach (var user in staticUsers)
@@ -466,6 +467,22 @@ namespace cms
                                         this.Close();
                                     };
                                     cashierForm.Show();
+                                }
+                                else if (role == "CUSTOMER")
+                                {
+                                    // Customer goes to OrderForm
+                                    // Note: Ensure OrderForm exists in your project or add the correct namespace
+                                    OrderForm customerForm = new OrderForm();
+
+                                    // Optional: Pass user info if OrderForm needs it
+                                    // customerForm.SetCurrentUser(username, userRole);
+
+                                    customerForm.FormClosed += (s, args) =>
+                                    {
+                                        this.Close(); // Fully close app when order form is closed
+                                    };
+
+                                    customerForm.Show();
                                 }
                                 else
                                 {
