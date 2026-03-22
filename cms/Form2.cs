@@ -18,7 +18,7 @@ namespace cms
             // Set default focus to username field
             txtUsername.Focus();
 
-            // Optional: Add Enter key event handlers
+            // Add Enter key event handlers
             txtUsername.KeyPress += TxtUsername_KeyPress;
             txtPassword.KeyPress += TxtPassword_KeyPress;
         }
@@ -64,10 +64,10 @@ namespace cms
                 return;
             }
 
-            // Example authentication logic - Replace with your actual database validation
+            // Authentication logic - Replace with your actual database validation
             if (ValidateCredentials(txtUsername.Text.Trim(), txtPassword.Text))
             {
-                // Login successful
+                // Login successful - proceed to main form
                 PerformLogin();
             }
             else
@@ -95,14 +95,12 @@ namespace cms
                 return true;
             }
 
-            // Example: You can also check for other users
             if (username == "user" && password == "user123")
             {
                 return true;
             }
 
             // Add your actual validation logic here
-            // For example:
             // return DatabaseHelper.ValidateUser(username, password);
 
             return false;
@@ -117,20 +115,16 @@ namespace cms
             // Properties.Settings.Default.LastLoggedInUser = loggedInUser;
             // Properties.Settings.Default.Save();
 
-            // Show success message (optional)
-            MessageBox.Show($"Welcome, {loggedInUser}!", "Login Successful",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-
             // Hide login form
             this.Hide();
 
             // TODO: Open your main application form
-            // Example:
-            // Form1 mainForm = new Form1();
-            // mainForm.Show();
+            // Replace with your actual main form
+            Form1 mainForm = new Form1();
+            mainForm.Show();
 
-            // If you want to close login form when main form closes:
-            // mainForm.FormClosed += (s, args) => this.Close();
+            // Close login form when main form closes (optional)
+            mainForm.FormClosed += (s, args) => this.Close();
         }
 
         private void btnShowPassword_Click(object sender, EventArgs e)
@@ -141,23 +135,21 @@ namespace cms
             {
                 // Show password
                 txtPassword.UseSystemPasswordChar = false;
-                btnShowPassword.Text = "👁‍🗨"; // Eye with speech bubble (open eye)
-                btnShowPassword.ForeColor = Color.FromArgb(228, 186, 94); // Gold color
-                btnShowPassword.BackColor = Color.FromArgb(60, 61, 58); // Slightly lighter background
+                btnShowPassword.Text = "👁‍🗨";
+                btnShowPassword.ForeColor = Color.FromArgb(228, 186, 94);
+                btnShowPassword.BackColor = Color.FromArgb(60, 61, 58);
             }
             else
             {
                 // Hide password
                 txtPassword.UseSystemPasswordChar = true;
-                btnShowPassword.Text = "👁"; // Eye (closed eye)
+                btnShowPassword.Text = "👁";
                 btnShowPassword.ForeColor = Color.FromArgb(180, 180, 180);
                 btnShowPassword.BackColor = Color.FromArgb(40, 41, 38);
             }
 
             // Maintain focus on password field
             txtPassword.Focus();
-
-            // Place cursor at the end of the password text
             txtPassword.SelectionStart = txtPassword.Text.Length;
         }
 
@@ -173,10 +165,6 @@ namespace cms
             if (result == DialogResult.Yes)
             {
                 // TODO: Implement password recovery logic
-                // Example: Show password recovery form
-                // ForgotPasswordForm forgotPwdForm = new ForgotPasswordForm();
-                // forgotPwdForm.ShowDialog();
-
                 MessageBox.Show("Please contact your system administrator for password assistance.",
                     "Password Recovery",
                     MessageBoxButtons.OK,
@@ -204,9 +192,9 @@ namespace cms
             lblErrorMessage.Visible = true;
             lblErrorMessage.ForeColor = Color.FromArgb(255, 100, 100);
 
-            // Optional: Add a timer to auto-clear error after 5 seconds
+            // Auto-clear error after 5 seconds
             Timer errorTimer = new Timer();
-            errorTimer.Interval = 5000; // 5 seconds
+            errorTimer.Interval = 5000;
             errorTimer.Tick += (s, ev) =>
             {
                 ClearError();
@@ -222,15 +210,12 @@ namespace cms
             lblErrorMessage.Visible = false;
         }
 
-        // Optional: Add form validation on mouse click
         protected override void OnMouseClick(MouseEventArgs e)
         {
             base.OnMouseClick(e);
-            // Clear error when user clicks outside
             ClearError();
         }
 
-        // Optional: Add visual feedback for buttons
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -290,7 +275,6 @@ namespace cms
             };
         }
 
-        // Optional: Add method to clear form fields
         public void ClearForm()
         {
             txtUsername.Clear();
@@ -305,19 +289,16 @@ namespace cms
             txtUsername.Focus();
         }
 
-        // Optional: Add method to set credentials for testing
         public void SetTestCredentials(string username, string password)
         {
             txtUsername.Text = username;
             txtPassword.Text = password;
         }
 
-        // Optional: Handle form closing
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
 
-            // Optional: Confirm exit if form is closing
             if (e.CloseReason == CloseReason.UserClosing)
             {
                 DialogResult result = MessageBox.Show(
