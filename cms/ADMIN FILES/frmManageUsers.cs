@@ -25,8 +25,6 @@ namespace cms.lastsuper
             // Get current logged-in admin
             currentAdmin = parentControl.GetCurrentLoggedInUser();
 
-            
-
             // Change button text
             btnAddUser.Text = "+ ADD STAFF";
             btnEditUser.Text = "✏️ EDIT STAFF";
@@ -55,7 +53,7 @@ namespace cms.lastsuper
                 cmbUsers.Items.Clear();
                 foreach (var user in users)
                 {
-                    cmbUsers.Items.Add($"{user.ID} - {user.FullName}");
+                    cmbUsers.Items.Add($"{user.UserId} - {user.FullName}");
                 }
                 if (cmbUsers.Items.Count > 0)
                 {
@@ -85,15 +83,15 @@ namespace cms.lastsuper
 
                     string statusDisplay = selectedUser.Status == "ACTIVE" ? "🟢 ACTIVE" : "🔴 INACTIVE";
 
-                    // Using Unicode bold characters for labels
+                    // Using Unicode bold characters for labels - FIXED property names
                     lblUserInfo.Text =
                         $"𝐔𝐒𝐄𝐑 𝐈𝐍𝐅𝐎\n\n" +
-                        $"𝐈𝐃          : {selectedUser.ID}\n" +
+                        $"𝐈𝐃          : {selectedUser.UserId}\n" +
                         $"𝐔𝐬𝐞𝐫𝐧𝐚𝐦𝐞    : {selectedUser.Username}\n" +
                         $"𝐅𝐮𝐥𝐥 𝐍𝐚𝐦𝐞 : {selectedUser.FullName}\n" +
                         $"𝐑𝐨𝐥𝐞       : {selectedUser.Role}\n" +
                         $"𝐒𝐭𝐚𝐭𝐮𝐬     : {statusDisplay}\n" +
-                        $"𝐋𝐚𝐬𝐭 𝐋𝐨𝐠𝐢𝐧 : {selectedUser.LastLogin:MMM dd, yyyy HH:mm}";
+                        $"𝐂𝐫𝐞𝐚𝐭𝐞𝐝    : {selectedUser.CreatedDate:MMM dd, yyyy HH:mm}";
 
                     // Update button states based on selected user
                     UpdateButtonStates();
@@ -306,19 +304,19 @@ namespace cms.lastsuper
 
                 var newUser = new UserManagementControl.UserData
                 {
-                    ID = GenerateNewID(),
+                    UserId = GenerateNewUserId(), // Changed from ID to UserId
                     Username = txtUsername.Text.Trim(),
                     FullName = fullName,
                     Role = "STAFF",
                     Status = "ACTIVE",
                     Password = defaultPassword,
-                    LastLogin = DateTime.Now
+                    CreatedDate = DateTime.Now // Changed from LastLogin to CreatedDate
                 };
 
                 parentControl.AddUser(newUser);
 
                 MessageBox.Show($"Staff {newUser.Username} created successfully!\n\n" +
-                    $"ID: {newUser.ID}\n" +
+                    $"ID: {newUser.UserId}\n" +
                     $"Name: {fullName}\n" +
                     $"Default Password: {defaultPassword}\n\n" +
                     $"Please inform the user to change their password on first login.",
@@ -329,13 +327,13 @@ namespace cms.lastsuper
             };
 
             addForm.Controls.AddRange(new Control[] {
-        lblUsername, txtUsername,
-        lblLastName, txtLastName,
-        lblFirstName, txtFirstName,
-        lblMiddleInitial, txtMiddleInitial,
-        lblPasswordNote,
-        btnSave, btnCancel
-    });
+                lblUsername, txtUsername,
+                lblLastName, txtLastName,
+                lblFirstName, txtFirstName,
+                lblMiddleInitial, txtMiddleInitial,
+                lblPasswordNote,
+                btnSave, btnCancel
+            });
 
             addForm.ShowDialog();
         }
@@ -404,7 +402,7 @@ namespace cms.lastsuper
             bool passwordReset = false;
             bool isSaved = false;
 
-            // User ID (read-only)
+            // User ID (read-only) - Changed from ID to UserId
             Label lblIDTitle = new Label
             {
                 Text = "User ID:",
@@ -414,7 +412,7 @@ namespace cms.lastsuper
             };
             Label lblID = new Label
             {
-                Text = selectedUser.ID,
+                Text = selectedUser.UserId,
                 Location = new Point(150, 20),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10)
@@ -763,16 +761,16 @@ namespace cms.lastsuper
             };
 
             editForm.Controls.AddRange(new Control[] {
-        lblIDTitle, lblID,
-        lblUsername, txtUsername,
-        lblLastName, txtLastName,
-        lblFirstName, txtFirstName,
-        lblMiddleInitial, txtMiddleInitial,
-        lblStatus, lblStatusValue,
-        lblSeparator,
-        lblResetTitle, btnResetPassword,
-        btnSaveChanges, btnCancel
-    });
+                lblIDTitle, lblID,
+                lblUsername, txtUsername,
+                lblLastName, txtLastName,
+                lblFirstName, txtFirstName,
+                lblMiddleInitial, txtMiddleInitial,
+                lblStatus, lblStatusValue,
+                lblSeparator,
+                lblResetTitle, btnResetPassword,
+                btnSaveChanges, btnCancel
+            });
 
             editForm.ShowDialog();
         }
@@ -787,7 +785,7 @@ namespace cms.lastsuper
             }
 
             // Prevent deactivating yourself
-            if (selectedUser.ID == currentAdmin.ID)
+            if (selectedUser.UserId == currentAdmin.UserId)
             {
                 MessageBox.Show("You cannot deactivate your own account!", "Access Denied",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -857,15 +855,15 @@ namespace cms.lastsuper
             }
         }
 
-        private string GenerateNewID()
+        private string GenerateNewUserId()
         {
             var users = parentControl.GetAllUsers();
             int maxNumber = 0;
             string prefix = "ST";
 
-            foreach (var user in users.Where(u => u.ID.StartsWith(prefix)))
+            foreach (var user in users.Where(u => u.UserId.StartsWith(prefix)))
             {
-                string numberPart = user.ID.Substring(2);
+                string numberPart = user.UserId.Substring(2);
                 if (int.TryParse(numberPart, out int num) && num > maxNumber)
                     maxNumber = num;
             }
@@ -887,7 +885,7 @@ namespace cms.lastsuper
         private bool IsValidName(string input)
         {
             if (string.IsNullOrWhiteSpace(input)) return false;
-            return System.Text.RegularExpressions.Regex.IsMatch(input, @"^[a-zA-Z0-9\s\-']+$");
+            return System.Text.RegularExpressions.Regex.IsMatch(input, @"^[a-zA-Z\s\-']+$");
         }
 
         private bool ConfirmAdminPassword()

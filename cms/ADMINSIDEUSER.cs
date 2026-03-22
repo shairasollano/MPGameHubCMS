@@ -1,5 +1,4 @@
-﻿
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 using cms.lastsuper;
 using System;
 using System.Collections.Generic;
@@ -12,18 +11,18 @@ namespace finaluserandstaff
 {
     public partial class UserManagementControl : UserControl
     {
-        // User Data Class
+        // User Data Class - MATCHING your existing table
         public class UserData
         {
-            public int DbId { get; set; }
-            public string ID { get; set; }
+            public int Id { get; set; }
+            public string UserId { get; set; }
             public string Username { get; set; }
             public string Password { get; set; }
             public string FullName { get; set; }
             public string Role { get; set; }
             public string Status { get; set; }
-            public DateTime LastLogin { get; set; }
-            public string Email { get; set; }
+            public DateTime CreatedDate { get; set; }
+            public DateTime? LastModifiedDate { get; set; }
         }
 
         // Role Enum
@@ -42,7 +41,7 @@ namespace finaluserandstaff
         private UserData currentLoggedInUser;
 
         // Database connection string
-        private string connectionString = "Server=localhost;Database=cms;Uid=root;Pwd=;";
+        private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
 
         // UI Controls
         private Label lblTotalUsers;
@@ -85,7 +84,7 @@ namespace finaluserandstaff
             // Set current user as ADMIN
             currentLoggedInUser = new UserData
             {
-                ID = "AD001",
+                UserId = "USR001",
                 Username = "admin",
                 FullName = "Administrator",
                 Role = "ADMIN",
@@ -109,7 +108,6 @@ namespace finaluserandstaff
 
         // ==================== DATABASE METHODS ====================
 
-        // Update the LoadUsersFromDatabase query
         private List<UserData> LoadUsersFromDatabase()
         {
             List<UserData> users = new List<UserData>();
@@ -119,9 +117,41 @@ namespace finaluserandstaff
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = @"SELECT ID, Username, password, full_name, ROLE, STATUS, last_login, custom_id 
-                            FROM users 
-                            ORDER BY FIELD(ROLE, 'SUPER ADMIN', 'ADMIN', 'STAFF'), custom_id";
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    // Check if users table exists
+                    string checkTableQuery = "SHOW TABLES LIKE 'users'";
+                    using (MySqlCommand checkTableCmd = new MySqlCommand(checkTableQuery, conn))
+                    {
+                        object result = checkTableCmd.ExecuteScalar();
+                        if (result == null)
+                        {
+                            // Create users table with your existing structure
+                            string createTableQuery = @"
+                                CREATE TABLE users (
+                                    Id INT PRIMARY KEY AUTO_INCREMENT,
+                                    UserId VARCHAR(20) NOT NULL UNIQUE,
+                                    Username VARCHAR(50) NOT NULL UNIQUE,
+                                    Password VARCHAR(100) NOT NULL,
+                                    Role VARCHAR(20) NOT NULL,
+                                    Status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
+                                    CreatedDate DATETIME NOT NULL,
+                                    LastModifiedDate DATETIME
+                                )";
+                            using (MySqlCommand createCmd = new MySqlCommand(createTableQuery, conn))
+                            {
+                                createCmd.ExecuteNonQuery();
+                            }
+
+                            // Insert default users
+                            InsertDefaultUsers(conn);
+                        }
+                    }
+
+                    // Load users from database - using correct column names
+                    string query = @"SELECT Id, UserId, Username, Password, Role, Status, CreatedDate, LastModifiedDate 
+                                    FROM users 
+                                    ORDER BY FIELD(Role, 'SUPER ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'CUSTOMER'), UserId";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -130,13 +160,15 @@ namespace finaluserandstaff
                         {
                             users.Add(new UserData
                             {
-                                ID = reader["custom_id"]?.ToString() ?? reader["ID"]?.ToString() ?? "",
+                                Id = Convert.ToInt32(reader["Id"]),
+                                UserId = reader["UserId"]?.ToString() ?? "",
                                 Username = reader["Username"]?.ToString() ?? "",
-                                Password = reader["password"]?.ToString() ?? "",
-                                FullName = reader["full_name"]?.ToString() ?? "",
-                                Role = reader["ROLE"]?.ToString() ?? "STAFF",
-                                Status = reader["STATUS"]?.ToString() ?? "ACTIVE",
-                                LastLogin = reader["last_login"] != DBNull.Value ? Convert.ToDateTime(reader["last_login"]) : DateTime.Now
+                                Password = reader["Password"]?.ToString() ?? "",
+                                FullName = reader["Username"]?.ToString() ?? "",
+                                Role = reader["Role"]?.ToString() ?? "STAFF",
+                                Status = reader["Status"]?.ToString() ?? "ACTIVE",
+                                CreatedDate = reader["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedDate"]) : DateTime.Now,
+                                LastModifiedDate = reader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(reader["LastModifiedDate"]) : (DateTime?)null
                             });
                         }
                     }
@@ -150,6 +182,37 @@ namespace finaluserandstaff
 
             return users;
         }
+
+        private void InsertDefaultUsers(MySqlConnection conn)
+        {
+            string insertQuery = @"
+                INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) VALUES
+                ('USR001', 'admin', 'admin123', 'ADMIN', 'ACTIVE', NOW()),
+                ('USR002', 'manager', 'manager123', 'MANAGER', 'ACTIVE', NOW()),
+                ('USR003', 'staff', 'staff123', 'STAFF', 'ACTIVE', NOW()),
+                ('USR004', 'cashier', 'cashier123', 'CASHIER', 'ACTIVE', NOW()),
+                ('USR005', 'customer', 'customer123', 'CUSTOMER', 'ACTIVE', NOW())";
+
+            using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            // Add staff members
+            for (int i = 6; i <= 20; i++)
+            {
+                string staffQuery = @"INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) 
+                                     VALUES (@UserId, @Username, 'staff123', 'STAFF', @Status, NOW())";
+                using (MySqlCommand staffCmd = new MySqlCommand(staffQuery, conn))
+                {
+                    staffCmd.Parameters.AddWithValue("@UserId", $"USR{i:D3}");
+                    staffCmd.Parameters.AddWithValue("@Username", $"staff{i - 5:00}");
+                    staffCmd.Parameters.AddWithValue("@Status", i % 3 == 0 ? "INACTIVE" : "ACTIVE");
+                    staffCmd.ExecuteNonQuery();
+                }
+            }
+        }
+
         private void SaveUserToDatabase(UserData user, bool isNew)
         {
             try
@@ -157,37 +220,36 @@ namespace finaluserandstaff
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
 
                     if (isNew)
                     {
-                        string query = @"INSERT INTO users (ID, Username, password, full_name, ROLE, STATUS, last_login, custom_id) 
-                                VALUES (@ID, @Username, @password, @full_name, @ROLE, @STATUS, @last_login, @custom_id)";
+                        string query = @"INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) 
+                                        VALUES (@UserId, @Username, @Password, @Role, @Status, @CreatedDate)";
 
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
-                            cmd.Parameters.AddWithValue("@ID", user.ID);
+                            cmd.Parameters.AddWithValue("@UserId", user.UserId);
                             cmd.Parameters.AddWithValue("@Username", user.Username);
-                            cmd.Parameters.AddWithValue("@password", user.Password);
-                            cmd.Parameters.AddWithValue("@full_name", user.FullName);
-                            cmd.Parameters.AddWithValue("@ROLE", user.Role);
-                            cmd.Parameters.AddWithValue("@STATUS", user.Status);
-                            cmd.Parameters.AddWithValue("@last_login", user.LastLogin);
-                            cmd.Parameters.AddWithValue("@custom_id", user.ID);
+                            cmd.Parameters.AddWithValue("@Password", user.Password);
+                            cmd.Parameters.AddWithValue("@Role", user.Role);
+                            cmd.Parameters.AddWithValue("@Status", user.Status);
+                            cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Now);
                             cmd.ExecuteNonQuery();
                         }
                     }
                     else
                     {
                         string query = @"UPDATE users 
-                                SET full_name = @full_name, ROLE = @ROLE, STATUS = @STATUS
-                                WHERE custom_id = @custom_id";
+                                        SET Role = @Role, Status = @Status, LastModifiedDate = @LastModifiedDate
+                                        WHERE Username = @Username";
 
                         using (MySqlCommand cmd = new MySqlCommand(query, conn))
                         {
-                            cmd.Parameters.AddWithValue("@full_name", user.FullName);
-                            cmd.Parameters.AddWithValue("@ROLE", user.Role);
-                            cmd.Parameters.AddWithValue("@STATUS", user.Status);
-                            cmd.Parameters.AddWithValue("@custom_id", user.ID);
+                            cmd.Parameters.AddWithValue("@Role", user.Role);
+                            cmd.Parameters.AddWithValue("@Status", user.Status);
+                            cmd.Parameters.AddWithValue("@LastModifiedDate", DateTime.Now);
+                            cmd.Parameters.AddWithValue("@Username", user.Username);
                             cmd.ExecuteNonQuery();
                         }
                     }
@@ -198,18 +260,20 @@ namespace finaluserandstaff
                 MessageBox.Show($"Database error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        private void DeleteUserFromDatabase(string customId)
+
+        private void DeleteUserFromDatabase(string username)
         {
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = "DELETE FROM users WHERE custom_id = @custom_id";
+                    conn.ChangeDatabase("matchpoint_db");
+                    string query = "DELETE FROM users WHERE Username = @username";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@custom_id", customId);
+                        cmd.Parameters.AddWithValue("@username", username);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -220,16 +284,26 @@ namespace finaluserandstaff
             }
         }
 
-        private string GenerateNewID(string role)
+        private string GenerateNewUserId(string role)
         {
-            string prefix = role == "SUPER ADMIN" ? "SA" : role == "ADMIN" ? "AD" : "ST";
+            string prefix = "";
+            switch (role.ToUpper())
+            {
+                case "SUPER ADMIN": prefix = "SA"; break;
+                case "ADMIN": prefix = "AD"; break;
+                case "MANAGER": prefix = "MG"; break;
+                case "CASHIER": prefix = "CA"; break;
+                case "CUSTOMER": prefix = "CU"; break;
+                default: prefix = "ST"; break;
+            }
 
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-                    string query = $"SELECT custom_id FROM users WHERE custom_id LIKE '{prefix}%' ORDER BY custom_id DESC LIMIT 1";
+                    conn.ChangeDatabase("matchpoint_db");
+                    string query = $"SELECT UserId FROM users WHERE UserId LIKE '{prefix}%' ORDER BY UserId DESC LIMIT 1";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -238,8 +312,8 @@ namespace finaluserandstaff
                         if (result == null || result == DBNull.Value)
                             return $"{prefix}001";
 
-                        string lastID = result.ToString();
-                        if (lastID.Length >= 3 && int.TryParse(lastID.Substring(2), out int number))
+                        string lastId = result.ToString();
+                        if (lastId.Length >= 3 && int.TryParse(lastId.Substring(2), out int number))
                         {
                             return $"{prefix}{(number + 1):D3}";
                         }
@@ -263,52 +337,40 @@ namespace finaluserandstaff
             // If database is empty, create sample data
             if (allUsers.Count == 0)
             {
-                // Super Admin
-                allUsers.Add(new UserData
-                {
-                    ID = "SA001",
-                    Username = "superadmin",
-                    FullName = "Super Administrator",
-                    Role = "SUPER ADMIN",
-                    Status = "ACTIVE",
-                    LastLogin = DateTime.Now,
-                    Password = "super123"
-                });
-
                 // Admin
                 allUsers.Add(new UserData
                 {
-                    ID = "AD001",
+                    UserId = "USR001",
                     Username = "admin",
                     FullName = "System Administrator",
                     Role = "ADMIN",
                     Status = "ACTIVE",
-                    LastLogin = DateTime.Now,
-                    Password = "admin123"
+                    Password = "admin123",
+                    CreatedDate = DateTime.Now
                 });
 
-                // Cashier
+                // Manager
                 allUsers.Add(new UserData
                 {
-                    ID = "CA001",
-                    Username = "cashier",
-                    FullName = "Cashier User",
-                    Role = "CASHIER",
+                    UserId = "USR002",
+                    Username = "manager",
+                    FullName = "Manager User",
+                    Role = "MANAGER",
                     Status = "ACTIVE",
-                    LastLogin = DateTime.Now,
-                    Password = "cashier123"
+                    Password = "manager123",
+                    CreatedDate = DateTime.Now
                 });
 
-                // Customer (Kiosk)
+                // Staff
                 allUsers.Add(new UserData
                 {
-                    ID = "CU001",
-                    Username = "kiosk",
-                    FullName = "Kiosk Customer",
-                    Role = "CUSTOMER",
+                    UserId = "USR003",
+                    Username = "staff",
+                    FullName = "Staff User",
+                    Role = "STAFF",
                     Status = "ACTIVE",
-                    LastLogin = DateTime.Now,
-                    Password = "kiosk123"
+                    Password = "staff123",
+                    CreatedDate = DateTime.Now
                 });
 
                 // Staff members
@@ -316,13 +378,13 @@ namespace finaluserandstaff
                 {
                     allUsers.Add(new UserData
                     {
-                        ID = $"ST{i:D3}",
+                        UserId = $"USR{3 + i:D3}",
                         Username = $"staff{i:00}",
                         FullName = $"Staff Member {i}",
                         Role = "STAFF",
                         Status = i % 3 == 0 ? "INACTIVE" : "ACTIVE",
-                        LastLogin = DateTime.Now.AddHours(-i),
-                        Password = "staff123"
+                        Password = "staff123",
+                        CreatedDate = DateTime.Now.AddHours(-i)
                     });
                 }
 
@@ -435,7 +497,7 @@ namespace finaluserandstaff
                 return true;
             }
 
-            if (currentRole == UserRole.Admin && targetRole == UserRole.Staff)
+            if (currentRole == UserRole.Admin && (targetRole == UserRole.Staff || targetRole == UserRole.Admin))
             {
                 return true;
             }
@@ -457,14 +519,12 @@ namespace finaluserandstaff
             if (isSearching)
             {
                 filtered = filtered.Where(u =>
-                    u.ID.ToLower().Contains(searchText) ||
+                    u.UserId.ToLower().Contains(searchText) ||
                     u.Username.ToLower().Contains(searchText) ||
                     u.FullName.ToLower().Contains(searchText) ||
                     u.Role.ToLower().Contains(searchText) ||
                     u.Status.ToLower().Contains(searchText) ||
-                    u.LastLogin.ToString("MMM dd, yyyy HH:mm").ToLower().Contains(searchText) ||
-                    u.LastLogin.ToString("MMM dd, yyyy").ToLower().Contains(searchText) ||
-                    u.LastLogin.ToString("HH:mm").ToLower().Contains(searchText)
+                    u.CreatedDate.ToString("MMM dd, yyyy HH:mm").ToLower().Contains(searchText)
                 );
             }
 
@@ -473,12 +533,12 @@ namespace finaluserandstaff
             foreach (var user in displayedUsers)
             {
                 int rowIndex = dgvUsers.Rows.Add(
-                    user.ID,
+                    user.UserId,
                     user.FullName,
                     user.Username,
                     user.Role,
                     user.Status,
-                    user.LastLogin.ToString("MMM dd, yyyy HH:mm")
+                    user.CreatedDate.ToString("MMM dd, yyyy HH:mm")
                 );
                 dgvUsers.Rows[rowIndex].Tag = user;
             }
@@ -495,7 +555,7 @@ namespace finaluserandstaff
         private void UpdateStatistics()
         {
             int totalUsers = displayedUsers.Count;
-            int activeAdmins = displayedUsers.Count(u => u.Status == "ACTIVE" && u.Role == "ADMIN");
+            int activeAdmins = displayedUsers.Count(u => u.Status == "ACTIVE" && (u.Role == "ADMIN" || u.Role == "MANAGER"));
             int inactiveAccounts = displayedUsers.Count(u => u.Status == "INACTIVE");
             int activeUsers = displayedUsers.Count(u => u.Status == "ACTIVE");
 
@@ -512,7 +572,7 @@ namespace finaluserandstaff
             for (int i = 0; i < dgvUsers.Rows.Count; i++)
             {
                 var user = dgvUsers.Rows[i].Tag as UserData;
-                if (user != null && user.ID == currentLoggedInUser.ID)
+                if (user != null && user.Username == currentLoggedInUser.Username)
                 {
                     dgvUsers.Rows[i].DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
                     dgvUsers.Rows[i].DefaultCellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
@@ -581,7 +641,7 @@ namespace finaluserandstaff
 
                 if (user != null)
                 {
-                    bool isCurrentUser = (user.ID == currentLoggedInUser?.ID);
+                    bool isCurrentUser = (user.Username == currentLoggedInUser?.Username);
 
                     if (isCurrentUser)
                     {
@@ -598,7 +658,7 @@ namespace finaluserandstaff
                             row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(60, 61, 54);
                             row.DefaultCellStyle.SelectionForeColor = Color.FromArgb(228, 186, 94);
                         }
-                        else if (user.Role == "ADMIN")
+                        else if (user.Role == "ADMIN" || user.Role == "MANAGER")
                         {
                             row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
                             row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 220, 220);
@@ -698,11 +758,11 @@ namespace finaluserandstaff
         {
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                writer.WriteLine("\"ID\",\"FULL NAME\",\"USERNAME\",\"ROLE\",\"STATUS\",\"LAST LOGIN\"");
+                writer.WriteLine("\"ID\",\"FULL NAME\",\"USERNAME\",\"ROLE\",\"STATUS\",\"CREATED DATE\"");
                 foreach (var user in displayedUsers)
                 {
-                    writer.WriteLine($"\"{user.ID}\",\"{user.FullName}\",\"{user.Username}\"," +
-                        $"\"{user.Role}\",\"{user.Status}\",\"{user.LastLogin:MMM dd, yyyy HH:mm}\"");
+                    writer.WriteLine($"\"{user.UserId}\",\"{user.FullName}\",\"{user.Username}\"," +
+                        $"\"{user.Role}\",\"{user.Status}\",\"{user.CreatedDate:MMM dd, yyyy HH:mm}\"");
                 }
             }
         }
@@ -716,18 +776,18 @@ namespace finaluserandstaff
                 writer.WriteLine($"<p>Exported on: {DateTime.Now:MMMM dd, yyyy HH:mm}</p>");
                 writer.WriteLine("<table border='1' cellpadding='5' cellspacing='0'>");
                 writer.WriteLine("<tr style='background-color:#F8F9FA;'>");
-                writer.WriteLine("<th>ID</th><th>FULL NAME</th><th>USERNAME</th><th>ROLE</th><th>STATUS</th><th>LAST LOGIN</th>");
-                writer.WriteLine("</tr>");
+                writer.WriteLine("<th>ID</th><th>FULL NAME</th><th>USERNAME</th><th>ROLE</th><th>STATUS</th><th>CREATED DATE</th>");
+                writer.WriteLine("\\");
                 foreach (var user in displayedUsers)
                 {
                     string rowColor = user.Role == "SUPER ADMIN" ? "#E4BA5E" : "white";
                     writer.WriteLine($"<tr style='background-color:{rowColor};'>");
-                    writer.WriteLine($"<td>{user.ID}</td>");
+                    writer.WriteLine($"<td style='font-weight:bold;'>{user.UserId}</td>");
                     writer.WriteLine($"<td>{user.FullName}</td>");
                     writer.WriteLine($"<td>{user.Username}</td>");
                     writer.WriteLine($"<td>{user.Role}</td>");
                     writer.WriteLine($"<td style='color:{(user.Status == "ACTIVE" ? "green" : "red")};font-weight:bold;'>{user.Status}</td>");
-                    writer.WriteLine($"<td>{user.LastLogin:MMM dd, yyyy HH:mm}</td>");
+                    writer.WriteLine($"<td>{user.CreatedDate:MMM dd, yyyy HH:mm}</td>");
                     writer.WriteLine("</tr>");
                 }
                 writer.WriteLine("</table>");
@@ -738,11 +798,18 @@ namespace finaluserandstaff
 
         private List<UserData> SortUsersByRole(List<UserData> users)
         {
-            return users.OrderBy(u =>
-                u.Role == "SUPER ADMIN" ? 1 :
-                u.Role == "ADMIN" ? 2 :
-                3
-            ).ThenBy(u => u.ID).ToList();
+            var roleOrder = new Dictionary<string, int>
+            {
+                { "SUPER ADMIN", 1 },
+                { "ADMIN", 2 },
+                { "MANAGER", 3 },
+                { "STAFF", 4 },
+                { "CASHIER", 5 },
+                { "CUSTOMER", 6 }
+            };
+
+            return users.OrderBy(u => roleOrder.ContainsKey(u.Role) ? roleOrder[u.Role] : 99)
+                       .ThenBy(u => u.UserId).ToList();
         }
 
         public UserData GetCurrentLoggedInUser()
@@ -773,25 +840,25 @@ namespace finaluserandstaff
 
         public void AddUser(UserData newUser)
         {
-            if (string.IsNullOrEmpty(newUser.ID))
+            if (string.IsNullOrEmpty(newUser.UserId))
             {
-                newUser.ID = GenerateNewID(newUser.Role);
+                newUser.UserId = GenerateNewUserId(newUser.Role);
             }
             SaveUserToDatabase(newUser, true);
             allUsers = LoadUsersFromDatabase();
             allUsers = SortUsersByRole(allUsers);
             RefreshUserList();
             UpdateStatistics();
-            HighlightNewUser(newUser.ID);
+            HighlightNewUser(newUser.Username);
         }
 
-        private void HighlightNewUser(string userId)
+        private void HighlightNewUser(string username)
         {
             if (dgvUsers == null) return;
             for (int i = 0; i < dgvUsers.Rows.Count; i++)
             {
                 var user = dgvUsers.Rows[i].Tag as UserData;
-                if (user != null && user.ID == userId)
+                if (user != null && user.Username == username)
                 {
                     dgvUsers.ClearSelection();
                     dgvUsers.Rows[i].Selected = true;
@@ -835,7 +902,7 @@ namespace finaluserandstaff
                     {
                         row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
                     }
-                    else if (user?.Role == "ADMIN")
+                    else if (user?.Role == "ADMIN" || user?.Role == "MANAGER")
                     {
                         row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
                     }
@@ -852,7 +919,7 @@ namespace finaluserandstaff
                     {
                         row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
                     }
-                    else if (user?.Role == "ADMIN")
+                    else if (user?.Role == "ADMIN" || user?.Role == "MANAGER")
                     {
                         row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
                     }
@@ -877,9 +944,9 @@ namespace finaluserandstaff
             UpdateStatistics();
         }
 
-        public void DeleteUser(string userId)
+        public void DeleteUser(string username)
         {
-            DeleteUserFromDatabase(userId);
+            DeleteUserFromDatabase(username);
             allUsers = LoadUsersFromDatabase();
             allUsers = SortUsersByRole(allUsers);
             RefreshUserList();
@@ -895,8 +962,8 @@ namespace finaluserandstaff
         {
         }
 
-       
-private void InitializeComponent()
+        // ==================== DESIGNER CODE ====================
+        private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UserManagementControl));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -1368,8 +1435,5 @@ private void InitializeComponent()
             this.ResumeLayout(false);
             this.PerformLayout();
         }
-
-
-
     }
 }
