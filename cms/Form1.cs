@@ -61,6 +61,9 @@ namespace cms
             // Add hover effects for menu labels
             AttachMenuHoverEffects();
 
+            // Add hover effects for Sales label
+            AttachSalesLabelHoverEffects();
+
             // Set the welcome message
             SetWelcomeMessage();
 
@@ -263,6 +266,28 @@ namespace cms
                     label.MouseLeave += MenuLabel_MouseLeave;
                     label.Cursor = Cursors.Hand;
                 }
+            }
+        }
+
+        // ⭐ Attach hover effects for Sales label
+        private void AttachSalesLabelHoverEffects()
+        {
+            if (salesBtn != null)
+            {
+                // Store original colors
+                if (!originalLabelColors.ContainsKey(salesBtn))
+                {
+                    originalLabelColors[salesBtn] = new LabelColors
+                    {
+                        ForeColor = salesBtn.ForeColor,
+                        BackColor = salesBtn.BackColor
+                    };
+                }
+
+                // Add hover events
+                salesBtn.MouseEnter += SalesLabel_MouseEnter;
+                salesBtn.MouseLeave += SalesLabel_MouseLeave;
+                salesBtn.Cursor = Cursors.Hand;
             }
         }
 
@@ -585,6 +610,16 @@ namespace cms
                 label3.ForeColor = yellowColor;
                 originalLabelColors[label3] = new LabelColors { ForeColor = yellowColor, BackColor = label3.BackColor };
             }
+
+            // Also store Sales label original colors
+            if (salesBtn != null)
+            {
+                originalLabelColors[salesBtn] = new LabelColors
+                {
+                    ForeColor = salesBtn.ForeColor,
+                    BackColor = salesBtn.BackColor
+                };
+            }
         }
 
         // ==============================================
@@ -723,6 +758,46 @@ namespace cms
                         label.ForeColor = Color.FromArgb(228, 186, 94);
                         label.BackColor = Color.Transparent;
                     }
+                }
+            }
+        }
+
+        // ⭐ UPDATED - Sales Label Hover Enter (now changes to WHITE text like others)
+        private void SalesLabel_MouseEnter(object sender, EventArgs e)
+        {
+            if (sender is Label label)
+            {
+                if (!originalLabelColors.ContainsKey(label))
+                {
+                    originalLabelColors[label] = new LabelColors
+                    {
+                        ForeColor = label.ForeColor,
+                        BackColor = label.BackColor
+                    };
+                }
+
+                // Apply hover effect - WHITE text like other menu items
+                label.ForeColor = Color.White;
+                label.BackColor = Color.FromArgb(60, 70, 80);
+            }
+        }
+
+        // ⭐ UPDATED - Sales Label Hover Leave (restores original color)
+        private void SalesLabel_MouseLeave(object sender, EventArgs e)
+        {
+            if (sender is Label label)
+            {
+                if (originalLabelColors.ContainsKey(label))
+                {
+                    // Restore original colors
+                    label.ForeColor = originalLabelColors[label].ForeColor;
+                    label.BackColor = originalLabelColors[label].BackColor;
+                }
+                else
+                {
+                    // Default restore (yellow)
+                    label.ForeColor = Color.FromArgb(228, 186, 94);
+                    label.BackColor = Color.Transparent;
                 }
             }
         }
