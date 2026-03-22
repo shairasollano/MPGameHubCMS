@@ -2,15 +2,8 @@
 {
     partial class SALES
     {
-        /// <summary> 
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -20,170 +13,200 @@
             base.Dispose(disposing);
         }
 
-        #region Component Designer generated code
-
-        /// <summary> 
-        /// Required method for Designer support - do not modify 
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            this.salesName = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.revName = new System.Windows.Forms.Label();
-            this.revValue = new System.Windows.Forms.Label();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.panel3 = new System.Windows.Forms.Panel();
-            this.label1 = new System.Windows.Forms.Label();
-            this.panel4 = new System.Windows.Forms.Panel();
-            this.label2 = new System.Windows.Forms.Label();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            this.filterPanel = new System.Windows.Forms.Panel();
+            this.lblFilterInfo = new System.Windows.Forms.Label();
+            this.btnLoadSales = new System.Windows.Forms.Button();
+            this.dtpYear = new System.Windows.Forms.DateTimePicker();
+            this.cmbMonth = new System.Windows.Forms.ComboBox();
+            this.cmbWeek = new System.Windows.Forms.ComboBox();
+            this.cmbFilterType = new System.Windows.Forms.ComboBox();
+            this.lblYear = new System.Windows.Forms.Label();
+            this.lblMonth = new System.Windows.Forms.Label();
+            this.lblWeek = new System.Windows.Forms.Label();
+            this.lblFilterType = new System.Windows.Forms.Label();
+            this.dgvSales = new System.Windows.Forms.DataGridView();
+            this.filterPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvSales)).BeginInit();
             this.SuspendLayout();
             // 
-            // salesName
+            // filterPanel
             // 
-            this.salesName.AutoSize = true;
-            this.salesName.Font = new System.Drawing.Font("Microsoft Sans Serif", 22.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.salesName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(34)))));
-            this.salesName.Location = new System.Drawing.Point(27, 21);
-            this.salesName.Name = "salesName";
-            this.salesName.Size = new System.Drawing.Size(246, 42);
-            this.salesName.TabIndex = 5;
-            this.salesName.Text = "Sales Report";
+            this.filterPanel.BackColor = System.Drawing.Color.FromArgb(245, 245, 245);
+            this.filterPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.filterPanel.Controls.Add(this.lblFilterInfo);
+            this.filterPanel.Controls.Add(this.btnLoadSales);
+            this.filterPanel.Controls.Add(this.dtpYear);
+            this.filterPanel.Controls.Add(this.cmbMonth);
+            this.filterPanel.Controls.Add(this.cmbWeek);
+            this.filterPanel.Controls.Add(this.cmbFilterType);
+            this.filterPanel.Controls.Add(this.lblYear);
+            this.filterPanel.Controls.Add(this.lblMonth);
+            this.filterPanel.Controls.Add(this.lblWeek);
+            this.filterPanel.Controls.Add(this.lblFilterType);
+            this.filterPanel.Dock = System.Windows.Forms.DockStyle.Top;
+            this.filterPanel.Location = new System.Drawing.Point(0, 0);
+            this.filterPanel.Name = "filterPanel";
+            this.filterPanel.Padding = new System.Windows.Forms.Padding(10);
+            this.filterPanel.Size = new System.Drawing.Size(1684, 100);
+            this.filterPanel.TabIndex = 0;
             // 
-            // panel1
+            // lblFilterInfo
             // 
-            this.panel1.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.panel1.Controls.Add(this.label2);
-            this.panel1.Controls.Add(this.panel4);
-            this.panel1.Controls.Add(this.label1);
-            this.panel1.Controls.Add(this.panel3);
-            this.panel1.Controls.Add(this.panel2);
-            this.panel1.Controls.Add(this.revValue);
-            this.panel1.Controls.Add(this.revName);
-            this.panel1.Location = new System.Drawing.Point(34, 98);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1424, 163);
-            this.panel1.TabIndex = 6;
+            this.lblFilterInfo.AutoSize = true;
+            this.lblFilterInfo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Italic);
+            this.lblFilterInfo.ForeColor = System.Drawing.Color.FromArgb(100, 100, 100);
+            this.lblFilterInfo.Location = new System.Drawing.Point(15, 55);
+            this.lblFilterInfo.Name = "lblFilterInfo";
+            this.lblFilterInfo.Size = new System.Drawing.Size(213, 15);
+            this.lblFilterInfo.TabIndex = 9;
+            this.lblFilterInfo.Text = "Select filter criteria and click Load Sales";
             // 
-            // revName
+            // btnLoadSales
             // 
-            this.revName.AutoSize = true;
-            this.revName.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.revName.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.revName.Location = new System.Drawing.Point(108, 47);
-            this.revName.Name = "revName";
-            this.revName.Size = new System.Drawing.Size(82, 22);
-            this.revName.TabIndex = 0;
-            this.revName.Text = "Revenue";
+            this.btnLoadSales.BackColor = System.Drawing.Color.FromArgb(52, 73, 94);
+            this.btnLoadSales.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnLoadSales.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.btnLoadSales.ForeColor = System.Drawing.Color.White;
+            this.btnLoadSales.Location = new System.Drawing.Point(605, 8);
+            this.btnLoadSales.Name = "btnLoadSales";
+            this.btnLoadSales.Size = new System.Drawing.Size(110, 38);
+            this.btnLoadSales.TabIndex = 8;
+            this.btnLoadSales.Text = "Load Sales";
+            this.btnLoadSales.UseVisualStyleBackColor = false;
+            this.btnLoadSales.Click += new System.EventHandler(this.BtnLoadSales_Click);
             // 
-            // revValue
+            // dtpYear
             // 
-            this.revValue.AutoSize = true;
-            this.revValue.Font = new System.Drawing.Font("Microsoft Sans Serif", 22.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.revValue.Location = new System.Drawing.Point(81, 81);
-            this.revValue.Name = "revValue";
-            this.revValue.Size = new System.Drawing.Size(168, 42);
-            this.revValue.TabIndex = 1;
-            this.revValue.Text = "P 23,000";
+            this.dtpYear.CustomFormat = "yyyy";
+            this.dtpYear.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.dtpYear.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpYear.Location = new System.Drawing.Point(485, 12);
+            this.dtpYear.Name = "dtpYear";
+            this.dtpYear.ShowUpDown = true;
+            this.dtpYear.Size = new System.Drawing.Size(100, 25);
+            this.dtpYear.TabIndex = 7;
+            this.dtpYear.Value = new System.DateTime(2024, 1, 1, 0, 0, 0, 0);
             // 
-            // panel2
+            // cmbMonth
             // 
-            this.panel2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.panel2.Location = new System.Drawing.Point(88, 50);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(17, 16);
-            this.panel2.TabIndex = 2;
+            this.cmbMonth.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbMonth.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cmbMonth.Location = new System.Drawing.Point(295, 12);
+            this.cmbMonth.Name = "cmbMonth";
+            this.cmbMonth.Size = new System.Drawing.Size(120, 25);
+            this.cmbMonth.TabIndex = 6;
+            this.cmbMonth.Visible = false;
             // 
-            // panel3
+            // cmbWeek
             // 
-            this.panel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.panel3.Location = new System.Drawing.Point(456, 50);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(17, 16);
-            this.panel3.TabIndex = 3;
+            this.cmbWeek.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbWeek.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cmbWeek.Location = new System.Drawing.Point(295, 12);
+            this.cmbWeek.Name = "cmbWeek";
+            this.cmbWeek.Size = new System.Drawing.Size(120, 25);
+            this.cmbWeek.TabIndex = 5;
             // 
-            // label1
+            // cmbFilterType
             // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.label1.Location = new System.Drawing.Point(476, 47);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(82, 22);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "Revenue";
+            this.cmbFilterType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbFilterType.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.cmbFilterType.Items.AddRange(new object[] {
+            "Select Week",
+            "Select Month"});
+            this.cmbFilterType.Location = new System.Drawing.Point(90, 12);
+            this.cmbFilterType.Name = "cmbFilterType";
+            this.cmbFilterType.Size = new System.Drawing.Size(130, 25);
+            this.cmbFilterType.TabIndex = 4;
+            this.cmbFilterType.SelectedIndexChanged += new System.EventHandler(this.CmbFilterType_SelectedIndexChanged);
             // 
-            // panel4
+            // lblYear
             // 
-            this.panel4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(228)))), ((int)(((byte)(186)))), ((int)(((byte)(94)))));
-            this.panel4.Location = new System.Drawing.Point(804, 50);
-            this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(17, 16);
-            this.panel4.TabIndex = 4;
+            this.lblYear.AutoSize = true;
+            this.lblYear.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblYear.ForeColor = System.Drawing.Color.FromArgb(64, 64, 64);
+            this.lblYear.Location = new System.Drawing.Point(435, 15);
+            this.lblYear.Name = "lblYear";
+            this.lblYear.Size = new System.Drawing.Size(42, 19);
+            this.lblYear.TabIndex = 3;
+            this.lblYear.Text = "Year:";
             // 
-            // label2
+            // lblMonth
             // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.label2.Location = new System.Drawing.Point(824, 47);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(82, 22);
-            this.label2.TabIndex = 5;
-            this.label2.Text = "Revenue";
+            this.lblMonth.AutoSize = true;
+            this.lblMonth.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblMonth.ForeColor = System.Drawing.Color.FromArgb(64, 64, 64);
+            this.lblMonth.Location = new System.Drawing.Point(240, 15);
+            this.lblMonth.Name = "lblMonth";
+            this.lblMonth.Size = new System.Drawing.Size(52, 19);
+            this.lblMonth.TabIndex = 2;
+            this.lblMonth.Text = "Month:";
+            this.lblMonth.Visible = false;
             // 
-            // dataGridView1
+            // lblWeek
             // 
-            this.dataGridView1.AllowUserToOrderColumns = true;
-            this.dataGridView1.BackgroundColor = System.Drawing.SystemColors.ButtonHighlight;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.Silver;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(34, 295);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.RowTemplate.Height = 24;
-            this.dataGridView1.Size = new System.Drawing.Size(1424, 613);
-            this.dataGridView1.TabIndex = 7;
+            this.lblWeek.AutoSize = true;
+            this.lblWeek.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblWeek.ForeColor = System.Drawing.Color.FromArgb(64, 64, 64);
+            this.lblWeek.Location = new System.Drawing.Point(240, 15);
+            this.lblWeek.Name = "lblWeek";
+            this.lblWeek.Size = new System.Drawing.Size(48, 19);
+            this.lblWeek.TabIndex = 1;
+            this.lblWeek.Text = "Week:";
+            // 
+            // lblFilterType
+            // 
+            this.lblFilterType.AutoSize = true;
+            this.lblFilterType.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.lblFilterType.ForeColor = System.Drawing.Color.FromArgb(64, 64, 64);
+            this.lblFilterType.Location = new System.Drawing.Point(15, 15);
+            this.lblFilterType.Name = "lblFilterType";
+            this.lblFilterType.Size = new System.Drawing.Size(72, 19);
+            this.lblFilterType.TabIndex = 0;
+            this.lblFilterType.Text = "Filter By:";
+            // 
+            // dgvSales
+            // 
+            this.dgvSales.AllowUserToAddRows = false;
+            this.dgvSales.AllowUserToDeleteRows = false;
+            this.dgvSales.BackgroundColor = System.Drawing.Color.White;
+            this.dgvSales.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.dgvSales.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvSales.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvSales.Location = new System.Drawing.Point(0, 100);
+            this.dgvSales.Name = "dgvSales";
+            this.dgvSales.ReadOnly = true;
+            this.dgvSales.RowHeadersVisible = false;
+            this.dgvSales.Size = new System.Drawing.Size(1684, 839);
+            this.dgvSales.TabIndex = 1;
             // 
             // SALES
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.dataGridView1);
-            this.Controls.Add(this.panel1);
-            this.Controls.Add(this.salesName);
+            this.Controls.Add(this.dgvSales);
+            this.Controls.Add(this.filterPanel);
             this.Name = "SALES";
             this.Size = new System.Drawing.Size(1684, 939);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            this.Load += new System.EventHandler(this.SALES_Load);
+            this.filterPanel.ResumeLayout(false);
+            this.filterPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvSales)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout();
-
         }
 
-        #endregion
-
-        private System.Windows.Forms.Label salesName;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label revName;
-        private System.Windows.Forms.Label revValue;
-        private System.Windows.Forms.Panel panel2;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Panel panel4;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Panel panel3;
-        private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.Panel filterPanel;
+        private System.Windows.Forms.DataGridView dgvSales;
+        private System.Windows.Forms.Label lblFilterInfo;
+        private System.Windows.Forms.Button btnLoadSales;
+        private System.Windows.Forms.DateTimePicker dtpYear;
+        private System.Windows.Forms.ComboBox cmbMonth;
+        private System.Windows.Forms.ComboBox cmbWeek;
+        private System.Windows.Forms.ComboBox cmbFilterType;
+        private System.Windows.Forms.Label lblYear;
+        private System.Windows.Forms.Label lblMonth;
+        private System.Windows.Forms.Label lblWeek;
+        private System.Windows.Forms.Label lblFilterType;
     }
 }

@@ -42,8 +42,6 @@
             this.lblDiscountTitle = new System.Windows.Forms.Label();
             this.lblTotalAmountTitle = new System.Windows.Forms.Label();
             this.lblTotalAmount = new System.Windows.Forms.Label();
-            this.rbCash = new System.Windows.Forms.RadioButton();
-            this.rbGCash = new System.Windows.Forms.RadioButton();
             this.lblPaymentMethodTitle = new System.Windows.Forms.Label();
             this.btnPreviewReceipt = new System.Windows.Forms.Button();
             this.txtDiscountAmount = new System.Windows.Forms.TextBox();
@@ -53,6 +51,8 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.panel2 = new System.Windows.Forms.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
+            this.btnCash = new System.Windows.Forms.Button();
+            this.btnGcash = new System.Windows.Forms.Button();
             this.panel4 = new System.Windows.Forms.Panel();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
@@ -218,41 +218,15 @@
             this.lblTotalAmount.TabIndex = 104;
             this.lblTotalAmount.Text = "finalAmount";
             // 
-            // rbCash
-            // 
-            this.rbCash.AutoSize = true;
-            this.rbCash.Font = new System.Drawing.Font("Nirmala UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rbCash.Location = new System.Drawing.Point(176, 29);
-            this.rbCash.Name = "rbCash";
-            this.rbCash.Size = new System.Drawing.Size(84, 34);
-            this.rbCash.TabIndex = 105;
-            this.rbCash.TabStop = true;
-            this.rbCash.Text = "Cash";
-            this.rbCash.UseVisualStyleBackColor = true;
-            this.rbCash.CheckedChanged += new System.EventHandler(this.rbCash_CheckedChanged);
-            // 
-            // rbGCash
-            // 
-            this.rbGCash.AutoSize = true;
-            this.rbGCash.Font = new System.Drawing.Font("Nirmala UI", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.rbGCash.Location = new System.Drawing.Point(176, 63);
-            this.rbGCash.Name = "rbGCash";
-            this.rbGCash.Size = new System.Drawing.Size(108, 34);
-            this.rbGCash.TabIndex = 106;
-            this.rbGCash.TabStop = true;
-            this.rbGCash.Text = "G-Cash";
-            this.rbGCash.UseVisualStyleBackColor = true;
-            this.rbGCash.CheckedChanged += new System.EventHandler(this.rbGCash_CheckedChanged);
-            // 
             // lblPaymentMethodTitle
             // 
             this.lblPaymentMethodTitle.AutoSize = true;
             this.lblPaymentMethodTitle.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPaymentMethodTitle.Location = new System.Drawing.Point(38, 19);
+            this.lblPaymentMethodTitle.Location = new System.Drawing.Point(13, 10);
             this.lblPaymentMethodTitle.Name = "lblPaymentMethodTitle";
-            this.lblPaymentMethodTitle.Size = new System.Drawing.Size(100, 84);
+            this.lblPaymentMethodTitle.Size = new System.Drawing.Size(237, 28);
             this.lblPaymentMethodTitle.TabIndex = 107;
-            this.lblPaymentMethodTitle.Text = "Select \r\nPayment \r\nMethod";
+            this.lblPaymentMethodTitle.Text = "Select Payment Method";
             // 
             // btnPreviewReceipt
             // 
@@ -334,13 +308,43 @@
             // panel3
             // 
             this.panel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(233)))), ((int)(((byte)(190)))), ((int)(((byte)(95)))));
-            this.panel3.Controls.Add(this.rbCash);
-            this.panel3.Controls.Add(this.rbGCash);
             this.panel3.Controls.Add(this.lblPaymentMethodTitle);
+            this.panel3.Controls.Add(this.btnCash);
+            this.panel3.Controls.Add(this.btnGcash);
             this.panel3.Location = new System.Drawing.Point(382, 30);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(360, 117);
+            this.panel3.Size = new System.Drawing.Size(360, 147);
             this.panel3.TabIndex = 115;
+            // 
+            // btnCash
+            // 
+            this.btnCash.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(39)))), ((int)(((byte)(34)))));
+            this.btnCash.BackgroundImage = global::KGHCashierPOS.Properties.Resources.CASH;
+            this.btnCash.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btnCash.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCash.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCash.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnCash.Location = new System.Drawing.Point(32, 43);
+            this.btnCash.Name = "btnCash";
+            this.btnCash.Size = new System.Drawing.Size(129, 89);
+            this.btnCash.TabIndex = 119;
+            this.btnCash.UseVisualStyleBackColor = false;
+            this.btnCash.Click += new System.EventHandler(this.btnCash_Click);
+            // 
+            // btnGcash
+            // 
+            this.btnGcash.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(39)))), ((int)(((byte)(34)))));
+            this.btnGcash.BackgroundImage = global::KGHCashierPOS.Properties.Resources.GCASH;
+            this.btnGcash.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.btnGcash.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnGcash.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGcash.ForeColor = System.Drawing.SystemColors.Control;
+            this.btnGcash.Location = new System.Drawing.Point(167, 41);
+            this.btnGcash.Name = "btnGcash";
+            this.btnGcash.Size = new System.Drawing.Size(125, 91);
+            this.btnGcash.TabIndex = 120;
+            this.btnGcash.UseVisualStyleBackColor = false;
+            this.btnGcash.Click += new System.EventHandler(this.btnGcash_Click);
             // 
             // panel4
             // 
@@ -449,8 +453,6 @@
         private System.Windows.Forms.Label lblDiscountTitle;
         private System.Windows.Forms.Label lblTotalAmountTitle;
         private System.Windows.Forms.Label lblTotalAmount;
-        private System.Windows.Forms.RadioButton rbCash;
-        private System.Windows.Forms.RadioButton rbGCash;
         private System.Windows.Forms.Label lblPaymentMethodTitle;
         private System.Windows.Forms.Button btnPreviewReceipt;
         private System.Windows.Forms.TextBox txtDiscountAmount;
@@ -465,5 +467,7 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button btnGcash;
+        private System.Windows.Forms.Button btnCash;
     }
 }

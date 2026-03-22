@@ -16,6 +16,7 @@ namespace cms
         private UserControl2 dashboardControl;
         private SETTINGS settingsControl;
         private Activitylogs activityLogsControl;
+        private SALES salesControl;
         private bool isSigningOut = false;
 
         // New controls for Game Rates & Equipment tabs
@@ -363,6 +364,17 @@ namespace cms
             panel2.Visible = true;
         }
 
+        private void ShowSales()
+        {
+            ClearPanel2();
+
+            salesControl = new SALES();
+            salesControl.Dock = DockStyle.Fill;
+
+            panel2.Controls.Add(salesControl);
+            panel2.Visible = true;
+        }
+
         // ClearPanel2 - DON'T dispose the tab control, just remove it from view
         private void ClearPanel2()
         {
@@ -402,6 +414,12 @@ namespace cms
             {
                 activityLogsControl.Dispose();
                 activityLogsControl = null;
+            }
+
+            if (salesControl != null && !salesControl.IsDisposed)
+            {
+                salesControl.Dispose();
+                salesControl = null;
             }
 
             // Clear the Rates tab (but keep the tab control itself)
@@ -696,6 +714,11 @@ namespace cms
         }
 
         private void salesBtn_Click(object sender, EventArgs e)
+        {
+            ShowSales();
+        }
+
+        private void panel2_Paint(object sender, PaintEventArgs e)
         {
 
         }

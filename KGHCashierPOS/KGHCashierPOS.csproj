@@ -286,6 +286,20 @@
   <ItemGroup>
     <None Include="Resources\1HOUR.png" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Resources\PLUS.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MINUS.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\MATCHPOINT1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\CASH.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\GCASH.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

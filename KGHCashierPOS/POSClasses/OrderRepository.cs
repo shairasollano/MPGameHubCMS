@@ -280,6 +280,7 @@ namespace KGHCashierPOS
         }
 
         // ============ GET ORDER DETAILS ============
+        // ============ GET ORDER DETAILS ============
         public static OrderDetails GetOrderDetails(string orderNumber)
         {
             try
@@ -287,19 +288,22 @@ namespace KGHCashierPOS
                 using (var conn = new MySqlConnection(Database.ConnectionString))
                 {
                     conn.Open();
-                    // Removed customer_name from the SELECT query
+
                     string query = @"
-                        SELECT 
-                            order_number,
-                            total_amount,
-                            order_date,
-                            status
-                        FROM orders 
-                        WHERE order_number = @orderNo";
+                SELECT 
+                    order_number,
+                    customer_name,
+                    total_amount,
+                    order_date,
+                    status,
+                    updated_at
+                FROM orders 
+                WHERE order_number = @orderNo";
 
                     using (var cmd = new MySqlCommand(query, conn))
                     {
                         cmd.Parameters.AddWithValue("@orderNo", orderNumber);
+
                         using (var reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
@@ -307,7 +311,7 @@ namespace KGHCashierPOS
                                 return new OrderDetails
                                 {
                                     OrderNumber = reader.GetString("order_number"),
-                                    CustomerName = "Walk-in Customer", // Set as static since not in DB
+                                    CustomerName = reader.GetString("customer_name"),
                                     TotalAmount = reader.GetDecimal("total_amount"),
                                     OrderDate = reader.GetDateTime("order_date"),
                                     Status = reader.GetString("status")
