@@ -28,7 +28,7 @@ namespace cms
         // GameEquipment control reference
         private GameEquipment gameEquipmentControl;
 
-        // User info - can be used if needed
+        // User info
         public string LoggedInUserRole { get; set; }
         public string LoggedInUsername { get; set; }
 
@@ -63,14 +63,79 @@ namespace cms
 
             // Set the welcome message
             SetWelcomeMessage();
+
+            // Apply role-based access control
+            ApplyRoleBasedAccess();
         }
 
-        // Method to set user info (called from login if needed)
+        // Method to set user info (called from login)
         public void SetCurrentUser(string username, string role)
         {
             LoggedInUsername = username;
             LoggedInUserRole = role;
             SetWelcomeMessage();
+            ApplyRoleBasedAccess();
+        }
+
+        // Apply role-based access control
+        private void ApplyRoleBasedAccess()
+        {
+            // Convert role to uppercase for comparison
+            string role = (LoggedInUserRole ?? "").ToUpper();
+
+            // Admin and Manager have full access
+            bool isAdminOrManager = (role == "ADMIN" || role == "MANAGER");
+
+            // Staff/Cashier have limited access
+            bool isStaff = (role == "STAFF" || role == "CASHIER");
+
+            if (isStaff)
+            {
+                // Hide or disable admin-only menus for staff
+                if (label1 != null) // User Management
+                {
+                    label1.Visible = false;
+                    label1.Enabled = false;
+                }
+
+                if (label3 != null) // Activity Logs
+                {
+                    label3.Visible = false;
+                    label3.Enabled = false;
+                }
+
+                if (label6 != null) // Settings
+                {
+                    label6.Visible = false;
+                    label6.Enabled = false;
+                }
+
+                // Staff can only see Dashboard and Game Rates/Equipment
+                // Force show dashboard
+                ShowDashboard();
+                HighlightMenuItem(dash);
+            }
+            else if (isAdminOrManager)
+            {
+                // Show all menus for admin/manager
+                if (label1 != null)
+                {
+                    label1.Visible = true;
+                    label1.Enabled = true;
+                }
+
+                if (label3 != null)
+                {
+                    label3.Visible = true;
+                    label3.Enabled = true;
+                }
+
+                if (label6 != null)
+                {
+                    label6.Visible = true;
+                    label6.Enabled = true;
+                }
+            }
         }
 
         // Initialize the tab control ONCE at startup - NOT recreated each time
@@ -134,20 +199,30 @@ namespace cms
         {
             if (loggedName != null)
             {
-                if (!string.IsNullOrEmpty(LoggedInUserRole))
+                if (!string.IsNullOrEmpty(LoggedInUsername))
                 {
-                    loggedName.Text = $"Welcome, {LoggedInUserRole}!";
+                    string roleDisplay = !string.IsNullOrEmpty(LoggedInUserRole) ?
+                        $"{LoggedInUserRole}" : "User";
+
+                    loggedName.Text = $"Welcome, {LoggedInUsername} ({roleDisplay})!";
                 }
                 else
                 {
                     loggedName.Text = "Welcome, Admin!";
                 }
 
-                if (LoggedInUserRole == "Super Admin")
+                // Set color based on role
+                string role = (LoggedInUserRole ?? "").ToUpper();
+
+                if (role == "ADMIN")
                 {
                     loggedName.ForeColor = Color.Gold;
                 }
-                else if (LoggedInUserRole == "Cashier")
+                else if (role == "MANAGER")
+                {
+                    loggedName.ForeColor = Color.FromArgb(100, 200, 200);
+                }
+                else if (role == "STAFF" || role == "CASHIER")
                 {
                     loggedName.ForeColor = Color.FromArgb(100, 200, 100);
                 }
@@ -227,6 +302,15 @@ namespace cms
 
         private void label1_Click_1(object sender, EventArgs e)
         {
+            // Check if user has permission to access User Management
+            string role = (LoggedInUserRole ?? "").ToUpper();
+            if (role == "STAFF" || role == "CASHIER")
+            {
+                MessageBox.Show("Access Denied! Staff members cannot access User Management.",
+                    "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             ShowUserManagement();
             HighlightMenuItem(label1);
         }
@@ -239,12 +323,30 @@ namespace cms
 
         private void label3_Click(object sender, EventArgs e)
         {
+            // Check if user has permission to access Activity Logs
+            string role = (LoggedInUserRole ?? "").ToUpper();
+            if (role == "STAFF" || role == "CASHIER")
+            {
+                MessageBox.Show("Access Denied! Staff members cannot access Activity Logs.",
+                    "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             ShowActivityLogs();
             HighlightMenuItem(label3);
         }
 
         private void label6_Click(object sender, EventArgs e)
         {
+            // Check if user has permission to access Settings
+            string role = (LoggedInUserRole ?? "").ToUpper();
+            if (role == "STAFF" || role == "CASHIER")
+            {
+                MessageBox.Show("Access Denied! Staff members cannot access Settings.",
+                    "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             ShowSettings();
             ResetMenuColors();
         }

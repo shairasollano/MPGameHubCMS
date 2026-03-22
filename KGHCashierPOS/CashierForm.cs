@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+using MySql.Data.MySqlClient;
 
 namespace KGHCashierPOS
 {
@@ -17,11 +17,15 @@ namespace KGHCashierPOS
         // ============ USER INFO ============
         private string currentUsername = "";
         private string currentUserRole = "";
+        private int currentUserId = 0;
 
         // Timer for date/time
         private Timer dateTimeTimer;
 
         private string loadedOrderNumber = "";
+
+        // MySQL Connection String
+        private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
 
         // ============ CONSTRUCTOR ============
         public CashierForm()
@@ -52,7 +56,7 @@ namespace KGHCashierPOS
             this.FormClosed += CashierForm_FormClosed;
         }
 
-        // ⭐ NEW METHOD - Equipment Control
+        // Equipment Control
         private void InitializeEquipmentControl()
         {
             equipmentRentalControl1 = new EquipmentRentalControl();
@@ -71,8 +75,36 @@ namespace KGHCashierPOS
             currentUsername = username;
             currentUserRole = role;
 
+            // Try to get user ID from database
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    string query = "SELECT Id FROM users WHERE Username = @username";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", username);
+                        object result = cmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            currentUserId = Convert.ToInt32(result);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting user ID: {ex.Message}");
+            }
+
             // Update welcome message
             UpdateCashierDisplay();
+
+            // Log login activity
+            LogActivity("Logged in to Cashier POS");
         }
 
         private void UpdateCashierDisplay()
@@ -80,11 +112,60 @@ namespace KGHCashierPOS
             // Update user label
             if (lblCashierName != null)
             {
-                lblCashierName.Text = currentUsername;
+                string roleDisplay = !string.IsNullOrEmpty(currentUserRole) ?
+                    $" ({currentUserRole})" : "";
+                lblCashierName.Text = $"{currentUsername}{roleDisplay}";
             }
 
             // Update form title
-            this.Text = $"Cashier POS - {currentUsername}";
+            this.Text = $"MatchPoint POS - {currentUsername} ({currentUserRole})";
+
+            // Set color based on role
+            if (lblCashierName != null)
+            {
+                string role = (currentUserRole ?? "").ToUpper();
+                if (role == "STAFF")
+                {
+                    lblCashierName.ForeColor = Color.FromArgb(100, 200, 100);
+                }
+                else if (role == "CASHIER")
+                {
+                    lblCashierName.ForeColor = Color.FromArgb(100, 200, 150);
+                }
+                else
+                {
+                    lblCashierName.ForeColor = Color.FromArgb(228, 186, 94);
+                }
+            }
+        }
+
+        private void LogActivity(string action)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] User: {currentUsername} ({currentUserRole}) - {action}");
+
+                // Log to database if you have an activity log table
+                // using (MySqlConnection conn = new MySqlConnection(connectionString))
+                // {
+                //     conn.Open();
+                //     conn.ChangeDatabase("matchpoint_db");
+                //     
+                //     string query = "INSERT INTO activity_logs (UserID, Username, Action, Timestamp) VALUES (@userId, @username, @action, @timestamp)";
+                //     using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                //     {
+                //         cmd.Parameters.AddWithValue("@userId", currentUserId);
+                //         cmd.Parameters.AddWithValue("@username", currentUsername);
+                //         cmd.Parameters.AddWithValue("@action", action);
+                //         cmd.Parameters.AddWithValue("@timestamp", DateTime.Now);
+                //         cmd.ExecuteNonQuery();
+                //     }
+                // }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error logging activity: {ex.Message}");
+            }
         }
 
         private void InitializeButtonStyles()
@@ -103,6 +184,16 @@ namespace KGHCashierPOS
             ButtonStyleHelper.ApplyActionButtonStyle(btnProceedPayment, Color.FromArgb(76, 175, 80));
             ButtonStyleHelper.ApplyActionButtonStyle(btnRemoveGame, Color.FromArgb(244, 67, 54));
             ButtonStyleHelper.ApplyActionButtonStyle(btnClearCashierForm, Color.FromArgb(255, 152, 0));
+
+            // Sign out button
+            if (btnSignOut != null)
+            {
+                btnSignOut.BackColor = Color.FromArgb(220, 53, 69);
+                btnSignOut.ForeColor = Color.White;
+                btnSignOut.FlatStyle = FlatStyle.Flat;
+                btnSignOut.FlatAppearance.BorderSize = 0;
+                btnSignOut.Cursor = Cursors.Hand;
+            }
         }
 
         private void InitializeRichTextBox()
@@ -125,20 +216,24 @@ namespace KGHCashierPOS
             dateTimeTimer.Interval = 1000;
             dateTimeTimer.Tick += DateTimeTimer_Tick;
             dateTimeTimer.Start();
-            DisplayLoggedInUser();
 
+            DisplayLoggedInUser();
             RefreshDisplay();
+
+            // Log form load
+            LogActivity("Cashier form loaded");
         }
 
         private void DisplayLoggedInUser()
         {
-            // If you have a label for showing logged-in user
-            if (lblCashierName != null)  // Add this label to your form
+            if (lblCashierName != null)
             {
-                lblCashierName.Text = $"Cashier: {UserSession.Username} ({UserSession.RoleName}";
+                string roleDisplay = !string.IsNullOrEmpty(currentUserRole) ?
+                    $" ({currentUserRole})" : "";
+                lblCashierName.Text = $"{currentUsername}{roleDisplay}";
             }
 
-            System.Diagnostics.Debug.WriteLine($"Cashier: {UserSession.Username} ({UserSession.RoleName})");
+            System.Diagnostics.Debug.WriteLine($"Cashier: {currentUsername} ({currentUserRole})");
         }
 
         private void DateTimeTimer_Tick(object sender, EventArgs e)
@@ -175,6 +270,8 @@ namespace KGHCashierPOS
             sessionManager.SelectedGame = gameName;
             ResetGameButtonColors();
             clickedButton.BackColor = ButtonStyleHelper.SelectedColor;
+
+            LogActivity($"Selected game: {gameName}");
         }
 
         private void ResetGameButtonColors()
@@ -219,20 +316,17 @@ namespace KGHCashierPOS
         }
 
         // ============ EQUIPMENT SELECTION ============
-        // ⭐ NEW METHOD - Show Equipment Modal
         private void ShowEquipmentSelection(int minutes)
         {
             var equipment = sessionManager.GetEquipmentForGame(sessionManager.SelectedGame);
 
-            // ⭐ Disable other controls while modal is open
+            // Disable other controls while modal is open
             btnBilliards.Enabled = false;
             btnScooter.Enabled = false;
             btnBadminton.Enabled = false;
             btnTableTennis.Enabled = false;
             btn30min.Enabled = false;
             btn1hour.Enabled = false;
-
-            
 
             // Load and show equipment control
             equipmentRentalControl1.LoadEquipment(sessionManager.SelectedGame, equipment);
@@ -244,21 +338,19 @@ namespace KGHCashierPOS
             checkTimer.Interval = 100;
             int capturedMinutes = minutes;
 
-            checkTimer.Tick += (s, e) =>
+            checkTimer.Tick += (s, ev) =>
             {
                 if (!equipmentRentalControl1.Visible)
                 {
                     checkTimer.Stop();
 
-                    // ⭐ Re-enable controls
+                    // Re-enable controls
                     btnBilliards.Enabled = true;
                     btnScooter.Enabled = true;
                     btnBadminton.Enabled = true;
                     btnTableTennis.Enabled = true;
                     btn30min.Enabled = true;
                     btn1hour.Enabled = true;
-
-                   
 
                     // Process result
                     if (equipmentRentalControl1.IsConfirmed)
@@ -277,7 +369,6 @@ namespace KGHCashierPOS
             checkTimer.Start();
         }
 
-        // ⭐ NEW METHOD - Add Session With Equipment
         private void AddSessionWithEquipment(int minutes, List<Equipment> equipment, decimal equipmentCost)
         {
             sessionManager.AddOrExtendSession(
@@ -304,9 +395,10 @@ namespace KGHCashierPOS
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information
             );
+
+            LogActivity($"Added {sessionManager.SelectedGame} for {minutes} minutes with equipment (₱{equipmentCost})");
         }
 
-        // ⭐ EXISTING METHOD - Add Without Equipment
         private void AddSessionWithoutEquipment(int minutes)
         {
             sessionManager.AddOrExtendSession(
@@ -327,6 +419,8 @@ namespace KGHCashierPOS
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information
             );
+
+            LogActivity($"Added {sessionManager.SelectedGame} for {minutes} minutes (no equipment)");
         }
 
         private void ResetGameSelection()
@@ -341,7 +435,7 @@ namespace KGHCashierPOS
 
             if (sessionManager.ActiveSessions.Count == 0)
             {
-                // ⭐ Improved empty state display
+                // Empty state display
                 rtbSelectedGames.SelectionAlignment = HorizontalAlignment.Center;
                 rtbSelectedGames.SelectionFont = new Font("Segoe UI", 10, FontStyle.Bold);
                 rtbSelectedGames.SelectionColor = Color.Gray;
@@ -354,7 +448,7 @@ namespace KGHCashierPOS
                 return;
             }
 
-            // ⭐ Set default formatting
+            // Set default formatting
             rtbSelectedGames.SelectionFont = new Font("Courier New", 9);
             rtbSelectedGames.SelectionColor = Color.Black;
             rtbSelectedGames.SelectionAlignment = HorizontalAlignment.Left;
@@ -381,7 +475,7 @@ namespace KGHCashierPOS
                 decimal displayPrice = session.TotalPrice + session.EquipmentCost;
                 totalAmount += displayPrice;
 
-                // ⭐ Item header with number
+                // Item header with number
                 summary.AppendLine($"  ┌─ ITEM #{itemNumber} ─────────────────────────────────────────");
                 summary.AppendLine($"  │");
                 summary.AppendLine($"  │  Game:             {session.GameName}");
@@ -391,7 +485,7 @@ namespace KGHCashierPOS
                 summary.AppendLine($"  │");
                 summary.AppendLine($"  │  Game Price:       {PriceFormatter.Format(session.TotalPrice)}");
 
-                // ⭐ Equipment details
+                // Equipment details
                 if (session.Equipment != null && session.Equipment.Count > 0)
                 {
                     summary.AppendLine($"  │");
@@ -483,6 +577,7 @@ namespace KGHCashierPOS
                 {
                     sessionManager.RemoveSession(selectedKey);
                     RefreshDisplay();
+                    LogActivity($"Removed {session.GameName} from order");
                 }
             }
         }
@@ -557,11 +652,11 @@ namespace KGHCashierPOS
 
                     txtOrderNumber.Clear();
                     txtOrderNumber.Focus();
-                    loadedOrderNumber = "";  // ⭐ Clear on failure
+                    loadedOrderNumber = "";
                     return;
                 }
 
-                // ⭐ Store the order number
+                // Store the order number
                 loadedOrderNumber = orderNumber;
 
                 sessionManager.ClearAll();
@@ -590,6 +685,7 @@ namespace KGHCashierPOS
                 );
 
                 txtOrderNumber.Clear();
+                LogActivity($"Loaded order #{orderNumber} with {items.Count} items");
             }
             catch (Exception ex)
             {
@@ -601,11 +697,10 @@ namespace KGHCashierPOS
                );
 
                 System.Diagnostics.Debug.WriteLine($"❌ LoadOrder Exception: {ex.Message}");
-                
-                loadedOrderNumber = "";  // ⭐ Clear on error
+
+                loadedOrderNumber = "";
             }
         }
-
 
         // ============ PROCEED TO PAYMENT ============
         private void btnProceedPayment_Click(object sender, EventArgs e)
@@ -636,18 +731,11 @@ namespace KGHCashierPOS
                 return;
             }
 
-            // ⭐ Get order number if it was entered (will be empty for manual entries)
-            string orderNumberToPass = "";
-
-            // Check if there's a loaded order number stored somewhere
-            // Option 1: Store it when order is loaded
-            // Option 2: Check if order number textbox had a value before it was cleared
-
-            // For now, we'll add a class-level variable to track this
-            orderNumberToPass = loadedOrderNumber;  // ⭐ We'll add this variable
+            string orderNumberToPass = loadedOrderNumber;
 
             System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
             System.Diagnostics.Debug.WriteLine("Proceeding to Payment");
+            System.Diagnostics.Debug.WriteLine($"Cashier: {currentUsername}");
             System.Diagnostics.Debug.WriteLine($"Order Number: {orderNumberToPass}");
             System.Diagnostics.Debug.WriteLine($"Sessions: {sessions.Count}");
             System.Diagnostics.Debug.WriteLine($"Total: {total:C}");
@@ -657,6 +745,8 @@ namespace KGHCashierPOS
             paymentControl.Visible = true;
             paymentControl.BringToFront();
             paymentControl.LoadPaymentData(sessions, total, orderNumberToPass);
+
+            LogActivity($"Proceeded to payment for order total: ₱{total}");
         }
 
         // ============ CLEAR & RESET ============
@@ -685,9 +775,9 @@ namespace KGHCashierPOS
             if (result == DialogResult.Yes)
             {
                 ResetTransaction();
-
                 MessageBox.Show("Form cleared successfully!", "Cleared",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LogActivity("Cleared all items and reset form");
             }
         }
 
@@ -701,7 +791,7 @@ namespace KGHCashierPOS
             RefreshDisplay();
             txtOrderNumber.Focus();
 
-            loadedOrderNumber = "";  // ⭐ Clear loaded order number
+            loadedOrderNumber = "";
 
             System.Diagnostics.Debug.WriteLine("═══════════════════════════════════════");
             System.Diagnostics.Debug.WriteLine("Cashier form cleared and reset");
@@ -715,6 +805,8 @@ namespace KGHCashierPOS
 
             MessageBox.Show("Payment completed!\nForm reset for next customer.",
                 "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            LogActivity("Payment completed successfully");
         }
 
         // ============ DATE/TIME ============
@@ -727,13 +819,14 @@ namespace KGHCashierPOS
         // ============ SIGN OUT ============
         private void btnSignOut_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show("Are you sure you want to sign out?",
+            DialogResult result = MessageBox.Show($"Are you sure you want to sign out {currentUsername}?",
                 "Sign Out",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
+                LogActivity("Signed out from Cashier POS");
                 this.Close();
                 Application.Restart();
             }
@@ -763,6 +856,8 @@ namespace KGHCashierPOS
                     return;
                 }
             }
+
+            LogActivity("Cashier form closed");
         }
 
         private void CashierForm_FormClosed(object sender, FormClosedEventArgs e)

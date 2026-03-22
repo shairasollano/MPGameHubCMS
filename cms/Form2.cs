@@ -1,6 +1,6 @@
 ﻿using cms;
 using KGHCashierPOS;
-using Mysqlx.Crud;
+using MySql.Data.MySqlClient;
 using System;
 using System.Data;
 using System.Drawing;
@@ -21,10 +21,101 @@ namespace cms
         // Timer for fade effect
         private Timer fadeTimer;
 
+        // MySQL Connection String
+        private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
+
         public Form2()
         {
             InitializeComponent();
             SetupForm();
+
+            // Initialize database
+            InitializeDatabase();
+        }
+
+        private void InitializeDatabase()
+        {
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // Create database if it doesn't exist
+                    string createDbQuery = "CREATE DATABASE IF NOT EXISTS matchpoint_db";
+                    using (MySqlCommand cmd = new MySqlCommand(createDbQuery, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Switch to matchpoint_db
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    // Create users table if it doesn't exist
+                    string createTableQuery = @"
+                        CREATE TABLE IF NOT EXISTS users (
+                            Id INT PRIMARY KEY AUTO_INCREMENT,
+                            UserId VARCHAR(20) NOT NULL UNIQUE,
+                            Username VARCHAR(50) NOT NULL UNIQUE,
+                            Password VARCHAR(100) NOT NULL,
+                            Role VARCHAR(20) NOT NULL,
+                            Status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
+                            CreatedDate DATETIME NOT NULL,
+                            LastModifiedDate DATETIME
+                        )";
+
+                    using (MySqlCommand cmd = new MySqlCommand(createTableQuery, conn))
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Check if users table is empty and seed static accounts
+                    string checkUsersQuery = "SELECT COUNT(*) FROM users";
+                    using (MySqlCommand cmd = new MySqlCommand(checkUsersQuery, conn))
+                    {
+                        int userCount = Convert.ToInt32(cmd.ExecuteScalar());
+
+                        if (userCount == 0)
+                        {
+                            SeedStaticAccounts(conn);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Database initialization error: {ex.Message}\n\n" +
+                    "Please make sure XAMPP is running and MySQL is started.",
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void SeedStaticAccounts(MySqlConnection conn)
+        {
+            string insertQuery = @"
+                INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) 
+                VALUES (@UserId, @Username, @Password, @Role, @Status, @CreatedDate)";
+
+            var staticUsers = new[]
+            {
+                new { UserId = "USR001", Username = "admin", Password = "admin123", Role = "ADMIN" },
+                new { UserId = "USR002", Username = "manager", Password = "manager123", Role = "MANAGER" },
+                new { UserId = "USR003", Username = "staff", Password = "staff123", Role = "STAFF" }
+            };
+
+            foreach (var user in staticUsers)
+            {
+                using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", user.UserId);
+                    cmd.Parameters.AddWithValue("@Username", user.Username);
+                    cmd.Parameters.AddWithValue("@Password", user.Password);
+                    cmd.Parameters.AddWithValue("@Role", user.Role);
+                    cmd.Parameters.AddWithValue("@Status", "ACTIVE");
+                    cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Now);
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
         private void SetupForm()
@@ -289,7 +380,7 @@ namespace cms
             txtPassword.SelectionStart = txtPassword.Text.Length;
         }
 
-        // ⭐ UPDATED - Database Authentication
+        // ⭐ AUTHENTICATION WITH MySQL
         private void btnSignIn_Click(object sender, EventArgs e)
         {
             string username = txtUsername.Text.Trim();
@@ -310,88 +401,127 @@ namespace cms
 
             try
             {
-                // ⭐ ONLY call AuthenticateUser - it handles all logging internally
-                LoginResult result = AuthenticationRepository.AuthenticateUser(username, password);
-
-                this.Cursor = Cursors.Default;
-                btnSignIn.Enabled = true;
-
-                if (result.Success)
+                // Authenticate user from MySQL database
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
-                    // ⭐ Just debug output - NO database logging here
-                    System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
-                    System.Diagnostics.Debug.WriteLine($"Login Successful:");
-                    System.Diagnostics.Debug.WriteLine($"  User: {UserSession.Username}");
-                    System.Diagnostics.Debug.WriteLine($"  Role: {UserSession.RoleName}");
-                    System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
 
-                    this.Hide();
-
-                    // ⭐ Route to appropriate form - NO logging here
-                    switch (result.RoleId)
+                    string query = "SELECT * FROM users WHERE Username = @username AND Password = @password AND Status = 'ACTIVE'";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
-                        case 1: // Super Admin
-                            Form1 superAdminForm = new Form1();
-                            superAdminForm.Closed += (s, args) =>
-                            {
-                                AuthenticationRepository.LogoutUser();
-                                this.Close();
-                            };
-                            superAdminForm.Show();
-                            break;
+                        cmd.Parameters.AddWithValue("@username", username);
+                        cmd.Parameters.AddWithValue("@password", password);
 
-                        case 2: // Admin
-                            Form1 adminForm = new Form1();
-                            adminForm.Closed += (s, args) =>
+                        using (MySqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
                             {
-                                AuthenticationRepository.LogoutUser();
-                                this.Close();
-                            };
-                            adminForm.Show();
-                            break;
+                                // Login successful
+                                string userId = reader["UserId"].ToString();
+                                string userRole = reader["Role"].ToString();
+                                string userStatus = reader["Status"].ToString();
 
-                        case 3: // Cashier
-                            KGHCashierPOS.CashierForm cashierForm = new KGHCashierPOS.CashierForm();
-                            cashierForm.Closed += (s, args) =>
+                                System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
+                                System.Diagnostics.Debug.WriteLine($"Login Successful:");
+                                System.Diagnostics.Debug.WriteLine($"  User: {username}");
+                                System.Diagnostics.Debug.WriteLine($"  Role: {userRole}");
+                                System.Diagnostics.Debug.WriteLine($"  Status: {userStatus}");
+                                System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
+
+                                this.Cursor = Cursors.Default;
+                                btnSignIn.Enabled = true;
+
+                                this.Hide();
+
+                                // ⭐ ROUTING LOGIC - Admin/Manager to Form1, Staff/Cashier to CashierForm
+                                string role = userRole.ToUpper();
+
+                                if (role == "ADMIN" || role == "MANAGER")
+                                {
+                                    // Admin or Manager goes to Form1 (User Management with Game Rates, Equipment, etc.)
+                                    Form1 adminForm = new Form1();
+
+                                    // Set user info in Form1
+                                    adminForm.LoggedInUsername = username;
+                                    adminForm.LoggedInUserRole = userRole;
+                                    adminForm.SetCurrentUser(username, userRole);
+
+                                    adminForm.Closed += (s, args) =>
+                                    {
+                                        this.Close();
+                                    };
+                                    adminForm.Show();
+                                }
+                                else if (role == "STAFF" || role == "CASHIER")
+                                {
+                                    // Staff/Cashier goes to CashierForm
+                                    KGHCashierPOS.CashierForm cashierForm = new KGHCashierPOS.CashierForm();
+
+                                    // Set user info in CashierForm
+                                    cashierForm.SetCurrentUser(username, userRole);
+
+                                    cashierForm.Closed += (s, args) =>
+                                    {
+                                        this.Close();
+                                    };
+                                    cashierForm.Show();
+                                }
+                                else
+                                {
+                                    MessageBox.Show("Invalid user role. Please contact administrator.",
+                                        "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                    this.Show();
+                                    ClearLoginFields();
+                                }
+                            }
+                            else
                             {
-                                AuthenticationRepository.LogoutUser();
-                                this.Close();
-                            };
-                            cashierForm.Show();
-                            break;
+                                // Check if user exists but is inactive
+                                string inactiveQuery = "SELECT * FROM users WHERE Username = @username AND Password = @password";
+                                using (MySqlCommand inactiveCmd = new MySqlCommand(inactiveQuery, conn))
+                                {
+                                    inactiveCmd.Parameters.AddWithValue("@username", username);
+                                    inactiveCmd.Parameters.AddWithValue("@password", password);
 
-                        case 4: // Customer
-                            KGHCashierPOS.OrderForm orderForm = new KGHCashierPOS.OrderForm();
-                            orderForm.Closed += (s, args) =>
-                            {
-                                AuthenticationRepository.LogoutUser();
-                                this.Close();
-                            };
-                            orderForm.Show();
-                            break;
+                                    using (MySqlDataReader inactiveReader = inactiveCmd.ExecuteReader())
+                                    {
+                                        if (inactiveReader.Read())
+                                        {
+                                            string status = inactiveReader["Status"].ToString();
+                                            if (status != "ACTIVE")
+                                            {
+                                                MessageBox.Show("Your account is inactive. Please contact administrator.",
+                                                    "Account Inactive", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                            }
+                                            else
+                                            {
+                                                MessageBox.Show("Invalid username or password. Please try again.",
+                                                    "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            MessageBox.Show("Invalid username or password. Please try again.",
+                                                "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                        }
+                                    }
+                                }
 
-                        default:
-                            MessageBox.Show("Invalid user role.", "Access Denied",
-                                MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            this.Show();
-                            ClearLoginFields();
-                            break;
+                                this.Cursor = Cursors.Default;
+                                btnSignIn.Enabled = true;
+                                ClearLoginFields();
+                            }
+                        }
                     }
-                }
-                else
-                {
-                    // Failed login - already logged in AuthenticateUser
-                    MessageBox.Show(result.Message, "Login Failed",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    ClearLoginFields();
                 }
             }
             catch (Exception ex)
             {
                 this.Cursor = Cursors.Default;
                 btnSignIn.Enabled = true;
-                MessageBox.Show($"Login error:\n{ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Login error:\n{ex.Message}\n\nPlease make sure XAMPP is running and MySQL is started.",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -421,11 +551,19 @@ namespace cms
                 "Please contact your system administrator to reset your password.\n\n" +
                 "📧 Email: admin@matchpoint.com\n" +
                 "📞 Phone: (02) 8123-4567\n\n" +
-                "Test Credentials (from database):\n" +
-                "Super Admin: superadmin / super123\n" +
-                "Admin: admin / admin123\n" +
-                "Cashier: cashier / cashier123\n" +
-                "Kiosk: kiosk / kiosk123",
+                "Test Credentials:\n" +
+                "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
+                "👑 ADMIN (Management Access):\n" +
+                "   Username: admin\n" +
+                "   Password: admin123\n\n" +
+                "👔 MANAGER (Management Access):\n" +
+                "   Username: manager\n" +
+                "   Password: manager123\n\n" +
+                "💼 STAFF (Cashier Access):\n" +
+                "   Username: staff\n" +
+                "   Password: staff123\n\n" +
+                "Note: New users created will have default password: 12345\n\n" +
+                "⚠️ Make sure XAMPP is running with MySQL started.",
                 "Forgot Password",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
@@ -459,6 +597,9 @@ namespace cms
             }
         }
 
-        private void Form2_Load(object sender, EventArgs e) { }
+        private void Form2_Load(object sender, EventArgs e)
+        {
+            // Database already initialized in constructor
+        }
     }
 }

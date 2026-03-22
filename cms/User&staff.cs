@@ -7,15 +7,282 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.EntityFrameworkCore;
 
-namespace finaluserandstaff
+namespace cms
 {
-    // =========================== MAINFORM ===========================
-    public partial class mainform : Form
+    // =========================== DATABASE MODELS ===========================
+    public class User
     {
-        public mainform()
+        public int Id { get; set; }
+        public string UserId { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public string Role { get; set; }
+        public string Status { get; set; }
+        public DateTime CreatedDate { get; set; }
+        public DateTime? LastModifiedDate { get; set; }
+    }
+
+    // =========================== DATABASE CONTEXT ===========================
+    public class MatchpointDbContext : DbContext
+    {
+        public DbSet<User> Users { get; set; }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            // Connection string for local SQL Server
+            optionsBuilder.UseSqlServer(@"Server=(localdb)\MSSQLLocalDB;Database=matchpoint_db;Trusted_Connection=True;");
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+        }
+    }
+
+    // =========================== DATABASE HELPER CLASS ===========================
+    public class DatabaseHelper
+    {
+        private static MatchpointDbContext _context;
+
+        public static void InitializeDatabase()
+        {
+            try
+            {
+                _context = new MatchpointDbContext();
+
+                // Create database if it doesn't exist
+                _context.Database.EnsureCreated();
+
+                // Check if users table is empty
+                if (!_context.Users.Any())
+                {
+                    CreateStaticAccounts();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Database initialization error: {ex.Message}",
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private static void CreateStaticAccounts()
+        {
+            var staticUsers = new List<User>
+            {
+                new User
+                {
+                    UserId = "USR001",
+                    Username = "admin",
+                    Password = "admin123",
+                    Role = "ADMIN",
+                    Status = "ACTIVE",
+                    CreatedDate = DateTime.Now
+                },
+                new User
+                {
+                    UserId = "USR002",
+                    Username = "manager",
+                    Password = "manager123",
+                    Role = "MANAGER",
+                    Status = "ACTIVE",
+                    CreatedDate = DateTime.Now
+                },
+                new User
+                {
+                    UserId = "USR003",
+                    Username = "staff",
+                    Password = "staff123",
+                    Role = "STAFF",
+                    Status = "ACTIVE",
+                    CreatedDate = DateTime.Now
+                }
+            };
+
+            _context.Users.AddRange(staticUsers);
+            _context.SaveChanges();
+        }
+
+        public static List<User> GetAllUsers()
+        {
+            try
+            {
+                return _context.Users.ToList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading users: {ex.Message}",
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new List<User>();
+            }
+        }
+
+        public static bool AddUser(string username, string role, string password = "12345")
+        {
+            try
+            {
+                // Check if username already exists
+                if (_context.Users.Any(u => u.Username == username))
+                {
+                    MessageBox.Show("Username already exists!", "Duplicate User",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                // Generate new UserId
+                int nextId = _context.Users.Count() + 1;
+                string userId = $"USR{nextId:D3}";
+
+                var newUser = new User
+                {
+                    UserId = userId,
+                    Username = username,
+                    Password = password,
+                    Role = role,
+                    Status = "ACTIVE",
+                    CreatedDate = DateTime.Now
+                };
+
+                _context.Users.Add(newUser);
+                _context.SaveChanges();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error adding user: {ex.Message}",
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        public static bool UpdateUser(string oldUsername, string newUsername, string role)
+        {
+            try
+            {
+                var user = _context.Users.FirstOrDefault(u => u.Username == oldUsername);
+                if (user != null)
+                {
+                    // Check if new username already exists (if changed)
+                    if (oldUsername != newUsername && _context.Users.Any(u => u.Username == newUsername))
+                    {
+                        MessageBox.Show("Username already exists!", "Duplicate User",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return false;
+                    }
+
+                    user.Username = newUsername;
+                    user.Role = role;
+                    user.LastModifiedDate = DateTime.Now;
+                    _context.SaveChanges();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error updating user: {ex.Message}",
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        public static bool DeleteUser(string username)
+        {
+            try
+            {
+                var user = _context.Users.FirstOrDefault(u => u.Username == username);
+                if (user != null)
+                {
+                    _context.Users.Remove(user);
+                    _context.SaveChanges();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error deleting user: {ex.Message}",
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        public static bool UpdateUserStatus(string username, string status)
+        {
+            try
+            {
+                var user = _context.Users.FirstOrDefault(u => u.Username == username);
+                if (user != null)
+                {
+                    user.Status = status;
+                    user.LastModifiedDate = DateTime.Now;
+                    _context.SaveChanges();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error updating status: {ex.Message}",
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        public static bool ChangePassword(string username, string newPassword)
+        {
+            try
+            {
+                var user = _context.Users.FirstOrDefault(u => u.Username == username);
+                if (user != null)
+                {
+                    user.Password = newPassword;
+                    user.LastModifiedDate = DateTime.Now;
+                    _context.SaveChanges();
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error changing password: {ex.Message}",
+                    "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+    }
+
+    // =========================== USER_STAFF FORM (UPDATED) ===========================
+    public partial class User_staff : Form
+    {
+        public User_staff()
         {
             InitializeComponent();
+            // Add event handlers for status changes
+            this.datagrd.CellValueChanged += new DataGridViewCellEventHandler(this.STATUS_SelectedIndexChanged);
+            this.datagrd.CurrentCellDirtyStateChanged += new EventHandler(this.datagrd_CurrentCellDirtyStateChanged);
+        }
+
+        private void RefreshUserGrid()
+        {
+            datagrd.Rows.Clear();
+            var users = DatabaseHelper.GetAllUsers();
+
+            foreach (var user in users)
+            {
+                int rowIndex = datagrd.Rows.Add(user.UserId, user.Username, user.Role, user.Status);
+
+                // Style for admin account
+                if (user.Username == "admin")
+                {
+                    datagrd.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Red;
+                    datagrd.Rows[rowIndex].DefaultCellStyle.Font = new Font(datagrd.Font, FontStyle.Bold);
+                }
+            }
         }
 
         private void Manage_Click(object sender, EventArgs e)
@@ -27,6 +294,7 @@ namespace finaluserandstaff
         {
             frmAddUser addWindow = new frmAddUser();
             addWindow.ShowDialog();
+            RefreshUserGrid(); // Refresh after adding
         }
 
         private void uPDATEUSERToolStripMenuItem_Click(object sender, EventArgs e)
@@ -39,12 +307,13 @@ namespace finaluserandstaff
                 updateWindow.txtUpdateUsername.Text = selectedUser;
                 updateWindow.cmbRole.Text = datagrd.SelectedRows[0].Cells[2].Value.ToString();
 
-                if (selectedUser == "admin01")
+                if (selectedUser == "admin")
                 {
                     updateWindow.cmbRole.Enabled = false;
                 }
 
                 updateWindow.ShowDialog();
+                RefreshUserGrid(); // Refresh after update
             }
         }
 
@@ -54,7 +323,7 @@ namespace finaluserandstaff
             {
                 string selectedUser = datagrd.SelectedRows[0].Cells[1].Value.ToString();
 
-                if (selectedUser == "admin01")
+                if (selectedUser == "admin")
                 {
                     MessageBox.Show("Security Violation: You cannot delete your own administrative account!",
                         "Action Denied", MessageBoxButtons.OK, MessageBoxIcon.Stop);
@@ -66,260 +335,67 @@ namespace finaluserandstaff
 
                 if (dialogResult == DialogResult.Yes)
                 {
-                    datagrd.Rows.RemoveAt(datagrd.SelectedRows[0].Index);
+                    if (DatabaseHelper.DeleteUser(selectedUser))
+                    {
+                        MessageBox.Show("User deleted successfully!", "Success",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        RefreshUserGrid();
+                    }
                 }
+            }
+        }
+
+        private void cHANGEPASSWORDToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (datagrd.SelectedRows.Count > 0)
+            {
+                string selectedUser = datagrd.SelectedRows[0].Cells[1].Value.ToString();
+                frmChangePassword changePasswordWindow = new frmChangePassword(selectedUser);
+                changePasswordWindow.ShowDialog();
             }
         }
 
         private void mainform_Load(object sender, EventArgs e)
         {
-            int rowIndex = datagrd.Rows.Add("00001", "admin01", "MANAGER", "ACTIVE");
-            datagrd.Rows[rowIndex].DefaultCellStyle.BackColor = Color.Red;
-            datagrd.Rows[rowIndex].DefaultCellStyle.Font = new Font(datagrd.Font, FontStyle.Bold);
+            // Initialize database and load users
+            DatabaseHelper.InitializeDatabase();
+            RefreshUserGrid();
         }
-    }
 
-    public partial class mainform
-    {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
+        private void STATUS_SelectedIndexChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (disposing && (components != null))
+            if (e.RowIndex >= 0 && e.ColumnIndex == 3) // Status column index
             {
-                components.Dispose();
+                string username = datagrd.Rows[e.RowIndex].Cells[1].Value.ToString();
+                string newStatus = datagrd.Rows[e.RowIndex].Cells[3].Value.ToString();
+
+                if (username != "admin") // Don't allow status change for admin
+                {
+                    DatabaseHelper.UpdateUserStatus(username, newStatus);
+                }
+                else
+                {
+                    MessageBox.Show("Cannot change status of admin account!", "Action Denied",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    RefreshUserGrid(); // Revert the change
+                }
             }
-            base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
-        private void InitializeComponent()
+        private void datagrd_CurrentCellDirtyStateChanged(object sender, EventArgs e)
         {
-            this.components = new System.ComponentModel.Container();
-            this.pnlMenu = new System.Windows.Forms.Panel();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.panel2 = new System.Windows.Forms.Panel();
-            this.datagrd = new System.Windows.Forms.DataGridView();
-            this.btnManage = new System.Windows.Forms.Button();
-            this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.uPDATEUSERToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.dELETEUSERToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.cHANGEPASSWORDToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.label1 = new System.Windows.Forms.Label();
-            this.ID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.NAME = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.ROLE = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.STATUS = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.panel1.SuspendLayout();
-            this.panel2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.datagrd)).BeginInit();
-            this.contextMenuStrip1.SuspendLayout();
-            this.SuspendLayout();
-            // 
-            // pnlMenu
-            // 
-            this.pnlMenu.BackColor = System.Drawing.Color.Black;
-            this.pnlMenu.Dock = System.Windows.Forms.DockStyle.Left;
-            this.pnlMenu.Location = new System.Drawing.Point(0, 0);
-            this.pnlMenu.Name = "pnlMenu";
-            this.pnlMenu.Size = new System.Drawing.Size(147, 726);
-            this.pnlMenu.TabIndex = 0;
-            // 
-            // panel1
-            // 
-            this.panel1.BackColor = System.Drawing.Color.Maroon;
-            this.panel1.Controls.Add(this.label1);
-            this.panel1.Location = new System.Drawing.Point(144, -1);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1118, 76);
-            this.panel1.TabIndex = 0;
-            // 
-            // panel2
-            // 
-            this.panel2.BackColor = System.Drawing.Color.Snow;
-            this.panel2.Controls.Add(this.datagrd);
-            this.panel2.Location = new System.Drawing.Point(171, 145);
-            this.panel2.Name = "panel2";
-            this.panel2.Padding = new System.Windows.Forms.Padding(20);
-            this.panel2.Size = new System.Drawing.Size(1056, 495);
-            this.panel2.TabIndex = 1;
-            // 
-            // datagrd
-            // 
-            this.datagrd.AllowUserToAddRows = false;
-            this.datagrd.AllowUserToDeleteRows = false;
-            this.datagrd.AllowUserToResizeRows = false;
-            this.datagrd.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.datagrd.BackgroundColor = System.Drawing.Color.WhiteSmoke;
-            this.datagrd.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.datagrd.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ID,
-            this.NAME,
-            this.ROLE,
-            this.STATUS});
-            this.datagrd.GridColor = System.Drawing.Color.IndianRed;
-            this.datagrd.Location = new System.Drawing.Point(16, 14);
-            this.datagrd.MultiSelect = false;
-            this.datagrd.Name = "datagrd";
-            this.datagrd.RowHeadersWidth = 51;
-            this.datagrd.RowTemplate.Height = 24;
-            this.datagrd.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.datagrd.Size = new System.Drawing.Size(1024, 463);
-            this.datagrd.TabIndex = 0;
-            // 
-            // btnManage
-            // 
-            this.btnManage.BackColor = System.Drawing.Color.IndianRed;
-            this.btnManage.ForeColor = System.Drawing.Color.White;
-            this.btnManage.Location = new System.Drawing.Point(997, 97);
-            this.btnManage.Name = "btnManage";
-            this.btnManage.Size = new System.Drawing.Size(229, 37);
-            this.btnManage.TabIndex = 2;
-            this.btnManage.Text = "MANAGE USERS";
-            this.btnManage.UseVisualStyleBackColor = false;
-            this.btnManage.Click += new System.EventHandler(this.Manage_Click);
-            // 
-            // contextMenuStrip1
-            // 
-            this.contextMenuStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItem1,
-            this.uPDATEUSERToolStripMenuItem,
-            this.dELETEUSERToolStripMenuItem,
-            this.cHANGEPASSWORDToolStripMenuItem});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(220, 100);
-            // 
-            // toolStripMenuItem1
-            // 
-            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(219, 24);
-            this.toolStripMenuItem1.Text = "ADD NEW USER";
-            this.toolStripMenuItem1.Click += new System.EventHandler(this.toolStripMenuItem1_Click);
-            // 
-            // uPDATEUSERToolStripMenuItem
-            // 
-            this.uPDATEUSERToolStripMenuItem.Name = "uPDATEUSERToolStripMenuItem";
-            this.uPDATEUSERToolStripMenuItem.Size = new System.Drawing.Size(219, 24);
-            this.uPDATEUSERToolStripMenuItem.Text = "UPDATE USER";
-            this.uPDATEUSERToolStripMenuItem.Click += new System.EventHandler(this.uPDATEUSERToolStripMenuItem_Click);
-            // 
-            // dELETEUSERToolStripMenuItem
-            // 
-            this.dELETEUSERToolStripMenuItem.Name = "dELETEUSERToolStripMenuItem";
-            this.dELETEUSERToolStripMenuItem.Size = new System.Drawing.Size(219, 24);
-            this.dELETEUSERToolStripMenuItem.Text = "DELETE USER";
-            this.dELETEUSERToolStripMenuItem.Click += new System.EventHandler(this.dELETEUSERToolStripMenuItem_Click);
-            // 
-            // cHANGEPASSWORDToolStripMenuItem
-            // 
-            this.cHANGEPASSWORDToolStripMenuItem.Name = "cHANGEPASSWORDToolStripMenuItem";
-            this.cHANGEPASSWORDToolStripMenuItem.Size = new System.Drawing.Size(219, 24);
-            this.cHANGEPASSWORDToolStripMenuItem.Text = "CHANGE PASSWORD";
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.White;
-            this.label1.Location = new System.Drawing.Point(22, 27);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(464, 28);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "USER AND STAFF MANAGEMENT | ADMIN SIDE";
-            // 
-            // ID
-            // 
-            this.ID.HeaderText = "#ID";
-            this.ID.MinimumWidth = 6;
-            this.ID.Name = "ID";
-            this.ID.ReadOnly = true;
-            // 
-            // NAME
-            // 
-            this.NAME.HeaderText = "USERNAME";
-            this.NAME.MinimumWidth = 6;
-            this.NAME.Name = "NAME";
-            this.NAME.ReadOnly = true;
-            // 
-            // ROLE
-            // 
-            this.ROLE.HeaderText = "ROLE";
-            this.ROLE.MinimumWidth = 6;
-            this.ROLE.Name = "ROLE";
-            this.ROLE.ReadOnly = true;
-            // 
-            // STATUS
-            // 
-            this.STATUS.HeaderText = "STATUS";
-            this.STATUS.Items.AddRange(new object[] {
-            "ACTIVE",
-            "INACTIVE"});
-            this.STATUS.MinimumWidth = 6;
-            this.STATUS.Name = "STATUS";
-            this.STATUS.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.STATUS.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            // 
-            // mainform
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 23F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(1256, 726);
-            this.Controls.Add(this.btnManage);
-            this.Controls.Add(this.panel2);
-            this.Controls.Add(this.pnlMenu);
-            this.Controls.Add(this.panel1);
-            this.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "mainform";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "mainform";
-            this.Load += new System.EventHandler(this.mainform_Load);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            this.panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.datagrd)).EndInit();
-            this.contextMenuStrip1.ResumeLayout(false);
-            this.ResumeLayout(false);
-
+            if (datagrd.IsCurrentCellDirty)
+            {
+                datagrd.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
         }
-
-        #endregion
-
-        private System.Windows.Forms.Panel pnlMenu;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Panel panel2;
-        private System.Windows.Forms.Button btnManage;
-        public System.Windows.Forms.DataGridView datagrd;
-        private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem uPDATEUSERToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem dELETEUSERToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem cHANGEPASSWORDToolStripMenuItem;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn NAME;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ROLE;
-        private System.Windows.Forms.DataGridViewComboBoxColumn STATUS;
     }
 
-    // =========================== FRMUPDATEUSER ===========================
+    // =========================== FRMUPDATEUSER (UPDATED) ===========================
     public partial class frmUpdateUser : Form
     {
+        private string oldUsername;
+
         public frmUpdateUser()
         {
             InitializeComponent();
@@ -327,12 +403,21 @@ namespace finaluserandstaff
 
         private void btnConfirm_Click(object sender, EventArgs e)
         {
-            mainform main = (mainform)Application.OpenForms["mainform"];
+            string oldUsername = txtUpdateUsername.Text; // Store old username
+            string newUsername = txtUpdateUsername.Text;
+            string newRole = cmbRole.Text;
 
-            if (main != null && main.datagrd.SelectedRows.Count > 0)
+            if (string.IsNullOrWhiteSpace(newUsername))
             {
-                main.datagrd.SelectedRows[0].Cells[1].Value = txtUpdateUsername.Text;
-                main.datagrd.SelectedRows[0].Cells[2].Value = cmbRole.Text;
+                MessageBox.Show("Username cannot be empty!", "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (DatabaseHelper.UpdateUser(oldUsername, newUsername, newRole))
+            {
+                MessageBox.Show("User updated successfully!", "Success",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
         }
@@ -347,156 +432,7 @@ namespace finaluserandstaff
         }
     }
 
-    public partial class frmUpdateUser
-    {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
-        }
-
-        #region Windows Form Designer generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
-        private void InitializeComponent()
-        {
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.label1 = new System.Windows.Forms.Label();
-            this.cmbRole = new System.Windows.Forms.ComboBox();
-            this.btnConfirm = new System.Windows.Forms.Button();
-            this.txtUpdateUsername = new System.Windows.Forms.TextBox();
-            this.btnCancel = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
-            this.panel1.SuspendLayout();
-            this.SuspendLayout();
-            // 
-            // panel1
-            // 
-            this.panel1.BackColor = System.Drawing.Color.Maroon;
-            this.panel1.Controls.Add(this.label1);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(432, 71);
-            this.panel1.TabIndex = 0;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI", 16.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(97, 20);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(213, 38);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "UPDATE FORM";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
-            // 
-            // cmbRole
-            // 
-            this.cmbRole.Font = new System.Windows.Forms.Font("Segoe UI Semibold", 10.2F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cmbRole.ForeColor = System.Drawing.Color.Maroon;
-            this.cmbRole.FormattingEnabled = true;
-            this.cmbRole.Items.AddRange(new object[] {
-            "MANAGER",
-            "STAFF",
-            "BOTH"});
-            this.cmbRole.Location = new System.Drawing.Point(52, 203);
-            this.cmbRole.Name = "cmbRole";
-            this.cmbRole.Size = new System.Drawing.Size(329, 31);
-            this.cmbRole.TabIndex = 2;
-            this.cmbRole.Text = "SELECT ROLE..";
-            // 
-            // btnConfirm
-            // 
-            this.btnConfirm.BackColor = System.Drawing.Color.Green;
-            this.btnConfirm.Location = new System.Drawing.Point(61, 251);
-            this.btnConfirm.Name = "btnConfirm";
-            this.btnConfirm.Size = new System.Drawing.Size(141, 55);
-            this.btnConfirm.TabIndex = 3;
-            this.btnConfirm.Text = "CONFIRM";
-            this.btnConfirm.UseVisualStyleBackColor = false;
-            this.btnConfirm.Click += new System.EventHandler(this.btnConfirm_Click);
-            // 
-            // txtUpdateUsername
-            // 
-            this.txtUpdateUsername.Font = new System.Windows.Forms.Font("Segoe UI Semibold", 13.8F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtUpdateUsername.Location = new System.Drawing.Point(52, 154);
-            this.txtUpdateUsername.Name = "txtUpdateUsername";
-            this.txtUpdateUsername.Size = new System.Drawing.Size(329, 38);
-            this.txtUpdateUsername.TabIndex = 4;
-            // 
-            // btnCancel
-            // 
-            this.btnCancel.BackColor = System.Drawing.Color.Red;
-            this.btnCancel.Location = new System.Drawing.Point(217, 251);
-            this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(141, 55);
-            this.btnCancel.TabIndex = 5;
-            this.btnCancel.Text = "CANCEL";
-            this.btnCancel.UseVisualStyleBackColor = false;
-            this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.ForeColor = System.Drawing.Color.Maroon;
-            this.label2.Location = new System.Drawing.Point(48, 128);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(203, 23);
-            this.label2.TabIndex = 6;
-            this.label2.Text = "ENTER NEW USERNAME";
-            // 
-            // frmUpdateUser
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 23F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.MistyRose;
-            this.ClientSize = new System.Drawing.Size(432, 382);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.txtUpdateUsername);
-            this.Controls.Add(this.btnConfirm);
-            this.Controls.Add(this.cmbRole);
-            this.Controls.Add(this.panel1);
-            this.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ForeColor = System.Drawing.Color.White;
-            this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "frmUpdateUser";
-            this.Text = "Update User";
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
-        }
-
-        #endregion
-
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button btnConfirm;
-        private System.Windows.Forms.Button btnCancel;
-        public System.Windows.Forms.ComboBox cmbRole;
-        public System.Windows.Forms.TextBox txtUpdateUsername;
-        private System.Windows.Forms.Label label2;
-    }
-
-    // =========================== FRMADDUSER ===========================
+    // =========================== FRMADDUSER (UPDATED) ===========================
     public partial class frmAddUser : Form
     {
         public frmAddUser()
@@ -509,25 +445,73 @@ namespace finaluserandstaff
             cmbRole.Items.Clear();
             cmbRole.Items.Add("MANAGER");
             cmbRole.Items.Add("STAFF");
-            cmbRole.SelectedIndex = 1; // Automatically selects 'STAFF'
+            cmbRole.SelectedIndex = 0; // Select MANAGER by default
         }
 
         private void btnConfirm_Click(object sender, EventArgs e)
         {
-            var main = Application.OpenForms["mainform"] as mainform;
+            string username = txtUsername.Text.Trim();
+            string role = cmbRole.Text;
 
-            if (main != null)
+            if (string.IsNullOrWhiteSpace(username))
             {
-                string id = "#" + new Random().Next(1000, 9999);
-                string user = txtUsername.Text;
-                string role = cmbRole.Text;
-                string status = "ACTIVE";
+                MessageBox.Show("Please enter a username!", "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
-                string defaultPassword = "12345";
+            string defaultPassword = "12345";
 
-                main.datagrd.Rows.Add(id, user, role, status);
+            if (DatabaseHelper.AddUser(username, role, defaultPassword))
+            {
+                MessageBox.Show($"User {username} created successfully!\nDefault password is: {defaultPassword}",
+                    "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                this.Close();
+            }
+        }
 
-                MessageBox.Show($"User {user} created! Default password is: {defaultPassword}");
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
+        }
+    }
+
+    // =========================== FRMCHANGEPASSWORD (NEW FORM) ===========================
+    public partial class frmChangePassword : Form
+    {
+        private string username;
+
+        public frmChangePassword(string user)
+        {
+            InitializeComponent();
+            username = user;
+            lblUsername.Text = $"Changing password for: {username}";
+        }
+
+        private void btnConfirm_Click(object sender, EventArgs e)
+        {
+            if (txtNewPassword.Text != txtConfirmPassword.Text)
+            {
+                MessageBox.Show("Passwords do not match!", "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtNewPassword.Text))
+            {
+                MessageBox.Show("Password cannot be empty!", "Validation Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (DatabaseHelper.ChangePassword(username, txtNewPassword.Text))
+            {
+                MessageBox.Show("Password changed successfully!", "Success",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.Close();
             }
         }
@@ -538,17 +522,20 @@ namespace finaluserandstaff
         }
     }
 
-    public partial class frmAddUser
+    // Add this partial class for frmChangePassword designer
+    public partial class frmChangePassword
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label lblUsername;
+        private System.Windows.Forms.TextBox txtNewPassword;
+        private System.Windows.Forms.TextBox txtConfirmPassword;
+        private System.Windows.Forms.Button btnConfirm;
+        private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -558,21 +545,17 @@ namespace finaluserandstaff
             base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
             this.label1 = new System.Windows.Forms.Label();
-            this.cmbRole = new System.Windows.Forms.ComboBox();
+            this.lblUsername = new System.Windows.Forms.Label();
+            this.txtNewPassword = new System.Windows.Forms.TextBox();
+            this.txtConfirmPassword = new System.Windows.Forms.TextBox();
             this.btnConfirm = new System.Windows.Forms.Button();
-            this.txtUsername = new System.Windows.Forms.TextBox();
             this.btnCancel = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -589,52 +572,56 @@ namespace finaluserandstaff
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Segoe UI", 16.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Font = new System.Drawing.Font("Segoe UI", 16.2F, System.Drawing.FontStyle.Bold);
             this.label1.Location = new System.Drawing.Point(97, 20);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(213, 38);
+            this.label1.Size = new System.Drawing.Size(238, 38);
             this.label1.TabIndex = 0;
-            this.label1.Text = "ADD USER FORM";
-            this.label1.Click += new System.EventHandler(this.label1_Click);
+            this.label1.Text = "CHANGE PASSWORD";
             // 
-            // cmbRole
+            // lblUsername
             // 
-            this.cmbRole.Font = new System.Windows.Forms.Font("Segoe UI Semibold", 10.2F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cmbRole.ForeColor = System.Drawing.Color.Maroon;
-            this.cmbRole.FormattingEnabled = true;
-            this.cmbRole.Items.AddRange(new object[] {
-            "MANAGER",
-            "STAFF",
-            "BOTH"});
-            this.cmbRole.Location = new System.Drawing.Point(52, 203);
-            this.cmbRole.Name = "cmbRole";
-            this.cmbRole.Size = new System.Drawing.Size(329, 31);
-            this.cmbRole.TabIndex = 2;
-            this.cmbRole.Text = "SELECT ROLE..";
+            this.lblUsername.AutoSize = true;
+            this.lblUsername.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
+            this.lblUsername.ForeColor = System.Drawing.Color.Maroon;
+            this.lblUsername.Location = new System.Drawing.Point(48, 84);
+            this.lblUsername.Name = "lblUsername";
+            this.lblUsername.Size = new System.Drawing.Size(0, 23);
+            this.lblUsername.TabIndex = 1;
+            // 
+            // txtNewPassword
+            // 
+            this.txtNewPassword.Font = new System.Drawing.Font("Segoe UI", 12F);
+            this.txtNewPassword.Location = new System.Drawing.Point(52, 164);
+            this.txtNewPassword.Name = "txtNewPassword";
+            this.txtNewPassword.PasswordChar = '*';
+            this.txtNewPassword.Size = new System.Drawing.Size(329, 34);
+            this.txtNewPassword.TabIndex = 2;
+            // 
+            // txtConfirmPassword
+            // 
+            this.txtConfirmPassword.Font = new System.Drawing.Font("Segoe UI", 12F);
+            this.txtConfirmPassword.Location = new System.Drawing.Point(52, 243);
+            this.txtConfirmPassword.Name = "txtConfirmPassword";
+            this.txtConfirmPassword.PasswordChar = '*';
+            this.txtConfirmPassword.Size = new System.Drawing.Size(329, 34);
+            this.txtConfirmPassword.TabIndex = 3;
             // 
             // btnConfirm
             // 
             this.btnConfirm.BackColor = System.Drawing.Color.Green;
-            this.btnConfirm.Location = new System.Drawing.Point(61, 251);
+            this.btnConfirm.Location = new System.Drawing.Point(61, 313);
             this.btnConfirm.Name = "btnConfirm";
             this.btnConfirm.Size = new System.Drawing.Size(141, 55);
-            this.btnConfirm.TabIndex = 3;
+            this.btnConfirm.TabIndex = 4;
             this.btnConfirm.Text = "CONFIRM";
             this.btnConfirm.UseVisualStyleBackColor = false;
             this.btnConfirm.Click += new System.EventHandler(this.btnConfirm_Click);
             // 
-            // txtUsername
-            // 
-            this.txtUsername.Font = new System.Drawing.Font("Segoe UI Semibold", 13.8F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtUsername.Location = new System.Drawing.Point(52, 154);
-            this.txtUsername.Name = "txtUsername";
-            this.txtUsername.Size = new System.Drawing.Size(329, 38);
-            this.txtUsername.TabIndex = 4;
-            // 
             // btnCancel
             // 
             this.btnCancel.BackColor = System.Drawing.Color.Red;
-            this.btnCancel.Location = new System.Drawing.Point(217, 251);
+            this.btnCancel.Location = new System.Drawing.Point(217, 313);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(141, 55);
             this.btnCancel.TabIndex = 5;
@@ -646,45 +633,45 @@ namespace finaluserandstaff
             // 
             this.label2.AutoSize = true;
             this.label2.ForeColor = System.Drawing.Color.Maroon;
-            this.label2.Location = new System.Drawing.Point(48, 128);
+            this.label2.Location = new System.Drawing.Point(48, 138);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(203, 23);
+            this.label2.Size = new System.Drawing.Size(135, 23);
             this.label2.TabIndex = 6;
-            this.label2.Text = "ENTER NEW USERNAME";
+            this.label2.Text = "NEW PASSWORD";
             // 
-            // frmAddUser
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.ForeColor = System.Drawing.Color.Maroon;
+            this.label3.Location = new System.Drawing.Point(48, 217);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(203, 23);
+            this.label3.TabIndex = 7;
+            this.label3.Text = "CONFIRM PASSWORD";
+            // 
+            // frmChangePassword
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 23F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.MistyRose;
-            this.ClientSize = new System.Drawing.Size(432, 382);
+            this.ClientSize = new System.Drawing.Size(432, 400);
+            this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.txtUsername);
             this.Controls.Add(this.btnConfirm);
-            this.Controls.Add(this.cmbRole);
+            this.Controls.Add(this.txtConfirmPassword);
+            this.Controls.Add(this.txtNewPassword);
+            this.Controls.Add(this.lblUsername);
             this.Controls.Add(this.panel1);
-            this.Font = new System.Windows.Forms.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
             this.ForeColor = System.Drawing.Color.White;
-            this.Margin = new System.Windows.Forms.Padding(4);
-            this.Name = "frmAddUser";
-            this.Text = "Add User";
-            this.Load += new System.EventHandler(this.frmAddUser_Load);
+            this.Name = "frmChangePassword";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "Change Password";
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
-
-        #endregion
-
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Button btnConfirm;
-        private System.Windows.Forms.Button btnCancel;
-        public System.Windows.Forms.ComboBox cmbRole;
-        public System.Windows.Forms.TextBox txtUsername;
-        private System.Windows.Forms.Label label2;
     }
 }
