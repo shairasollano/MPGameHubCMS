@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using cms;
 
 namespace finaluserandstaff
 {
@@ -25,12 +26,13 @@ namespace finaluserandstaff
             public DateTime? LastModifiedDate { get; set; }
         }
 
-        // Role Enum
+        // Role Enum with hierarchy levels (lower number = higher privilege)
         public enum UserRole
         {
-            Staff = 1,
-            Admin = 2,
-            SuperAdmin = 3
+            SUPER_ADMIN = 1,
+            ADMIN = 2,
+            MANAGER = 3,
+            CASHIER = 4
         }
 
         // Data storage
@@ -81,16 +83,59 @@ namespace finaluserandstaff
         {
             InitializeComponent();
 
-            // Set current user as ADMIN
-            currentLoggedInUser = new UserData
+            // Get current user from GlobalLogger if available
+            if (!string.IsNullOrEmpty(GlobalLogger.CurrentUsername))
             {
-                UserId = "USR001",
-                Username = "admin",
-                FullName = "Administrator",
-                Role = "ADMIN",
-                Status = "ACTIVE",
-                Password = "admin123"
-            };
+                string userPassword = "";
+
+                // Try to get password from database
+                try
+                {
+                    using (MySqlConnection conn = new MySqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        conn.ChangeDatabase("matchpoint_db");
+
+                        string query = "SELECT Password FROM users WHERE Username = @username";
+                        using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@username", GlobalLogger.CurrentUsername);
+                            object result = cmd.ExecuteScalar();
+                            if (result != null)
+                            {
+                                userPassword = result.ToString();
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error getting user password: {ex.Message}");
+                }
+
+                currentLoggedInUser = new UserData
+                {
+                    UserId = "",
+                    Username = GlobalLogger.CurrentUsername,
+                    FullName = GlobalLogger.CurrentUsername,
+                    Role = GlobalLogger.CurrentUserRole ?? "ADMIN",
+                    Status = "ACTIVE",
+                    Password = userPassword
+                };
+            }
+            else
+            {
+                // Set current user as ADMIN (fallback)
+                currentLoggedInUser = new UserData
+                {
+                    UserId = "USR001",
+                    Username = "admin",
+                    FullName = "Administrator",
+                    Role = "ADMIN",
+                    Status = "ACTIVE",
+                    Password = "admin123"
+                };
+            }
 
             // Set card titles
             if (lblTotalUsers != null) lblTotalUsers.Text = "Total Users";
@@ -104,6 +149,120 @@ namespace finaluserandstaff
             UpdateStatistics();
             ApplyRolePermissions();
             HighlightCurrentUser();
+
+            // Log that User Management was opened
+            try
+            {
+                GlobalLogger.LogInfo("UserManagement", $"User {currentLoggedInUser.Username} ({currentLoggedInUser.Role}) opened User Management");
+            }
+            catch { }
+        }
+
+        // Method to set current user (called from Form1)
+        public void SetCurrentUser(string username, string role)
+        {
+            // Try to get the user's password from database
+            string userPassword = "";
+            try
+            {
+                using (MySqlConnection conn = new MySqlConnection(connectionString))
+                {
+                    conn.Open();
+                    conn.ChangeDatabase("matchpoint_db");
+
+                    string query = "SELECT Password FROM users WHERE Username = @username";
+                    using (MySqlCommand cmd = new MySqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@username", username);
+                        object result = cmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            userPassword = result.ToString();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error getting user password: {ex.Message}");
+            }
+
+            currentLoggedInUser = new UserData
+            {
+                UserId = "",
+                Username = username,
+                FullName = username,
+                Role = role,
+                Status = "ACTIVE",
+                Password = userPassword
+            };
+
+            LoadSampleData();
+            RefreshUserList();
+            UpdateStatistics();
+            ApplyRolePermissions();
+            HighlightCurrentUser();
+
+            // Log user access
+            try
+            {
+                GlobalLogger.LogInfo("UserManagement", $"User {username} ({role}) accessed User Management");
+            }
+            catch { }
+        }
+
+        // Get role hierarchy level (lower number = higher privilege)
+        private int GetRoleLevel(string role)
+        {
+            switch (role.ToUpper())
+            {
+                case "SUPER ADMIN": return 1;
+                case "ADMIN": return 2;
+                case "MANAGER": return 3;
+                case "CASHIER": return 4;
+                default: return 99;
+            }
+        }
+
+        // Check if current user can manage target user (can manage users with lower privilege)
+        private bool CanManageUser(UserData targetUser)
+        {
+            int currentLevel = GetRoleLevel(currentLoggedInUser.Role);
+            int targetLevel = GetRoleLevel(targetUser.Role);
+
+            // Can manage users with higher number (lower privilege)
+            return currentLevel < targetLevel;
+        }
+
+        // Get roles that current user can assign (only lower than their own level)
+        private List<string> GetAssignableRoles()
+        {
+            int currentLevel = GetRoleLevel(currentLoggedInUser.Role);
+            var assignableRoles = new List<string>();
+
+            var allRoles = new Dictionary<int, string>
+            {
+                { 1, "SUPER ADMIN" },
+                { 2, "ADMIN" },
+                { 3, "MANAGER" },
+                { 4, "CASHIER" }
+            };
+
+            foreach (var role in allRoles)
+            {
+                if (role.Key > currentLevel) // Only roles lower than current user
+                {
+                    assignableRoles.Add(role.Value);
+                }
+            }
+
+            return assignableRoles;
+        }
+
+        // Public method to get assignable roles for the current user
+        public List<string> GetAssignableRolesForCurrentUser()
+        {
+            return GetAssignableRoles();
         }
 
         // ==================== DATABASE METHODS ====================
@@ -126,7 +285,7 @@ namespace finaluserandstaff
                         object result = checkTableCmd.ExecuteScalar();
                         if (result == null)
                         {
-                            // Create users table with your existing structure
+                            // Create users table
                             string createTableQuery = @"
                                 CREATE TABLE users (
                                     Id INT PRIMARY KEY AUTO_INCREMENT,
@@ -148,10 +307,10 @@ namespace finaluserandstaff
                         }
                     }
 
-                    // Load users from database - using correct column names
+                    // Load users from database
                     string query = @"SELECT Id, UserId, Username, Password, Role, Status, CreatedDate, LastModifiedDate 
                                     FROM users 
-                                    ORDER BY FIELD(Role, 'SUPER ADMIN', 'ADMIN', 'MANAGER', 'STAFF', 'CASHIER', 'CUSTOMER'), UserId";
+                                    ORDER BY FIELD(Role, 'SUPER ADMIN', 'ADMIN', 'MANAGER', 'CASHIER'), UserId";
 
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     using (MySqlDataReader reader = cmd.ExecuteReader())
@@ -165,7 +324,7 @@ namespace finaluserandstaff
                                 Username = reader["Username"]?.ToString() ?? "",
                                 Password = reader["Password"]?.ToString() ?? "",
                                 FullName = reader["Username"]?.ToString() ?? "",
-                                Role = reader["Role"]?.ToString() ?? "STAFF",
+                                Role = reader["Role"]?.ToString() ?? "CASHIER",
                                 Status = reader["Status"]?.ToString() ?? "ACTIVE",
                                 CreatedDate = reader["CreatedDate"] != DBNull.Value ? Convert.ToDateTime(reader["CreatedDate"]) : DateTime.Now,
                                 LastModifiedDate = reader["LastModifiedDate"] != DBNull.Value ? Convert.ToDateTime(reader["LastModifiedDate"]) : (DateTime?)null
@@ -176,6 +335,12 @@ namespace finaluserandstaff
             }
             catch (Exception ex)
             {
+                try
+                {
+                    GlobalLogger.LogError("UserManagement", ex.Message, "Database error loading users");
+                }
+                catch { }
+
                 MessageBox.Show($"Database error: {ex.Message}\n\nMake sure MySQL is running in XAMPP",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -187,28 +352,27 @@ namespace finaluserandstaff
         {
             string insertQuery = @"
                 INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) VALUES
-                ('USR001', 'admin', 'admin123', 'ADMIN', 'ACTIVE', NOW()),
-                ('USR002', 'manager', 'manager123', 'MANAGER', 'ACTIVE', NOW()),
-                ('USR003', 'staff', 'staff123', 'STAFF', 'ACTIVE', NOW()),
-                ('USR004', 'cashier', 'cashier123', 'CASHIER', 'ACTIVE', NOW()),
-                ('USR005', 'customer', 'customer123', 'CUSTOMER', 'ACTIVE', NOW())";
+                ('SA001', 'superadmin', 'super123', 'SUPER ADMIN', 'ACTIVE', NOW()),
+                ('AD001', 'admin', 'admin123', 'ADMIN', 'ACTIVE', NOW()),
+                ('MG001', 'manager', 'manager123', 'MANAGER', 'ACTIVE', NOW()),
+                ('CA001', 'cashier', 'cashier123', 'CASHIER', 'ACTIVE', NOW())";
 
             using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
             {
                 cmd.ExecuteNonQuery();
             }
 
-            // Add staff members
-            for (int i = 6; i <= 20; i++)
+            // Add additional cashiers
+            for (int i = 5; i <= 15; i++)
             {
-                string staffQuery = @"INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) 
-                                     VALUES (@UserId, @Username, 'staff123', 'STAFF', @Status, NOW())";
-                using (MySqlCommand staffCmd = new MySqlCommand(staffQuery, conn))
+                string cashierQuery = @"INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) 
+                                     VALUES (@UserId, @Username, 'cashier123', 'CASHIER', @Status, NOW())";
+                using (MySqlCommand cashierCmd = new MySqlCommand(cashierQuery, conn))
                 {
-                    staffCmd.Parameters.AddWithValue("@UserId", $"USR{i:D3}");
-                    staffCmd.Parameters.AddWithValue("@Username", $"staff{i - 5:00}");
-                    staffCmd.Parameters.AddWithValue("@Status", i % 3 == 0 ? "INACTIVE" : "ACTIVE");
-                    staffCmd.ExecuteNonQuery();
+                    cashierCmd.Parameters.AddWithValue("@UserId", $"CA{i:D3}");
+                    cashierCmd.Parameters.AddWithValue("@Username", $"cashier{i - 4:00}");
+                    cashierCmd.Parameters.AddWithValue("@Status", i % 3 == 0 ? "INACTIVE" : "ACTIVE");
+                    cashierCmd.ExecuteNonQuery();
                 }
             }
         }
@@ -237,6 +401,12 @@ namespace finaluserandstaff
                             cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Now);
                             cmd.ExecuteNonQuery();
                         }
+
+                        try
+                        {
+                            GlobalLogger.LogInfo("UserManagement", $"New user '{user.Username}' created with role {user.Role}");
+                        }
+                        catch { }
                     }
                     else
                     {
@@ -252,11 +422,23 @@ namespace finaluserandstaff
                             cmd.Parameters.AddWithValue("@Username", user.Username);
                             cmd.ExecuteNonQuery();
                         }
+
+                        try
+                        {
+                            GlobalLogger.LogInfo("UserManagement", $"User '{user.Username}' updated - Role: {user.Role}, Status: {user.Status}");
+                        }
+                        catch { }
                     }
                 }
             }
             catch (Exception ex)
             {
+                try
+                {
+                    GlobalLogger.LogError("UserManagement", ex.Message, $"Error saving user {user.Username}");
+                }
+                catch { }
+
                 MessageBox.Show($"Database error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -277,9 +459,21 @@ namespace finaluserandstaff
                         cmd.ExecuteNonQuery();
                     }
                 }
+
+                try
+                {
+                    GlobalLogger.LogInfo("UserManagement", $"User '{username}' was deleted");
+                }
+                catch { }
             }
             catch (Exception ex)
             {
+                try
+                {
+                    GlobalLogger.LogError("UserManagement", ex.Message, $"Error deleting user {username}");
+                }
+                catch { }
+
                 MessageBox.Show($"Database error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -293,8 +487,7 @@ namespace finaluserandstaff
                 case "ADMIN": prefix = "AD"; break;
                 case "MANAGER": prefix = "MG"; break;
                 case "CASHIER": prefix = "CA"; break;
-                case "CUSTOMER": prefix = "CU"; break;
-                default: prefix = "ST"; break;
+                default: prefix = "CA"; break;
             }
 
             try
@@ -337,10 +530,22 @@ namespace finaluserandstaff
             // If database is empty, create sample data
             if (allUsers.Count == 0)
             {
+                // Super Admin
+                allUsers.Add(new UserData
+                {
+                    UserId = "SA001",
+                    Username = "superadmin",
+                    FullName = "Super Administrator",
+                    Role = "SUPER ADMIN",
+                    Status = "ACTIVE",
+                    Password = "super123",
+                    CreatedDate = DateTime.Now
+                });
+
                 // Admin
                 allUsers.Add(new UserData
                 {
-                    UserId = "USR001",
+                    UserId = "AD001",
                     Username = "admin",
                     FullName = "System Administrator",
                     Role = "ADMIN",
@@ -352,7 +557,7 @@ namespace finaluserandstaff
                 // Manager
                 allUsers.Add(new UserData
                 {
-                    UserId = "USR002",
+                    UserId = "MG001",
                     Username = "manager",
                     FullName = "Manager User",
                     Role = "MANAGER",
@@ -361,29 +566,17 @@ namespace finaluserandstaff
                     CreatedDate = DateTime.Now
                 });
 
-                // Staff
-                allUsers.Add(new UserData
-                {
-                    UserId = "USR003",
-                    Username = "staff",
-                    FullName = "Staff User",
-                    Role = "STAFF",
-                    Status = "ACTIVE",
-                    Password = "staff123",
-                    CreatedDate = DateTime.Now
-                });
-
-                // Staff members
+                // Cashier members
                 for (int i = 1; i <= 15; i++)
                 {
                     allUsers.Add(new UserData
                     {
-                        UserId = $"USR{3 + i:D3}",
-                        Username = $"staff{i:00}",
-                        FullName = $"Staff Member {i}",
-                        Role = "STAFF",
+                        UserId = $"CA{i:D3}",
+                        Username = $"cashier{i:00}",
+                        FullName = $"Cashier {i}",
+                        Role = "CASHIER",
                         Status = i % 3 == 0 ? "INACTIVE" : "ACTIVE",
-                        Password = "staff123",
+                        Password = "cashier123",
                         CreatedDate = DateTime.Now.AddHours(-i)
                     });
                 }
@@ -466,43 +659,10 @@ namespace finaluserandstaff
 
         private void ApplyRolePermissions()
         {
-            UserRole currentRole = GetRoleFromString(currentLoggedInUser.Role);
-
             if (btnManageUsers != null)
             {
-                btnManageUsers.Text = currentRole == UserRole.SuperAdmin ? "MANAGE USERS" : "MANAGE STAFF";
+                btnManageUsers.Text = "MANAGE USERS";
             }
-        }
-
-        private UserRole GetRoleFromString(string role)
-        {
-            switch (role.ToUpper())
-            {
-                case "SUPER ADMIN":
-                    return UserRole.SuperAdmin;
-                case "ADMIN":
-                    return UserRole.Admin;
-                default:
-                    return UserRole.Staff;
-            }
-        }
-
-        private bool CanModifyUser(UserData targetUser)
-        {
-            UserRole currentRole = GetRoleFromString(currentLoggedInUser.Role);
-            UserRole targetRole = GetRoleFromString(targetUser.Role);
-
-            if (currentRole == UserRole.SuperAdmin)
-            {
-                return true;
-            }
-
-            if (currentRole == UserRole.Admin && (targetRole == UserRole.Staff || targetRole == UserRole.Admin))
-            {
-                return true;
-            }
-
-            return false;
         }
 
         private void RefreshUserList()
@@ -528,7 +688,39 @@ namespace finaluserandstaff
                 );
             }
 
+            // Sort by role hierarchy first (SUPER ADMIN, ADMIN, MANAGER, CASHIER)
             displayedUsers = SortUsersByRole(filtered.ToList());
+
+            // If current user is MANAGER, bring their account to the top
+            if (currentLoggedInUser.Role == "MANAGER")
+            {
+                var managerUser = displayedUsers.FirstOrDefault(u => u.Username == currentLoggedInUser.Username);
+                if (managerUser != null)
+                {
+                    displayedUsers.Remove(managerUser);
+                    displayedUsers.Insert(0, managerUser);
+                }
+            }
+            // If current user is ADMIN, bring their account to the top as well
+            else if (currentLoggedInUser.Role == "ADMIN")
+            {
+                var adminUser = displayedUsers.FirstOrDefault(u => u.Username == currentLoggedInUser.Username);
+                if (adminUser != null)
+                {
+                    displayedUsers.Remove(adminUser);
+                    displayedUsers.Insert(0, adminUser);
+                }
+            }
+            // If current user is SUPER ADMIN, bring their account to the top
+            else if (currentLoggedInUser.Role == "SUPER ADMIN")
+            {
+                var superAdminUser = displayedUsers.FirstOrDefault(u => u.Username == currentLoggedInUser.Username);
+                if (superAdminUser != null)
+                {
+                    displayedUsers.Remove(superAdminUser);
+                    displayedUsers.Insert(0, superAdminUser);
+                }
+            }
 
             foreach (var user in displayedUsers)
             {
@@ -541,6 +733,10 @@ namespace finaluserandstaff
                     user.CreatedDate.ToString("MMM dd, yyyy HH:mm")
                 );
                 dgvUsers.Rows[rowIndex].Tag = user;
+
+                // Disable status editing for users with higher or equal role
+                bool canModify = CanManageUser(user);
+                dgvUsers.Rows[rowIndex].Cells["statusColumn"].ReadOnly = !canModify;
             }
 
             if (lblUserList != null)
@@ -569,14 +765,34 @@ namespace finaluserandstaff
         {
             if (dgvUsers == null || currentLoggedInUser == null) return;
 
+            // Find the row with the current logged-in user and highlight it
             for (int i = 0; i < dgvUsers.Rows.Count; i++)
             {
                 var user = dgvUsers.Rows[i].Tag as UserData;
                 if (user != null && user.Username == currentLoggedInUser.Username)
                 {
+                    // Highlight the current user's row with a gold color
                     dgvUsers.Rows[i].DefaultCellStyle.BackColor = Color.FromArgb(255, 245, 200);
                     dgvUsers.Rows[i].DefaultCellStyle.Font = new System.Drawing.Font(dgvUsers.Font, FontStyle.Bold);
                     dgvUsers.Rows[i].DefaultCellStyle.SelectionBackColor = Color.FromArgb(228, 186, 94);
+
+                    // Also set the row's foreground color based on role
+                    if (user.Role == "SUPER ADMIN")
+                    {
+                        dgvUsers.Rows[i].DefaultCellStyle.ForeColor = Color.FromArgb(228, 186, 94);
+                    }
+                    else if (user.Role == "ADMIN")
+                    {
+                        dgvUsers.Rows[i].DefaultCellStyle.ForeColor = Color.Black;
+                    }
+                    else if (user.Role == "MANAGER")
+                    {
+                        dgvUsers.Rows[i].DefaultCellStyle.ForeColor = Color.FromArgb(33, 33, 33);
+                    }
+                    else
+                    {
+                        dgvUsers.Rows[i].DefaultCellStyle.ForeColor = Color.Black;
+                    }
                     break;
                 }
             }
@@ -589,9 +805,9 @@ namespace finaluserandstaff
                 var user = dgvUsers.Rows[e.RowIndex].Tag as UserData;
                 if (user != null)
                 {
-                    if (!CanModifyUser(user))
+                    if (!CanManageUser(user))
                     {
-                        MessageBox.Show($"You cannot change the status of {user.Role} users!",
+                        MessageBox.Show($"You cannot change the status of {user.Role} users! You can only manage users with lower role than yours.",
                             "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                         e.Cancel = true;
                     }
@@ -611,7 +827,7 @@ namespace finaluserandstaff
                     if (user != null)
                     {
                         string newStatus = dgvUsers.Rows[e.RowIndex].Cells["statusColumn"].Value?.ToString();
-                        if (!string.IsNullOrEmpty(newStatus) && user.Status != newStatus)
+                        if (!string.IsNullOrEmpty(newStatus) && user.Status != newStatus && CanManageUser(user))
                         {
                             user.Status = newStatus;
                             SaveUserToDatabase(user, false);
@@ -658,10 +874,16 @@ namespace finaluserandstaff
                             row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(60, 61, 54);
                             row.DefaultCellStyle.SelectionForeColor = Color.FromArgb(228, 186, 94);
                         }
-                        else if (user.Role == "ADMIN" || user.Role == "MANAGER")
+                        else if (user.Role == "ADMIN")
                         {
                             row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
                             row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(220, 220, 220);
+                            row.DefaultCellStyle.SelectionForeColor = Color.Black;
+                        }
+                        else if (user.Role == "MANAGER")
+                        {
+                            row.DefaultCellStyle.BackColor = Color.FromArgb(230, 240, 255);
+                            row.DefaultCellStyle.SelectionBackColor = Color.FromArgb(228, 186, 94);
                             row.DefaultCellStyle.SelectionForeColor = Color.Black;
                         }
                         else
@@ -744,6 +966,12 @@ namespace finaluserandstaff
                         }
                         MessageBox.Show($"Export successful!\nSaved to: {saveDialog.FileName}",
                             "Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        try
+                        {
+                            GlobalLogger.LogInfo("UserManagement", $"User data exported by {currentLoggedInUser.Username}");
+                        }
+                        catch { }
                     }
                     catch (Exception ex)
                     {
@@ -780,17 +1008,19 @@ namespace finaluserandstaff
                 writer.WriteLine("\\");
                 foreach (var user in displayedUsers)
                 {
-                    string rowColor = user.Role == "SUPER ADMIN" ? "#E4BA5E" : "white";
+                    string rowColor = user.Role == "SUPER ADMIN" ? "#E4BA5E" :
+                                     user.Role == "ADMIN" ? "#F8F9FA" :
+                                     user.Role == "MANAGER" ? "#E6F0FF" : "white";
                     writer.WriteLine($"<tr style='background-color:{rowColor};'>");
-                    writer.WriteLine($"<td style='font-weight:bold;'>{user.UserId}</td>");
-                    writer.WriteLine($"<td>{user.FullName}</td>");
-                    writer.WriteLine($"<td>{user.Username}</td>");
-                    writer.WriteLine($"<td>{user.Role}</td>");
-                    writer.WriteLine($"<td style='color:{(user.Status == "ACTIVE" ? "green" : "red")};font-weight:bold;'>{user.Status}</td>");
-                    writer.WriteLine($"<td>{user.CreatedDate:MMM dd, yyyy HH:mm}</td>");
-                    writer.WriteLine("</tr>");
+                    writer.WriteLine($"<td style='font-weight:bold;'>{user.UserId}  \\<td");
+                    writer.WriteLine($"<td style='font-weight:bold;'>{user.FullName}  \\<td");
+                    writer.WriteLine($"<td style='font-weight:bold;'>{user.Username}  \\<td");
+                    writer.WriteLine($"<td style='font-weight:bold;'>{user.Role}  \\<td");
+                    writer.WriteLine($"<td style='color:{(user.Status == "ACTIVE" ? "green" : "red")};font-weight:bold;'>{user.Status}  \\<td");
+                    writer.WriteLine($"<td style='font-weight:bold;'>{user.CreatedDate:MMM dd, yyyy HH:mm}  \\<td");
+                    writer.WriteLine("ÿ");
                 }
-                writer.WriteLine("</table>");
+                writer.WriteLine("</tr>");
                 writer.WriteLine($"<p>Total Users: {displayedUsers.Count}</p>");
                 writer.WriteLine("</body></html>");
             }
@@ -803,9 +1033,7 @@ namespace finaluserandstaff
                 { "SUPER ADMIN", 1 },
                 { "ADMIN", 2 },
                 { "MANAGER", 3 },
-                { "STAFF", 4 },
-                { "CASHIER", 5 },
-                { "CUSTOMER", 6 }
+                { "CASHIER", 4 }
             };
 
             return users.OrderBy(u => roleOrder.ContainsKey(u.Role) ? roleOrder[u.Role] : 99)
@@ -815,6 +1043,15 @@ namespace finaluserandstaff
         public UserData GetCurrentLoggedInUser()
         {
             return currentLoggedInUser;
+        }
+
+        public void SetCurrentLoggedInUser(UserData user)
+        {
+            currentLoggedInUser = user;
+            LoadSampleData();
+            RefreshUserList();
+            UpdateStatistics();
+            ApplyRolePermissions();
         }
 
         private void BtnManageUsers_Click(object sender, EventArgs e)
@@ -902,9 +1139,13 @@ namespace finaluserandstaff
                     {
                         row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
                     }
-                    else if (user?.Role == "ADMIN" || user?.Role == "MANAGER")
+                    else if (user?.Role == "ADMIN")
                     {
                         row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+                    }
+                    else if (user?.Role == "MANAGER")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(230, 240, 255);
                     }
                     else
                     {
@@ -919,9 +1160,13 @@ namespace finaluserandstaff
                     {
                         row.DefaultCellStyle.BackColor = Color.FromArgb(40, 41, 34);
                     }
-                    else if (user?.Role == "ADMIN" || user?.Role == "MANAGER")
+                    else if (user?.Role == "ADMIN")
                     {
                         row.DefaultCellStyle.BackColor = Color.FromArgb(248, 249, 250);
+                    }
+                    else if (user?.Role == "MANAGER")
+                    {
+                        row.DefaultCellStyle.BackColor = Color.FromArgb(230, 240, 255);
                     }
                     else
                     {

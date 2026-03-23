@@ -12,6 +12,7 @@ namespace cms.lastsuper
         private UserManagementControl parentControl;
         private UserManagementControl.UserData selectedUser;
         private UserManagementControl.UserData currentAdmin;
+        private string[] assignableRoles;
 
         public frmManageUsers(UserManagementControl control)
         {
@@ -25,13 +26,16 @@ namespace cms.lastsuper
             // Get current logged-in admin
             currentAdmin = parentControl.GetCurrentLoggedInUser();
 
-            // Change button text
-            btnAddUser.Text = "+ ADD STAFF";
-            btnEditUser.Text = "✏️ EDIT STAFF";
+            // Get assignable roles based on current user's role
+            assignableRoles = parentControl.GetAssignableRolesForCurrentUser().ToArray();
+
+            // Change button text based on role
+            btnAddUser.Text = "+ ADD USER";
+            btnEditUser.Text = "✏️ EDIT USER";
             btnDeactivateUser.Text = "🚫 DEACTIVATE";
             btnReactivateUser.Text = "🔄 REACTIVATE";
 
-            // Load users (STAFF only)
+            // Load users (only users with lower role than current user)
             LoadUsersIntoComboBox();
 
             // Wire up button events
@@ -48,12 +52,21 @@ namespace cms.lastsuper
         {
             if (parentControl != null)
             {
-                // Only show STAFF users (not other Admins)
-                var users = parentControl.GetAllUsers().Where(u => u.Role == "STAFF").ToList();
+                // Get current user's role level
+                int currentLevel = GetRoleLevel(currentAdmin.Role);
+
+                // Only show users with roles lower than current user
+                var users = parentControl.GetAllUsers()
+                    .Where(u => GetRoleLevel(u.Role) > currentLevel) // Users with lower role (higher number)
+                    .OrderBy(u => GetRoleLevel(u.Role))
+                    .ThenBy(u => u.UserId)
+                    .ToList();
+
                 cmbUsers.Items.Clear();
                 foreach (var user in users)
                 {
-                    cmbUsers.Items.Add($"{user.UserId} - {user.FullName}");
+                    string roleIcon = GetRoleIcon(user.Role);
+                    cmbUsers.Items.Add($"{roleIcon} {user.UserId} - {user.FullName} ({user.Role})");
                 }
                 if (cmbUsers.Items.Count > 0)
                 {
@@ -61,8 +74,36 @@ namespace cms.lastsuper
                 }
                 else
                 {
-                    lblUserInfo.Text = "𝐔𝐒𝐄𝐑 𝐈𝐍𝐅𝐎\n\nNo staff members found";
+                    lblUserInfo.Text = "𝐔𝐒𝐄𝐑 𝐈𝐍𝐅𝐎\n\nNo users found with lower role than yours";
                 }
+            }
+        }
+
+        private int GetRoleLevel(string role)
+        {
+            switch (role.ToUpper())
+            {
+                case "SUPER ADMIN": return 1;
+                case "ADMIN": return 2;
+                case "MANAGER": return 3;
+                case "STAFF": return 4;
+                case "CASHIER": return 5;
+                case "CUSTOMER": return 6;
+                default: return 99;
+            }
+        }
+
+        private string GetRoleIcon(string role)
+        {
+            switch (role.ToUpper())
+            {
+                case "SUPER ADMIN": return "👑";
+                case "ADMIN": return "⚙️";
+                case "MANAGER": return "📋";
+                case "STAFF": return "👤";
+                case "CASHIER": return "💰";
+                case "CUSTOMER": return "👥";
+                default: return "❓";
             }
         }
 
@@ -70,10 +111,17 @@ namespace cms.lastsuper
         {
             if (cmbUsers.SelectedIndex >= 0 && parentControl != null)
             {
-                var staffUsers = parentControl.GetAllUsers().Where(u => u.Role == "STAFF").ToList();
-                if (cmbUsers.SelectedIndex < staffUsers.Count)
+                // Get users with lower role than current user
+                int currentLevel = GetRoleLevel(currentAdmin.Role);
+                var manageableUsers = parentControl.GetAllUsers()
+                    .Where(u => GetRoleLevel(u.Role) > currentLevel)
+                    .OrderBy(u => GetRoleLevel(u.Role))
+                    .ThenBy(u => u.UserId)
+                    .ToList();
+
+                if (cmbUsers.SelectedIndex < manageableUsers.Count)
                 {
-                    selectedUser = staffUsers[cmbUsers.SelectedIndex];
+                    selectedUser = manageableUsers[cmbUsers.SelectedIndex];
 
                     // Style the label
                     lblUserInfo.Font = new System.Drawing.Font("Segoe UI", 11, FontStyle.Regular);
@@ -82,14 +130,15 @@ namespace cms.lastsuper
                     lblUserInfo.Padding = new Padding(5);
 
                     string statusDisplay = selectedUser.Status == "ACTIVE" ? "🟢 ACTIVE" : "🔴 INACTIVE";
+                    string roleIcon = GetRoleIcon(selectedUser.Role);
 
-                    // Using Unicode bold characters for labels - FIXED property names
+                    // Using Unicode bold characters for labels
                     lblUserInfo.Text =
                         $"𝐔𝐒𝐄𝐑 𝐈𝐍𝐅𝐎\n\n" +
                         $"𝐈𝐃          : {selectedUser.UserId}\n" +
                         $"𝐔𝐬𝐞𝐫𝐧𝐚𝐦𝐞    : {selectedUser.Username}\n" +
                         $"𝐅𝐮𝐥𝐥 𝐍𝐚𝐦𝐞 : {selectedUser.FullName}\n" +
-                        $"𝐑𝐨𝐥𝐞       : {selectedUser.Role}\n" +
+                        $"𝐑𝐨𝐥𝐞       : {roleIcon} {selectedUser.Role}\n" +
                         $"𝐒𝐭𝐚𝐭𝐮𝐬     : {statusDisplay}\n" +
                         $"𝐂𝐫𝐞𝐚𝐭𝐞𝐝    : {selectedUser.CreatedDate:MMM dd, yyyy HH:mm}";
 
@@ -123,17 +172,25 @@ namespace cms.lastsuper
 
         private void ShowAddUserDialog()
         {
+            // Check if user can add users (has assignable roles)
+            if (assignableRoles.Length == 0)
+            {
+                MessageBox.Show("You don't have permission to add new users. Your role doesn't allow creating users with lower roles.",
+                    "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             // Authorization check
             if (!ConfirmAdminPassword())
             {
-                MessageBox.Show("Authorization required to add new staff.", "Access Denied",
+                MessageBox.Show("Authorization required to add new users.", "Access Denied",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             Form addForm = new Form();
-            addForm.Text = "Add New Staff";
-            addForm.Size = new Size(550, 550);
+            addForm.Text = "Add New User";
+            addForm.Size = new Size(600, 650);
             addForm.StartPosition = FormStartPosition.CenterParent;
             addForm.FormBorderStyle = FormBorderStyle.FixedDialog;
             addForm.BackColor = Color.White;
@@ -157,11 +214,29 @@ namespace cms.lastsuper
             Label lblMiddleInitial = new Label { Text = "M.I.:", Location = new Point(30, 150), AutoSize = true, Font = new System.Drawing.Font("Segoe UI", 10) };
             TextBox txtMiddleInitial = new TextBox { Location = new Point(150, 147), Size = new Size(60, 27), Font = new System.Drawing.Font("Segoe UI", 10), MaxLength = 1 };
 
+            // Role Selection - Only show roles lower than current user
+            Label lblRole = new Label { Text = "Role:", Location = new Point(30, 190), AutoSize = true, Font = new System.Drawing.Font("Segoe UI", 10) };
+            ComboBox cmbRole = new ComboBox
+            {
+                Location = new Point(150, 187),
+                Size = new Size(200, 27),
+                Font = new System.Drawing.Font("Segoe UI", 10),
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+
+            // Add assignable roles with icons
+            foreach (var role in assignableRoles)
+            {
+                string roleIcon = GetRoleIcon(role);
+                cmbRole.Items.Add($"{roleIcon} {role}");
+            }
+            if (cmbRole.Items.Count > 0) cmbRole.SelectedIndex = 0;
+
             // Note about password
             Label lblPasswordNote = new Label
             {
                 Text = "⚠️ Default password will be set to: MatchPoint123!\n   User must change password on first login.",
-                Location = new Point(30, 200),
+                Location = new Point(30, 240),
                 Size = new Size(470, 45),
                 Font = new System.Drawing.Font("Segoe UI", 9),
                 ForeColor = Color.FromArgb(108, 117, 125),
@@ -171,11 +246,11 @@ namespace cms.lastsuper
             // Buttons
             Button btnSave = new Button
             {
-                Text = "CREATE STAFF",
+                Text = "CREATE USER",
                 BackColor = Color.FromArgb(46, 184, 92),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(150, 280),
+                Location = new Point(150, 320),
                 Size = new Size(140, 40),
                 Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
                 Cursor = Cursors.Hand
@@ -187,14 +262,14 @@ namespace cms.lastsuper
                 BackColor = Color.FromArgb(108, 117, 125),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(310, 280),
+                Location = new Point(310, 320),
                 Size = new Size(140, 40),
                 Font = new System.Drawing.Font("Segoe UI", 10),
                 Cursor = Cursors.Hand
             };
             btnCancel.Click += (s, ev) => addForm.Close();
 
-            // Real-time validation for name fields (no special characters)
+            // Real-time validation for name fields
             void AddNameValidation(TextBox textBox, Label label)
             {
                 textBox.TextChanged += (s, ev) =>
@@ -265,7 +340,7 @@ namespace cms.lastsuper
                     return;
                 }
 
-                // Validate Middle Initial (optional, but if entered must be a single letter)
+                // Validate Middle Initial (optional)
                 string middleInitial = txtMiddleInitial.Text.Trim();
                 if (!string.IsNullOrEmpty(middleInitial))
                 {
@@ -293,7 +368,12 @@ namespace cms.lastsuper
                     return;
                 }
 
-                // Build Full Name: Last, First M.I.
+                // Get selected role (remove icon)
+                string selectedRole = cmbRole.SelectedItem.ToString();
+                int spaceIndex = selectedRole.IndexOf(' ');
+                if (spaceIndex > 0) selectedRole = selectedRole.Substring(spaceIndex + 1);
+
+                // Build Full Name
                 string fullName = $"{txtLastName.Text.Trim()}, {txtFirstName.Text.Trim()}";
                 if (!string.IsNullOrEmpty(middleInitial))
                 {
@@ -304,20 +384,21 @@ namespace cms.lastsuper
 
                 var newUser = new UserManagementControl.UserData
                 {
-                    UserId = GenerateNewUserId(), // Changed from ID to UserId
+                    UserId = GenerateNewUserId(selectedRole),
                     Username = txtUsername.Text.Trim(),
                     FullName = fullName,
-                    Role = "STAFF",
+                    Role = selectedRole,
                     Status = "ACTIVE",
                     Password = defaultPassword,
-                    CreatedDate = DateTime.Now // Changed from LastLogin to CreatedDate
+                    CreatedDate = DateTime.Now
                 };
 
                 parentControl.AddUser(newUser);
 
-                MessageBox.Show($"Staff {newUser.Username} created successfully!\n\n" +
+                MessageBox.Show($"User {newUser.Username} created successfully!\n\n" +
                     $"ID: {newUser.UserId}\n" +
                     $"Name: {fullName}\n" +
+                    $"Role: {selectedRole}\n" +
                     $"Default Password: {defaultPassword}\n\n" +
                     $"Please inform the user to change their password on first login.",
                     "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -331,6 +412,7 @@ namespace cms.lastsuper
                 lblLastName, txtLastName,
                 lblFirstName, txtFirstName,
                 lblMiddleInitial, txtMiddleInitial,
+                lblRole, cmbRole,
                 lblPasswordNote,
                 btnSave, btnCancel
             });
@@ -342,27 +424,35 @@ namespace cms.lastsuper
         {
             if (selectedUser == null)
             {
-                MessageBox.Show("Please select a staff member first.", "No Selection",
+                MessageBox.Show("Please select a user first.", "No Selection",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check if user can edit this user
+            if (GetRoleLevel(selectedUser.Role) <= GetRoleLevel(currentAdmin.Role))
+            {
+                MessageBox.Show($"You cannot edit {selectedUser.Role} users. You can only edit users with lower role than yours.",
+                    "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             // Authorization check
             if (!ConfirmAdminPassword())
             {
-                MessageBox.Show("Authorization required to edit staff.", "Access Denied",
+                MessageBox.Show("Authorization required to edit user.", "Access Denied",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             Form editForm = new Form();
-            editForm.Text = $"Edit Staff - {selectedUser.Username}";
-            editForm.Size = new Size(550, 580);
+            editForm.Text = $"Edit User - {selectedUser.Username}";
+            editForm.Size = new Size(600, 650);
             editForm.StartPosition = FormStartPosition.CenterParent;
             editForm.FormBorderStyle = FormBorderStyle.FixedDialog;
             editForm.BackColor = Color.White;
 
-            // Parse existing full name to get components
+            // Parse existing full name
             string lastName = "";
             string firstName = "";
             string middleInitial = "";
@@ -374,12 +464,11 @@ namespace cms.lastsuper
                 lastName = parts[0].Trim();
 
                 string remaining = parts[1].Trim();
-                // Check if there's a middle initial (ends with dot)
                 int lastSpaceIndex = remaining.LastIndexOf(' ');
                 if (lastSpaceIndex > 0 && remaining.EndsWith("."))
                 {
                     firstName = remaining.Substring(0, lastSpaceIndex).Trim();
-                    middleInitial = remaining.Substring(lastSpaceIndex + 1).Trim();
+                    middleInitial = remaining.Substring(lastSpaceIndex + 1).Trim().Replace(".", "");
                 }
                 else
                 {
@@ -387,22 +476,14 @@ namespace cms.lastsuper
                     middleInitial = "";
                 }
             }
-            else
-            {
-                // Fallback: if format is different, just use as is
-                firstName = fullName;
-            }
 
-            // Store original values to detect changes
-            string originalUsername = selectedUser.Username;
             string originalLastName = lastName;
             string originalFirstName = firstName;
             string originalMiddleInitial = middleInitial;
-            string originalPassword = selectedUser.Password;
             bool passwordReset = false;
             bool isSaved = false;
 
-            // User ID (read-only) - Changed from ID to UserId
+            // User ID (read-only)
             Label lblIDTitle = new Label
             {
                 Text = "User ID:",
@@ -482,23 +563,40 @@ namespace cms.lastsuper
             {
                 Location = new Point(150, 177),
                 Size = new Size(60, 27),
-                Text = middleInitial.Replace(".", ""),
+                Text = middleInitial,
                 Font = new System.Drawing.Font("Segoe UI", 10),
                 MaxLength = 1
+            };
+
+            // Role (read-only display - cannot change role in edit)
+            Label lblRole = new Label
+            {
+                Text = "Role:",
+                Location = new Point(30, 220),
+                AutoSize = true,
+                Font = new System.Drawing.Font("Segoe UI", 10)
+            };
+            Label lblRoleValue = new Label
+            {
+                Text = $"{GetRoleIcon(selectedUser.Role)} {selectedUser.Role}",
+                Location = new Point(150, 220),
+                AutoSize = true,
+                Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.FromArgb(79, 70, 229)
             };
 
             // Status (read-only display)
             Label lblStatus = new Label
             {
                 Text = "Status:",
-                Location = new Point(30, 220),
+                Location = new Point(30, 260),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10)
             };
             Label lblStatusValue = new Label
             {
                 Text = selectedUser.Status == "ACTIVE" ? "🟢 ACTIVE" : "🔴 INACTIVE",
-                Location = new Point(150, 220),
+                Location = new Point(150, 260),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10, selectedUser.Status == "ACTIVE" ? FontStyle.Bold : FontStyle.Regular),
                 ForeColor = selectedUser.Status == "ACTIVE" ? Color.Green : Color.Red
@@ -508,7 +606,7 @@ namespace cms.lastsuper
             Label lblSeparator = new Label
             {
                 Text = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-                Location = new Point(30, 260),
+                Location = new Point(30, 300),
                 AutoSize = true,
                 ForeColor = Color.Gray,
                 Font = new System.Drawing.Font("Segoe UI", 9)
@@ -518,7 +616,7 @@ namespace cms.lastsuper
             Label lblResetTitle = new Label
             {
                 Text = "SECURITY",
-                Location = new Point(30, 290),
+                Location = new Point(30, 330),
                 AutoSize = true,
                 Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(108, 117, 125)
@@ -530,7 +628,7 @@ namespace cms.lastsuper
                 BackColor = Color.FromArgb(108, 117, 125),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(150, 320),
+                Location = new Point(150, 360),
                 Size = new Size(200, 45),
                 Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
                 Cursor = Cursors.Hand
@@ -543,7 +641,7 @@ namespace cms.lastsuper
                 BackColor = Color.FromArgb(23, 162, 184),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(150, 400),
+                Location = new Point(150, 440),
                 Size = new Size(140, 40),
                 Font = new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold),
                 Cursor = Cursors.Hand
@@ -555,7 +653,7 @@ namespace cms.lastsuper
                 BackColor = Color.FromArgb(108, 117, 125),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
-                Location = new Point(310, 400),
+                Location = new Point(310, 440),
                 Size = new Size(140, 40),
                 Font = new System.Drawing.Font("Segoe UI", 10),
                 Cursor = Cursors.Hand
@@ -680,12 +778,12 @@ namespace cms.lastsuper
 
                 if (passwordReset)
                 {
-                    MessageBox.Show($"Staff {selectedUser.Username} updated successfully!\n\nPassword has been reset to: MatchPoint123!",
+                    MessageBox.Show($"User {selectedUser.Username} updated successfully!\n\nPassword has been reset to: MatchPoint123!",
                         "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show($"Staff {selectedUser.Username} updated successfully!",
+                    MessageBox.Show($"User {selectedUser.Username} updated successfully!",
                         "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
 
@@ -766,6 +864,7 @@ namespace cms.lastsuper
                 lblLastName, txtLastName,
                 lblFirstName, txtFirstName,
                 lblMiddleInitial, txtMiddleInitial,
+                lblRole, lblRoleValue,
                 lblStatus, lblStatusValue,
                 lblSeparator,
                 lblResetTitle, btnResetPassword,
@@ -779,7 +878,7 @@ namespace cms.lastsuper
         {
             if (selectedUser == null)
             {
-                MessageBox.Show("Please select a staff member first.", "No Selection",
+                MessageBox.Show("Please select a user first.", "No Selection",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -792,17 +891,25 @@ namespace cms.lastsuper
                 return;
             }
 
+            // Check permission
+            if (GetRoleLevel(selectedUser.Role) <= GetRoleLevel(currentAdmin.Role))
+            {
+                MessageBox.Show($"You cannot deactivate {selectedUser.Role} users. You can only manage users with lower role than yours.",
+                    "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             // Authorization check
             if (!ConfirmAdminPassword())
             {
-                MessageBox.Show("Authorization required to deactivate staff.", "Access Denied",
+                MessageBox.Show("Authorization required to deactivate user.", "Access Denied",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (selectedUser.Status == "INACTIVE")
             {
-                MessageBox.Show("Staff member is already deactivated.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("User is already deactivated.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -813,7 +920,7 @@ namespace cms.lastsuper
             {
                 selectedUser.Status = "INACTIVE";
                 parentControl.UpdateUser(selectedUser);
-                MessageBox.Show($"Staff {selectedUser.Username} deactivated.", "Success",
+                MessageBox.Show($"User {selectedUser.Username} deactivated.", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadUsersIntoComboBox();
             }
@@ -823,22 +930,30 @@ namespace cms.lastsuper
         {
             if (selectedUser == null)
             {
-                MessageBox.Show("Please select a staff member first.", "No Selection",
+                MessageBox.Show("Please select a user first.", "No Selection",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check permission
+            if (GetRoleLevel(selectedUser.Role) <= GetRoleLevel(currentAdmin.Role))
+            {
+                MessageBox.Show($"You cannot reactivate {selectedUser.Role} users. You can only manage users with lower role than yours.",
+                    "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             // Authorization check
             if (!ConfirmAdminPassword())
             {
-                MessageBox.Show("Authorization required to reactivate staff.", "Access Denied",
+                MessageBox.Show("Authorization required to reactivate user.", "Access Denied",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             if (selectedUser.Status == "ACTIVE")
             {
-                MessageBox.Show("Staff member is already active.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("User is already active.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -849,17 +964,28 @@ namespace cms.lastsuper
             {
                 selectedUser.Status = "ACTIVE";
                 parentControl.UpdateUser(selectedUser);
-                MessageBox.Show($"Staff {selectedUser.Username} reactivated.", "Success",
+                MessageBox.Show($"User {selectedUser.Username} reactivated.", "Success",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 LoadUsersIntoComboBox();
             }
         }
 
-        private string GenerateNewUserId()
+        private string GenerateNewUserId(string role)
         {
             var users = parentControl.GetAllUsers();
             int maxNumber = 0;
-            string prefix = "ST";
+            string prefix = "";
+
+            switch (role.ToUpper())
+            {
+                case "SUPER ADMIN": prefix = "SA"; break;
+                case "ADMIN": prefix = "AD"; break;
+                case "MANAGER": prefix = "MG"; break;
+                case "STAFF": prefix = "ST"; break;
+                case "CASHIER": prefix = "CA"; break;
+                case "CUSTOMER": prefix = "CU"; break;
+                default: prefix = "US"; break;
+            }
 
             foreach (var user in users.Where(u => u.UserId.StartsWith(prefix)))
             {

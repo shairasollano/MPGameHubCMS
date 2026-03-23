@@ -5,6 +5,8 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Windows.Forms;
 using Font = System.Drawing.Font;
@@ -13,25 +15,47 @@ namespace cms
 {
     public partial class Activitylogs : UserControl
     {
-        // Database connection
+        // ==============================================
+        // DATABASE CONFIGURATION
+        // ==============================================
         private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
         private MySqlConnection connection;
 
-        // Singleton instance for easy access from other forms
+        // ==============================================
+        // SINGLETON INSTANCE
+        // ==============================================
         private static Activitylogs _instance;
+        private static readonly object _lock = new object();
+
         public static Activitylogs Instance
         {
             get
             {
-                if (_instance == null)
+                if (_instance == null || _instance.IsDisposed)
                 {
-                    _instance = new Activitylogs();
+                    lock (_lock)
+                    {
+                        if (_instance == null || _instance.IsDisposed)
+                        {
+                            _instance = new Activitylogs();
+                        }
+                    }
                 }
                 return _instance;
             }
         }
 
-        // Log entry class
+        /// <summary>
+        /// Ensures the Activity Logs instance is created (for initialization)
+        /// </summary>
+        public static void EnsureInitialized()
+        {
+            var instance = Instance; // This will create it if needed
+        }
+
+        // ==============================================
+        // LOG ENTRY MODEL
+        // ==============================================
         public class LogEntry
         {
             public int LogId { get; set; }
@@ -43,48 +67,42 @@ namespace cms
             public string Severity { get; set; }
             public string IPAddress { get; set; }
             public string Details { get; set; }
-            public string Module { get; set; } // GameRates, GameEquipment, etc.
+            public string Module { get; set; }
         }
 
+        // Data storage
         private List<LogEntry> logEntries = new List<LogEntry>();
         private List<LogEntry> filteredLogs = new List<LogEntry>();
 
+        // ==============================================
+        // CONSTRUCTOR
+        // ==============================================
         public Activitylogs()
         {
             InitializeComponent();
             _instance = this;
 
-            // Initialize database
             InitializeDatabase();
-
-            // Set up the control
             SetupControl();
-
-            // Set up event handlers
             SetupEventHandlers();
-
-            // Initial load
             RefreshLogs();
         }
 
+        // ==============================================
+        // DATABASE INITIALIZATION
+        // ==============================================
         private void InitializeDatabase()
         {
             try
             {
-                // First, ensure database exists
                 CreateDatabaseIfNotExists();
-
-                // Initialize connection
                 connection = new MySqlConnection(connectionString);
-
-                // Create activity_logs table if it doesn't exist
                 CreateTablesIfNotExist();
-
-                // Load data from database
                 LoadDataFromDatabase();
             }
             catch (Exception ex)
             {
+                LogError("System", "ActivityLogs", $"Database initialization error: {ex.Message}");
                 MessageBox.Show($"Database initialization error: {ex.Message}\n\nUsing default sample data.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 LoadSampleData();
@@ -97,15 +115,12 @@ namespace cms
             using (MySqlConnection tempConn = new MySqlConnection(createDbConnectionString))
             {
                 tempConn.Open();
-
-                // Check if database exists
                 string checkDbQuery = "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'matchpoint_db'";
                 MySqlCommand checkCmd = new MySqlCommand(checkDbQuery, tempConn);
                 object result = checkCmd.ExecuteScalar();
 
                 if (result == null)
                 {
-                    // Create database
                     string createDbQuery = "CREATE DATABASE matchpoint_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
                     MySqlCommand createCmd = new MySqlCommand(createDbQuery, tempConn);
                     createCmd.ExecuteNonQuery();
@@ -119,7 +134,6 @@ namespace cms
             {
                 connection.Open();
 
-                // Create activity_logs table with module column
                 string createLogsTable = @"
                     CREATE TABLE IF NOT EXISTS activity_logs (
                         log_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -142,7 +156,7 @@ namespace cms
 
                 new MySqlCommand(createLogsTable, connection).ExecuteNonQuery();
 
-                // Check if module column exists (for backward compatibility)
+                // Add module column if it doesn't exist (backward compatibility)
                 try
                 {
                     string checkColumnQuery = "SELECT module FROM activity_logs LIMIT 1";
@@ -150,12 +164,11 @@ namespace cms
                 }
                 catch
                 {
-                    // Column doesn't exist, add it
                     string addColumnQuery = "ALTER TABLE activity_logs ADD COLUMN module VARCHAR(50) DEFAULT 'System' AFTER details";
                     new MySqlCommand(addColumnQuery, connection).ExecuteNonQuery();
                 }
 
-                // Check if we need to insert sample data
+                // Insert sample data if table is empty
                 string checkCount = "SELECT COUNT(*) FROM activity_logs";
                 int count = Convert.ToInt32(new MySqlCommand(checkCount, connection).ExecuteScalar());
 
@@ -266,7 +279,6 @@ namespace cms
                     }
                 }
 
-                // Sort by timestamp (newest first)
                 logEntries = logEntries.OrderByDescending(l => l.Timestamp).ToList();
             }
             catch (Exception ex)
@@ -329,47 +341,40 @@ namespace cms
         {
             switch (activity)
             {
-                // Auth activities
                 case "Login": return $"User '{user}' logged into the system";
                 case "Logout": return $"User '{user}' logged out of the system";
-
-                // User management
                 case "User Created": return $"New user account '{user}' was created";
                 case "User Updated": return $"User '{user}' profile was updated";
                 case "User Deleted": return $"User '{user}' was deleted from the system";
-
-                // Game Rates activities
                 case "Game Rate Added": return $"New game rate was added by '{user}'";
                 case "Game Rate Updated": return $"Game rate was updated by '{user}'";
                 case "Game Rate Deleted": return $"Game rate was deleted by '{user}'";
                 case "Game Rate Status Changed": return $"Game rate status was changed by '{user}'";
-
-                // Equipment activities
                 case "Equipment Added": return $"New equipment was added by '{user}'";
                 case "Equipment Updated": return $"Equipment was updated by '{user}'";
                 case "Equipment Deleted": return $"Equipment was deleted by '{user}'";
                 case "Equipment Checked Out": return $"Equipment was checked out by '{user}'";
                 case "Equipment Checked In": return $"Equipment was checked in by '{user}'";
                 case "Equipment Maintenance": return $"Equipment maintenance was performed by '{user}'";
-
-                // System activities
                 case "Settings Updated": return $"System settings were updated by '{user}'";
                 case "Backup Created": return $"Database backup was created by '{user}'";
                 case "Database Restored": return $"Database was restored by '{user}'";
                 case "Payment Processed": return $"Payment transaction processed by '{user}'";
                 case "System Error": return $"System error occurred, handled by '{user}'";
-
                 default: return $"Activity '{activity}' performed by '{user}' in {module}";
             }
         }
 
+        // ==============================================
+        // UI SETUP
+        // ==============================================
         private void SetupControl()
         {
             // Set default dates
             startDatePicker.Value = DateTime.Today.AddDays(-7);
             endDatePicker.Value = DateTime.Today;
 
-            // Set default filter values
+            // Setup activity filter combo
             activityCombo.Items.Clear();
             activityCombo.Items.Add("All");
             activityCombo.Items.Add("Login");
@@ -394,6 +399,7 @@ namespace cms
             activityCombo.Items.Add("System Error");
             activityCombo.SelectedIndex = 0;
 
+            // Setup severity filter combo
             severityCombo.Items.Clear();
             severityCombo.Items.Add("All");
             severityCombo.Items.Add("Info");
@@ -402,6 +408,7 @@ namespace cms
             severityCombo.Items.Add("Critical");
             severityCombo.SelectedIndex = 0;
 
+            // Setup module filter combo
             moduleCombo.Items.Clear();
             moduleCombo.Items.Add("All");
             moduleCombo.Items.Add("System");
@@ -411,10 +418,7 @@ namespace cms
             moduleCombo.Items.Add("Payments");
             moduleCombo.SelectedIndex = 0;
 
-            // Set placeholder text
             SetupPlaceholderText();
-
-            // Disable delete buttons initially
             deleteSelectedButton.Enabled = false;
         }
 
@@ -433,6 +437,7 @@ namespace cms
             userLabel.Cursor = Cursors.Hand;
         }
 
+        // Event handlers for user textbox
         private void UserTextBox_Enter(object sender, EventArgs e)
         {
             if (userTextBox.Text == "Enter username...")
@@ -454,19 +459,16 @@ namespace cms
         private void UserLabel_Click(object sender, EventArgs e)
         {
             userTextBox.Focus();
-
             if (userTextBox.Text == "Enter username...")
             {
                 userTextBox.Text = "";
                 userTextBox.ForeColor = Color.FromArgb(70, 70, 70);
             }
-
             userTextBox.SelectAll();
         }
 
         private void SetupEventHandlers()
         {
-            // Button click events
             refreshButton.Click += refreshButton_Click;
             searchButton.Click += searchButton_Click;
             clearButton.Click += clearButton_Click;
@@ -474,20 +476,20 @@ namespace cms
             deleteAllButton.Click += deleteAllButton_Click;
             exportButton.Click += exportButton_Click;
 
-            // Date picker events
             startDatePicker.ValueChanged += FilterChanged;
             endDatePicker.ValueChanged += FilterChanged;
-
-            // Combo box events
             activityCombo.SelectedIndexChanged += FilterChanged;
             severityCombo.SelectedIndexChanged += FilterChanged;
             moduleCombo.SelectedIndexChanged += FilterChanged;
 
-            // DataGridView events
             logsDataGridView.CellFormatting += logsDataGridView_CellFormatting;
             logsDataGridView.SelectionChanged += logsDataGridView_SelectionChanged;
+            logsDataGridView.CellDoubleClick += logsDataGridView_CellDoubleClick;
         }
 
+        // ==============================================
+        // FILTERING AND DISPLAY
+        // ==============================================
         private void RefreshLogs()
         {
             ApplyFilters();
@@ -499,14 +501,10 @@ namespace cms
         {
             filteredLogs = logEntries.ToList();
 
-            // Apply date filter
             DateTime startDate = startDatePicker.Value.Date;
             DateTime endDate = endDatePicker.Value.Date.AddDays(1).AddSeconds(-1);
+            filteredLogs = filteredLogs.Where(log => log.Timestamp >= startDate && log.Timestamp <= endDate).ToList();
 
-            filteredLogs = filteredLogs.Where(log =>
-                log.Timestamp >= startDate && log.Timestamp <= endDate).ToList();
-
-            // Apply user filter
             string searchText = userTextBox.Text;
             if (searchText != "Enter username..." && !string.IsNullOrWhiteSpace(searchText))
             {
@@ -516,28 +514,24 @@ namespace cms
                     log.UserId.ToLower().Contains(searchTerm)).ToList();
             }
 
-            // Apply activity type filter
             if (activityCombo.SelectedIndex > 0)
             {
                 string selectedActivity = activityCombo.SelectedItem.ToString();
                 filteredLogs = filteredLogs.Where(log => log.ActivityType == selectedActivity).ToList();
             }
 
-            // Apply severity filter
             if (severityCombo.SelectedIndex > 0)
             {
                 string selectedSeverity = severityCombo.SelectedItem.ToString();
                 filteredLogs = filteredLogs.Where(log => log.Severity == selectedSeverity).ToList();
             }
 
-            // Apply module filter
             if (moduleCombo.SelectedIndex > 0)
             {
                 string selectedModule = moduleCombo.SelectedItem.ToString();
                 filteredLogs = filteredLogs.Where(log => log.Module == selectedModule).ToList();
             }
 
-            // Sort by timestamp (newest first)
             filteredLogs = filteredLogs.OrderByDescending(l => l.Timestamp).ToList();
         }
 
@@ -545,90 +539,53 @@ namespace cms
         {
             DateTime today = DateTime.Today;
 
-            int totalLogs = filteredLogs.Count;
-            int todayLogs = filteredLogs.Count(l => l.Timestamp.Date == today);
-            int distinctUsers = filteredLogs.Select(l => l.Username).Distinct().Count();
-            int activeToday = filteredLogs
+            totalLogsValue.Text = filteredLogs.Count.ToString();
+            todayLogsValue.Text = filteredLogs.Count(l => l.Timestamp.Date == today).ToString();
+            distinctUsersValue.Text = filteredLogs.Select(l => l.Username).Distinct().Count().ToString();
+            activeTodayValue.Text = filteredLogs
                 .Where(l => l.Timestamp.Date == today && l.ActivityType == "Login")
                 .Select(l => l.Username)
                 .Distinct()
-                .Count();
+                .Count().ToString();
 
-            int infoCount = filteredLogs.Count(l => l.Severity == "Info");
-            int warningCount = filteredLogs.Count(l => l.Severity == "Warning");
-            int errorCount = filteredLogs.Count(l => l.Severity == "Error");
-            int criticalCount = filteredLogs.Count(l => l.Severity == "Critical");
+            infoValue.Text = filteredLogs.Count(l => l.Severity == "Info").ToString();
+            warningValue.Text = filteredLogs.Count(l => l.Severity == "Warning").ToString();
+            errorValue.Text = filteredLogs.Count(l => l.Severity == "Error").ToString();
+            criticalValue.Text = filteredLogs.Count(l => l.Severity == "Critical").ToString();
 
-            // GameRates stats
-            int gameRateChanges = filteredLogs.Count(l =>
+            gameRateChangesValue.Text = filteredLogs.Count(l =>
                 l.Module == "GameRates" &&
                 (l.ActivityType.Contains("Added") || l.ActivityType.Contains("Updated") ||
-                 l.ActivityType.Contains("Deleted") || l.ActivityType.Contains("Status")));
+                 l.ActivityType.Contains("Deleted") || l.ActivityType.Contains("Status"))).ToString();
 
-            // GameEquipment stats
-            int equipmentChanges = filteredLogs.Count(l =>
+            equipmentChangesValue.Text = filteredLogs.Count(l =>
                 l.Module == "GameEquipment" &&
                 (l.ActivityType.Contains("Added") || l.ActivityType.Contains("Updated") ||
-                 l.ActivityType.Contains("Deleted") || l.ActivityType.Contains("Checked")));
-
-            // Update labels
-            totalLogsValue.Text = totalLogs.ToString();
-            todayLogsValue.Text = todayLogs.ToString();
-            distinctUsersValue.Text = distinctUsers.ToString();
-            activeTodayValue.Text = activeToday.ToString();
-            infoValue.Text = infoCount.ToString();
-            warningValue.Text = warningCount.ToString();
-            errorValue.Text = errorCount.ToString();
-            criticalValue.Text = criticalCount.ToString();
-
-            // Module-specific stats
-            gameRateChangesValue.Text = gameRateChanges.ToString();
-            equipmentChangesValue.Text = equipmentChanges.ToString();
+                 l.ActivityType.Contains("Deleted") || l.ActivityType.Contains("Checked"))).ToString();
         }
 
         private void UpdateDataGridView()
         {
-            // Clear existing rows
             logsDataGridView.Rows.Clear();
 
-            // Add filtered logs to DataGridView
             foreach (var log in filteredLogs)
             {
                 string icon = GetSeverityIcon(log.Severity);
-
-                // Format timestamp to show both date and time
                 string formattedTimestamp = log.Timestamp.ToString("MM/dd/yyyy HH:mm:ss");
-
-                // Truncate description if too long
-                string description = log.Description;
-                if (description.Length > 50)
-                    description = description.Substring(0, 47) + "...";
+                string description = log.Description.Length > 50 ? log.Description.Substring(0, 47) + "..." : log.Description;
 
                 int rowIndex = logsDataGridView.Rows.Add(
-                    icon,
-                    formattedTimestamp,
-                    log.Username,
-                    log.ActivityType,
-                    description,
-                    log.Severity,
-                    log.Module
+                    icon, formattedTimestamp, log.Username, log.ActivityType,
+                    description, log.Severity, log.Module
                 );
-
-                // Store the LogId in the row's Tag property
                 logsDataGridView.Rows[rowIndex].Tag = log.LogId;
             }
 
-            // Update title with count - matching Game Rates style
             titleLabel.Text = $"Activity Logs ({filteredLogs.Count} records)";
-
-            // Auto-resize columns to fit content
             logsDataGridView.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
 
-            // Set the description column to fill remaining space
             if (logsDataGridView.Columns["descriptionColumn"] != null)
-            {
                 logsDataGridView.Columns["descriptionColumn"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            }
         }
 
         private string GetSeverityIcon(string severity)
@@ -652,6 +609,89 @@ namespace cms
                 case "Error": return Color.FromArgb(220, 53, 69);
                 case "Critical": return Color.FromArgb(156, 39, 176);
                 default: return Color.FromArgb(108, 117, 125);
+            }
+        }
+
+        // ==============================================
+        // LOGGING METHODS (PUBLIC API)
+        // ==============================================
+
+        public void LogGameRateActivity(string username, string action, string rateName, string details = "")
+        {
+            string activityType = $"Game Rate {action}";
+            string description = $"Game rate '{rateName}' was {action.ToLower()} by '{username}'";
+            if (!string.IsNullOrEmpty(details))
+                description += $" - {details}";
+
+            AddLogEntry(username, activityType, description, "Info", "GameRates");
+        }
+
+        public void LogEquipmentActivity(string username, string action, string equipmentName, string details = "")
+        {
+            string activityType = $"Equipment {action}";
+            string description = $"Equipment '{equipmentName}' was {action.ToLower()} by '{username}'";
+            if (!string.IsNullOrEmpty(details))
+                description += $" - {details}";
+
+            AddLogEntry(username, activityType, description, "Info", "GameEquipment");
+        }
+
+        public void LogEquipmentCheckout(string username, string equipmentName, int quantity, string checkedOutBy)
+        {
+            string description = $"{quantity}x '{equipmentName}' checked out to {checkedOutBy} by '{username}'";
+            AddLogEntry(username, "Equipment Checked Out", description, "Info", "GameEquipment");
+        }
+
+        public void LogEquipmentCheckin(string username, string equipmentName, int quantity, string returnedBy)
+        {
+            string description = $"{quantity}x '{equipmentName}' checked in from {returnedBy} by '{username}'";
+            AddLogEntry(username, "Equipment Checked In", description, "Info", "GameEquipment");
+        }
+
+        public void LogEquipmentMaintenance(string username, string equipmentName, string condition)
+        {
+            string description = $"Maintenance completed for '{equipmentName}', new condition: {condition}";
+            AddLogEntry(username, "Equipment Maintenance", description, "Info", "GameEquipment");
+        }
+
+        public void LogWarning(string username, string module, string warning)
+        {
+            AddLogEntry(username, "Warning", warning, "Warning", module);
+        }
+
+        public void LogError(string username, string module, string error, string details = "")
+        {
+            string description = error;
+            if (!string.IsNullOrEmpty(details))
+                description += $" - {details}";
+
+            AddLogEntry(username, "System Error", description, "Error", module);
+        }
+
+        public void AddLogEntry(string username, string activityType, string description, string severity = "Info", string module = "System")
+        {
+            int newLogId = logEntries.Count > 0 ? logEntries.Max(l => l.LogId) + 1 : 1;
+
+            LogEntry newLog = new LogEntry
+            {
+                LogId = newLogId,
+                Timestamp = DateTime.Now,
+                UserId = GetUserIdFromUsername(username),
+                Username = username,
+                ActivityType = activityType,
+                Description = description,
+                Severity = severity,
+                IPAddress = GetLocalIPAddress(),
+                Details = $"Module: {module}",
+                Module = module
+            };
+
+            AddLogToDatabase(newLog);
+            logEntries.Insert(0, newLog);
+
+            if (this.Visible)
+            {
+                RefreshLogs();
             }
         }
 
@@ -690,120 +730,6 @@ namespace cms
             }
         }
 
-        // ==============================================
-        // PUBLIC METHODS FOR OTHER MODULES TO CALL
-        // ==============================================
-
-        /// <summary>
-        /// Add a log entry for GameRates module
-        /// </summary>
-        public void LogGameRateActivity(string username, string action, string rateName, string details = "")
-        {
-            string activityType = $"Game Rate {action}";
-            string description = $"Game rate '{rateName}' was {action.ToLower()} by '{username}'";
-            if (!string.IsNullOrEmpty(details))
-                description += $" - {details}";
-
-            AddLogEntry(username, activityType, description, "Info", "GameRates");
-        }
-
-        /// <summary>
-        /// Add a log entry for GameEquipment module
-        /// </summary>
-        public void LogEquipmentActivity(string username, string action, string equipmentName, string details = "")
-        {
-            string activityType = $"Equipment {action}";
-            string description = $"Equipment '{equipmentName}' was {action.ToLower()} by '{username}'";
-            if (!string.IsNullOrEmpty(details))
-                description += $" - {details}";
-
-            AddLogEntry(username, activityType, description, "Info", "GameEquipment");
-        }
-
-        /// <summary>
-        /// Add a log entry for Equipment Check Out
-        /// </summary>
-        public void LogEquipmentCheckout(string username, string equipmentName, int quantity, string checkedOutBy)
-        {
-            string description = $"{quantity}x '{equipmentName}' checked out to {checkedOutBy} by '{username}'";
-            AddLogEntry(username, "Equipment Checked Out", description, "Info", "GameEquipment");
-        }
-
-        /// <summary>
-        /// Add a log entry for Equipment Check In
-        /// </summary>
-        public void LogEquipmentCheckin(string username, string equipmentName, int quantity, string returnedBy)
-        {
-            string description = $"{quantity}x '{equipmentName}' checked in from {returnedBy} by '{username}'";
-            AddLogEntry(username, "Equipment Checked In", description, "Info", "GameEquipment");
-        }
-
-        /// <summary>
-        /// Add a log entry for Equipment Maintenance
-        /// </summary>
-        public void LogEquipmentMaintenance(string username, string equipmentName, string condition)
-        {
-            string description = $"Maintenance completed for '{equipmentName}', new condition: {condition}";
-            AddLogEntry(username, "Equipment Maintenance", description, "Info", "GameEquipment");
-        }
-
-        /// <summary>
-        /// Add a warning log entry (e.g., low stock, maintenance needed)
-        /// </summary>
-        public void LogWarning(string username, string module, string warning)
-        {
-            AddLogEntry(username, "Warning", warning, "Warning", module);
-        }
-
-        /// <summary>
-        /// Add an error log entry
-        /// </summary>
-        public void LogError(string username, string module, string error, string details = "")
-        {
-            string description = error;
-            if (!string.IsNullOrEmpty(details))
-                description += $" - {details}";
-
-            AddLogEntry(username, "System Error", description, "Error", module);
-        }
-
-        /// <summary>
-        /// Generic method to add any log entry
-        /// </summary>
-        public void AddLogEntry(string username, string activityType, string description, string severity = "Info", string module = "System")
-        {
-            int newLogId = 1;
-            if (logEntries.Count > 0)
-            {
-                newLogId = logEntries.Max(l => l.LogId) + 1;
-            }
-
-            LogEntry newLog = new LogEntry
-            {
-                LogId = newLogId,
-                Timestamp = DateTime.Now,
-                UserId = GetUserIdFromUsername(username),
-                Username = username,
-                ActivityType = activityType,
-                Description = description,
-                Severity = severity,
-                IPAddress = GetLocalIPAddress(),
-                Details = $"Module: {module}",
-                Module = module
-            };
-
-            // Add to database
-            AddLogToDatabase(newLog);
-
-            // Add to local list
-            logEntries.Insert(0, newLog);
-
-            if (this.Visible)
-            {
-                RefreshLogs();
-            }
-        }
-
         private string GetUserIdFromUsername(string username)
         {
             try
@@ -817,12 +743,10 @@ namespace cms
 
                     object result = cmd.ExecuteScalar();
                     if (result != null)
-                    {
                         return result.ToString();
-                    }
                 }
             }
-            catch { /* Ignore errors, return placeholder */ }
+            catch { }
 
             return "USER" + (1000 + Math.Abs(username.GetHashCode()) % 1000);
         }
@@ -831,18 +755,20 @@ namespace cms
         {
             try
             {
-                var host = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName());
+                var host = Dns.GetHostEntry(Dns.GetHostName());
                 foreach (var ip in host.AddressList)
                 {
-                    if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                    {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
                         return ip.ToString();
-                    }
                 }
             }
             catch { }
             return "127.0.0.1";
         }
+
+        // ==============================================
+        // QUERY METHODS
+        // ==============================================
 
         public List<LogEntry> GetLogsForUser(string username, int days = 7)
         {
@@ -885,7 +811,6 @@ namespace cms
                     cmd.Parameters.AddWithValue("@cutoffDate", cutoffDate);
                     int deletedCount = cmd.ExecuteNonQuery();
 
-                    // Reload data
                     LoadDataFromDatabase();
 
                     if (this.Visible)
@@ -934,7 +859,6 @@ namespace cms
             activityCombo.SelectedIndex = 0;
             severityCombo.SelectedIndex = 0;
             moduleCombo.SelectedIndex = 0;
-
             RefreshLogs();
         }
 
@@ -964,9 +888,7 @@ namespace cms
                 foreach (DataGridViewRow row in logsDataGridView.SelectedRows)
                 {
                     if (row.Tag != null && row.Tag is int logId)
-                    {
                         logIdsToDelete.Add(logId);
-                    }
                 }
 
                 try
@@ -983,7 +905,6 @@ namespace cms
                         }
                     }
 
-                    // Reload data
                     LoadDataFromDatabase();
                     RefreshLogs();
 
@@ -1021,9 +942,7 @@ namespace cms
                     {
                         conn.Open();
 
-                        // Build WHERE clause based on current filters
                         StringBuilder whereClause = new StringBuilder("WHERE 1=1");
-
                         DateTime startDate = startDatePicker.Value.Date;
                         DateTime endDate = endDatePicker.Value.Date.AddDays(1).AddSeconds(-1);
                         whereClause.Append($" AND timestamp >= '{startDate:yyyy-MM-dd HH:mm:ss}' AND timestamp <= '{endDate:yyyy-MM-dd HH:mm:ss}'");
@@ -1036,25 +955,18 @@ namespace cms
                         }
 
                         if (activityCombo.SelectedIndex > 0)
-                        {
                             whereClause.Append($" AND activity_type = '{activityCombo.SelectedItem}'");
-                        }
 
                         if (severityCombo.SelectedIndex > 0)
-                        {
                             whereClause.Append($" AND severity = '{severityCombo.SelectedItem}'");
-                        }
 
                         if (moduleCombo.SelectedIndex > 0)
-                        {
                             whereClause.Append($" AND module = '{moduleCombo.SelectedItem}'");
-                        }
 
                         string deleteQuery = $"DELETE FROM activity_logs {whereClause}";
                         MySqlCommand cmd = new MySqlCommand(deleteQuery, conn);
                         int deletedCount = cmd.ExecuteNonQuery();
 
-                        // Reload data
                         LoadDataFromDatabase();
                         RefreshLogs();
 
@@ -1091,11 +1003,8 @@ namespace cms
                 try
                 {
                     StringBuilder csv = new StringBuilder();
-
-                    // Add headers
                     csv.AppendLine("Timestamp,User ID,Username,Activity Type,Description,Severity,IP Address,Details,Module");
 
-                    // Add data
                     foreach (var log in filteredLogs)
                     {
                         csv.AppendLine($"\"{log.Timestamp:yyyy-MM-dd HH:mm:ss}\"," +
@@ -1126,7 +1035,6 @@ namespace cms
         {
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                // Format severity column with colors
                 if (logsDataGridView.Columns[e.ColumnIndex].Name == "severityColumn" &&
                     logsDataGridView.Rows[e.RowIndex].Cells["severityColumn"].Value != null)
                 {
@@ -1135,7 +1043,6 @@ namespace cms
                     e.CellStyle.Font = new Font(logsDataGridView.Font, FontStyle.Bold);
                 }
 
-                // Center the icon column
                 if (logsDataGridView.Columns[e.ColumnIndex].Name == "iconColumn")
                 {
                     e.CellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
@@ -1147,6 +1054,83 @@ namespace cms
         private void logsDataGridView_SelectionChanged(object sender, EventArgs e)
         {
             deleteSelectedButton.Enabled = logsDataGridView.SelectedRows.Count > 0;
+        }
+
+        private void logsDataGridView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                DataGridViewRow row = logsDataGridView.Rows[e.RowIndex];
+                if (row.Tag != null && row.Tag is int logId)
+                {
+                    var log = logEntries.FirstOrDefault(l => l.LogId == logId);
+                    if (log != null)
+                    {
+                        ShowLogDetailsDialog(log);
+                    }
+                }
+            }
+        }
+
+        private void ShowLogDetailsDialog(LogEntry log)
+        {
+            Form detailsForm = new Form();
+            detailsForm.Text = "Log Details";
+            detailsForm.Size = new Size(600, 500);
+            detailsForm.StartPosition = FormStartPosition.CenterParent;
+            detailsForm.FormBorderStyle = FormBorderStyle.FixedDialog;
+            detailsForm.MaximizeBox = false;
+            detailsForm.MinimizeBox = false;
+            detailsForm.BackColor = Color.White;
+
+            RichTextBox rtbDetails = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Consolas", 10),
+                ReadOnly = true,
+                BackColor = Color.White
+            };
+
+            StringBuilder details = new StringBuilder();
+            details.AppendLine("═══════════════════════════════════════════════════════════");
+            details.AppendLine($"  LOG DETAILS - ID: {log.LogId}");
+            details.AppendLine("═══════════════════════════════════════════════════════════");
+            details.AppendLine();
+            details.AppendLine($"  Timestamp:     {log.Timestamp:yyyy-MM-dd HH:mm:ss}");
+            details.AppendLine($"  User ID:       {log.UserId}");
+            details.AppendLine($"  Username:      {log.Username}");
+            details.AppendLine($"  Activity Type: {log.ActivityType}");
+            details.AppendLine($"  Module:        {log.Module}");
+            details.AppendLine($"  Severity:      {log.Severity}");
+            details.AppendLine($"  IP Address:    {log.IPAddress}");
+            details.AppendLine();
+            details.AppendLine($"  Description:");
+            details.AppendLine($"  {log.Description}");
+            details.AppendLine();
+            details.AppendLine($"  Details:");
+            details.AppendLine($"  {log.Details}");
+            details.AppendLine();
+            details.AppendLine("═══════════════════════════════════════════════════════════");
+
+            rtbDetails.Text = details.ToString();
+
+            Button btnClose = new Button
+            {
+                Text = "Close",
+                Size = new Size(100, 35),
+                BackColor = Color.FromArgb(108, 117, 125),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Location = new Point(detailsForm.ClientSize.Width - 120, detailsForm.ClientSize.Height - 50),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+            };
+            btnClose.FlatAppearance.BorderSize = 0;
+            btnClose.Click += (s, ev) => detailsForm.Close();
+
+            detailsForm.Controls.Add(rtbDetails);
+            detailsForm.Controls.Add(btnClose);
+
+            detailsForm.ShowDialog(this);
         }
     }
 }

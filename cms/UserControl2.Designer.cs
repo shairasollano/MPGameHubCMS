@@ -256,6 +256,7 @@
             this.label2.Size = new System.Drawing.Size(202, 25);
             this.label2.TabIndex = 6;
             this.label2.Text = "TOTAL SESSIONS";
+            this.label2.Click += new System.EventHandler(this.label2_Click);
             // 
             // panel3
             // 
