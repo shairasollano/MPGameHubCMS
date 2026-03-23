@@ -14,14 +14,11 @@ namespace cms
         // Track password visibility state
         private bool isPasswordVisible = false;
         private string passwordText = "";
-
-        // Password toggle icon
-        private Label showPassIcon;
-
-        // Timer for fade effect
+        private bool isClosing = false;
+        private bool isLoggingIn = false;
         private Timer fadeTimer;
 
-        // MySQL Connection String
+        // MySQL Connection String - Using matchpoint_db
         private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
 
         public Form2()
@@ -29,93 +26,34 @@ namespace cms
             InitializeComponent();
             SetupForm();
 
-            // Initialize database
-            InitializeDatabase();
+            // Initialize database connection check only (don't recreate tables)
+            CheckDatabaseConnection();
         }
 
-        private void InitializeDatabase()
+        private void CheckDatabaseConnection()
         {
             try
             {
                 using (MySqlConnection conn = new MySqlConnection(connectionString))
                 {
                     conn.Open();
-
-                    // Create database if it doesn't exist
-                    string createDbQuery = "CREATE DATABASE IF NOT EXISTS matchpoint_db";
-                    using (MySqlCommand cmd = new MySqlCommand(createDbQuery, conn))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    // Switch to matchpoint_db
-                    conn.ChangeDatabase("matchpoint_db");
-
-                    // Create users table if it doesn't exist
-                    string createTableQuery = @"
-                        CREATE TABLE IF NOT EXISTS users (
-                            Id INT PRIMARY KEY AUTO_INCREMENT,
-                            UserId VARCHAR(20) NOT NULL UNIQUE,
-                            Username VARCHAR(50) NOT NULL UNIQUE,
-                            Password VARCHAR(100) NOT NULL,
-                            Role VARCHAR(20) NOT NULL,
-                            Status VARCHAR(10) NOT NULL DEFAULT 'ACTIVE',
-                            CreatedDate DATETIME NOT NULL,
-                            LastModifiedDate DATETIME
-                        )";
-
-                    using (MySqlCommand cmd = new MySqlCommand(createTableQuery, conn))
-                    {
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    // Check if users table is empty and seed static accounts
-                    string checkUsersQuery = "SELECT COUNT(*) FROM users";
-                    using (MySqlCommand cmd = new MySqlCommand(checkUsersQuery, conn))
-                    {
-                        int userCount = Convert.ToInt32(cmd.ExecuteScalar());
-
-                        if (userCount == 0)
-                        {
-                            SeedStaticAccounts(conn);
-                        }
-                    }
+                    System.Diagnostics.Debug.WriteLine("Database connection successful!");
                 }
+            }
+            catch (MySqlException mysqlEx)
+            {
+                MessageBox.Show($"MySQL Error: {mysqlEx.Message}\n\n" +
+                    "Please make sure:\n" +
+                    "1. XAMPP is running\n" +
+                    "2. MySQL is started in XAMPP Control Panel\n" +
+                    "3. MySQL is running on port 3306",
+                    "Database Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Database initialization error: {ex.Message}\n\n" +
+                MessageBox.Show($"Database connection error: {ex.Message}\n\n" +
                     "Please make sure XAMPP is running and MySQL is started.",
                     "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void SeedStaticAccounts(MySqlConnection conn)
-        {
-            string insertQuery = @"
-                INSERT INTO users (UserId, Username, Password, Role, Status, CreatedDate) 
-                VALUES (@UserId, @Username, @Password, @Role, @Status, @CreatedDate)";
-
-            var staticUsers = new[]
-            {
-                new { UserId = "USR001", Username = "admin", Password = "admin123", Role = "ADMIN" },
-                new { UserId = "USR002", Username = "manager", Password = "manager123", Role = "MANAGER" },
-                new { UserId = "USR003", Username = "staff", Password = "staff123", Role = "STAFF" },
-                new { UserId = "USR004", Username = "customer", Password = "customer123", Role = "CUSTOMER" }
-            };
-
-            foreach (var user in staticUsers)
-            {
-                using (MySqlCommand cmd = new MySqlCommand(insertQuery, conn))
-                {
-                    cmd.Parameters.AddWithValue("@UserId", user.UserId);
-                    cmd.Parameters.AddWithValue("@Username", user.Username);
-                    cmd.Parameters.AddWithValue("@Password", user.Password);
-                    cmd.Parameters.AddWithValue("@Role", user.Role);
-                    cmd.Parameters.AddWithValue("@Status", "ACTIVE");
-                    cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Now);
-                    cmd.ExecuteNonQuery();
-                }
             }
         }
 
@@ -126,13 +64,18 @@ namespace cms
             this.FormBorderStyle = FormBorderStyle.None;
             this.WindowState = FormWindowState.Maximized;
 
-            // Create password toggle icon
-            CreateShowPasswordIcon();
+            // Wire up form events for proper cleanup
+            this.FormClosing += Form2_FormClosing;
+            this.FormClosed += Form2_FormClosed;
+            this.Load += Form2_Load;
+
+            // Configure show password button
+            SetupShowPasswordButton();
 
             // Wire up events
-            btnSignIn.Click += btnSignIn_Click;
-            btnExit.Click += btnExit_Click;
-            lblForgotPassword.Click += lblForgotPassword_Click;
+            if (btnSignIn != null) btnSignIn.Click += btnSignIn_Click;
+            if (btnExit != null) btnExit.Click += btnExit_Click;
+            if (lblForgotPassword != null) lblForgotPassword.Click += lblForgotPassword_Click;
 
             // Set Enter key to trigger login
             this.AcceptButton = btnSignIn;
@@ -144,9 +87,12 @@ namespace cms
             passwordText = "";
 
             // Handle key events
-            txtPassword.KeyPress += txtPassword_KeyPress;
-            txtPassword.KeyDown += txtPassword_KeyDown;
-            txtUsername.KeyDown += txtUsername_KeyDown;
+            if (txtPassword != null)
+            {
+                txtPassword.KeyPress += txtPassword_KeyPress;
+                txtPassword.KeyDown += txtPassword_KeyDown;
+            }
+            if (txtUsername != null) txtUsername.KeyDown += txtUsername_KeyDown;
 
             // Setup hover effects
             SetupHoverEffects();
@@ -170,47 +116,57 @@ namespace cms
                 if (fadeTimer != null)
                 {
                     fadeTimer.Stop();
+                    fadeTimer.Tick -= FadeTimer_Tick;
                     fadeTimer.Dispose();
                     fadeTimer = null;
                 }
             }
         }
 
-        private void CreateShowPasswordIcon()
+        private void SetupShowPasswordButton()
         {
-            showPassIcon = new Label
+            // Configure the existing btnShowPassword from designer
+            if (btnShowPassword != null)
             {
-                Text = "👁️",
-                Location = new Point(txtPassword.Right - 35, txtPassword.Top + 8),
-                Size = new Size(30, 25),
-                Cursor = Cursors.Hand,
-                BackColor = Color.Transparent,
-                ForeColor = Color.FromArgb(120, 120, 120)
-            };
-            showPassIcon.Click += showPassIcon_Click;
-            this.panelLogin.Controls.Add(showPassIcon);
-            showPassIcon.BringToFront();
+                btnShowPassword.Visible = true;
+                btnShowPassword.BackColor = Color.Transparent;
+                btnShowPassword.FlatStyle = FlatStyle.Flat;
+                btnShowPassword.FlatAppearance.BorderSize = 0;
+                btnShowPassword.Font = new Font("Segoe UI", 12F);
+                btnShowPassword.ForeColor = Color.FromArgb(180, 180, 180);
+                btnShowPassword.Text = "👁";
+                btnShowPassword.Cursor = Cursors.Hand;
+                btnShowPassword.Click += ShowPasswordButton_Click;
+                btnShowPassword.MouseEnter += (s, e) => btnShowPassword.ForeColor = Color.FromArgb(228, 186, 94);
+                btnShowPassword.MouseLeave += (s, e) => btnShowPassword.ForeColor = Color.FromArgb(180, 180, 180);
+            }
         }
 
         private void SetupTextBoxes()
         {
             // Setup username textbox with placeholder
-            txtUsername.Text = "Enter your username";
-            txtUsername.ForeColor = Color.FromArgb(120, 120, 120);
-            txtUsername.GotFocus += RemoveUsernamePlaceholder;
-            txtUsername.LostFocus += AddUsernamePlaceholder;
+            if (txtUsername != null)
+            {
+                txtUsername.Text = "Enter your username";
+                txtUsername.ForeColor = Color.FromArgb(120, 120, 120);
+                txtUsername.GotFocus += RemoveUsernamePlaceholder;
+                txtUsername.LostFocus += AddUsernamePlaceholder;
+            }
 
             // Setup password textbox with placeholder
-            txtPassword.Text = "Enter your password";
-            txtPassword.ForeColor = Color.FromArgb(120, 120, 120);
-            txtPassword.UseSystemPasswordChar = false;
-            txtPassword.GotFocus += RemovePasswordPlaceholder;
-            txtPassword.LostFocus += AddPasswordPlaceholder;
+            if (txtPassword != null)
+            {
+                txtPassword.Text = "Enter your password";
+                txtPassword.ForeColor = Color.FromArgb(120, 120, 120);
+                txtPassword.UseSystemPasswordChar = false;
+                txtPassword.GotFocus += RemovePasswordPlaceholder;
+                txtPassword.LostFocus += AddPasswordPlaceholder;
+            }
         }
 
         private void RemoveUsernamePlaceholder(object sender, EventArgs e)
         {
-            if (txtUsername.Text == "Enter your username")
+            if (txtUsername != null && txtUsername.Text == "Enter your username")
             {
                 txtUsername.Text = "";
                 txtUsername.ForeColor = Color.White;
@@ -219,7 +175,7 @@ namespace cms
 
         private void AddUsernamePlaceholder(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtUsername.Text))
+            if (txtUsername != null && string.IsNullOrWhiteSpace(txtUsername.Text))
             {
                 txtUsername.Text = "Enter your username";
                 txtUsername.ForeColor = Color.FromArgb(120, 120, 120);
@@ -228,29 +184,29 @@ namespace cms
 
         private void RemovePasswordPlaceholder(object sender, EventArgs e)
         {
-            if (txtPassword.Text == "Enter your password")
+            if (txtPassword != null && txtPassword.Text == "Enter your password")
             {
                 txtPassword.Text = "";
                 txtPassword.ForeColor = Color.White;
                 txtPassword.UseSystemPasswordChar = true;
-                if (showPassIcon != null)
-                    showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+                if (btnShowPassword != null)
+                    btnShowPassword.ForeColor = Color.FromArgb(180, 180, 180);
             }
         }
 
         private void AddPasswordPlaceholder(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtPassword.Text))
+            if (txtPassword != null && string.IsNullOrWhiteSpace(txtPassword.Text))
             {
                 txtPassword.Text = "Enter your password";
                 txtPassword.ForeColor = Color.FromArgb(120, 120, 120);
                 txtPassword.UseSystemPasswordChar = false;
                 isPasswordVisible = false;
                 passwordText = "";
-                if (showPassIcon != null)
+                if (btnShowPassword != null)
                 {
-                    showPassIcon.Text = "👁️";
-                    showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+                    btnShowPassword.Text = "👁";
+                    btnShowPassword.ForeColor = Color.FromArgb(180, 180, 180);
                 }
             }
         }
@@ -258,44 +214,79 @@ namespace cms
         private void SetupHoverEffects()
         {
             // Sign In button hover effects
-            btnSignIn.MouseEnter += (s, e) => btnSignIn.BackColor = Color.FromArgb(248, 206, 114);
-            btnSignIn.MouseLeave += (s, e) => btnSignIn.BackColor = Color.FromArgb(228, 186, 94);
+            if (btnSignIn != null)
+            {
+                btnSignIn.MouseEnter += (s, e) => btnSignIn.BackColor = Color.FromArgb(248, 206, 114);
+                btnSignIn.MouseLeave += (s, e) => btnSignIn.BackColor = Color.FromArgb(228, 186, 94);
+            }
 
             // Exit button hover
-            btnExit.MouseEnter += (s, e) =>
+            if (btnExit != null)
             {
-                btnExit.ForeColor = Color.FromArgb(180, 180, 180);
-                btnExit.Font = new Font(btnExit.Font, FontStyle.Underline);
-            };
-            btnExit.MouseLeave += (s, e) =>
-            {
-                btnExit.ForeColor = Color.FromArgb(120, 120, 120);
-                btnExit.Font = new Font(btnExit.Font, FontStyle.Regular);
-            };
+                btnExit.MouseEnter += (s, e) =>
+                {
+                    btnExit.ForeColor = Color.FromArgb(180, 180, 180);
+                    btnExit.Font = new Font(btnExit.Font, FontStyle.Underline);
+                };
+                btnExit.MouseLeave += (s, e) =>
+                {
+                    btnExit.ForeColor = Color.FromArgb(120, 120, 120);
+                    btnExit.Font = new Font(btnExit.Font, FontStyle.Regular);
+                };
+            }
 
             // Forgot password link hover
-            lblForgotPassword.MouseEnter += (s, e) =>
+            if (lblForgotPassword != null)
             {
-                lblForgotPassword.ForeColor = Color.FromArgb(228, 186, 94);
-                lblForgotPassword.Font = new Font(lblForgotPassword.Font, FontStyle.Underline);
-            };
-            lblForgotPassword.MouseLeave += (s, e) =>
-            {
-                lblForgotPassword.ForeColor = Color.FromArgb(140, 140, 140);
-                lblForgotPassword.Font = new Font(lblForgotPassword.Font, FontStyle.Regular);
-            };
-
-            // Password toggle icon hover
-            if (showPassIcon != null)
-            {
-                showPassIcon.MouseEnter += (s, e) => showPassIcon.ForeColor = Color.FromArgb(228, 186, 94);
-                showPassIcon.MouseLeave += (s, e) => showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+                lblForgotPassword.MouseEnter += (s, e) =>
+                {
+                    lblForgotPassword.ForeColor = Color.FromArgb(228, 186, 94);
+                    lblForgotPassword.Font = new Font(lblForgotPassword.Font, FontStyle.Underline);
+                };
+                lblForgotPassword.MouseLeave += (s, e) =>
+                {
+                    lblForgotPassword.ForeColor = Color.FromArgb(140, 140, 140);
+                    lblForgotPassword.Font = new Font(lblForgotPassword.Font, FontStyle.Regular);
+                };
             }
+        }
+
+        private void ShowPasswordButton_Click(object sender, EventArgs e)
+        {
+            if (txtPassword == null || txtPassword.Text == "Enter your password")
+                return;
+
+            isPasswordVisible = !isPasswordVisible;
+
+            if (isPasswordVisible)
+            {
+                // Show password
+                txtPassword.Text = passwordText;
+                txtPassword.UseSystemPasswordChar = false;
+                if (btnShowPassword != null)
+                {
+                    btnShowPassword.Text = "👁‍🗨";
+                    btnShowPassword.ForeColor = Color.FromArgb(228, 186, 94);
+                }
+            }
+            else
+            {
+                // Hide password
+                txtPassword.Text = new string('•', passwordText.Length);
+                txtPassword.UseSystemPasswordChar = true;
+                if (btnShowPassword != null)
+                {
+                    btnShowPassword.Text = "👁";
+                    btnShowPassword.ForeColor = Color.FromArgb(180, 180, 180);
+                }
+            }
+
+            if (txtPassword != null) txtPassword.SelectionStart = txtPassword.Text.Length;
         }
 
         private void txtPassword_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if (!isPasswordVisible && txtPassword.Text != "Enter your password" && !char.IsControl(e.KeyChar))
+            if (txtPassword != null && !isPasswordVisible && txtPassword.Text != "Enter your password" && !char.IsControl(e.KeyChar))
             {
                 int cursorPos = txtPassword.SelectionStart;
                 passwordText = passwordText.Insert(cursorPos, e.KeyChar.ToString());
@@ -307,7 +298,7 @@ namespace cms
 
         private void txtPassword_KeyDown(object sender, KeyEventArgs e)
         {
-            if (!isPasswordVisible && txtPassword.Text != "Enter your password")
+            if (txtPassword != null && !isPasswordVisible && txtPassword.Text != "Enter your password")
             {
                 if (e.KeyCode == Keys.Back)
                 {
@@ -343,52 +334,23 @@ namespace cms
 
         private void txtUsername_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
+            if (e.KeyCode == Keys.Enter && txtPassword != null)
             {
                 txtPassword.Focus();
                 e.Handled = true;
             }
         }
 
-        private void showPassIcon_Click(object sender, EventArgs e)
-        {
-            if (txtPassword.Text == "Enter your password")
-                return;
-
-            isPasswordVisible = !isPasswordVisible;
-
-            if (isPasswordVisible)
-            {
-                txtPassword.Text = passwordText;
-                txtPassword.UseSystemPasswordChar = false;
-                if (showPassIcon != null)
-                {
-                    showPassIcon.Text = "👁️‍🗨️";
-                    showPassIcon.ForeColor = Color.FromArgb(228, 186, 94);
-                }
-            }
-            else
-            {
-                txtPassword.Text = new string('•', passwordText.Length);
-                txtPassword.UseSystemPasswordChar = true;
-                if (showPassIcon != null)
-                {
-                    showPassIcon.Text = "👁️";
-                    showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
-                }
-            }
-
-            txtPassword.SelectionStart = txtPassword.Text.Length;
-        }
-
-        // ⭐ AUTHENTICATION WITH MySQL
+        // ⭐ AUTHENTICATION WITH MySQL - Gets username and password from users table
         private void btnSignIn_Click(object sender, EventArgs e)
         {
-            string username = txtUsername.Text.Trim();
-            string password = isPasswordVisible ? txtPassword.Text : passwordText;
+            if (isLoggingIn) return;
+
+            string username = txtUsername != null ? txtUsername.Text.Trim() : "";
+            string password = isPasswordVisible ? (txtPassword != null ? txtPassword.Text : "") : passwordText;
 
             if (username == "Enter your username") username = "";
-            if (txtPassword.Text == "Enter your password") password = "";
+            if (txtPassword != null && txtPassword.Text == "Enter your password") password = "";
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
@@ -397,8 +359,9 @@ namespace cms
                 return;
             }
 
+            isLoggingIn = true;
             this.Cursor = Cursors.WaitCursor;
-            btnSignIn.Enabled = false;
+            if (btnSignIn != null) btnSignIn.Enabled = false;
 
             try
             {
@@ -408,6 +371,7 @@ namespace cms
                     conn.Open();
                     conn.ChangeDatabase("matchpoint_db");
 
+                    // Query to check username and password
                     string query = "SELECT * FROM users WHERE Username = @username AND Password = @password AND Status = 'ACTIVE'";
                     using (MySqlCommand cmd = new MySqlCommand(query, conn))
                     {
@@ -430,76 +394,102 @@ namespace cms
                                 System.Diagnostics.Debug.WriteLine($"  Status: {userStatus}");
                                 System.Diagnostics.Debug.WriteLine("════════════════════════════════════════");
 
-                                this.Cursor = Cursors.Default;
-                                btnSignIn.Enabled = true;
+                                // ==============================================
+                                // SET GLOBAL LOGGER USER INFO
+                                // ==============================================
+                                GlobalLogger.CurrentUsername = username;
+                                GlobalLogger.CurrentUserRole = userRole;
+                                GlobalLogger.CurrentUserId = userId;
 
+                                // Log the login activity
+                                try
+                                {
+                                    GlobalLogger.Log("Login", $"User '{username}' logged in as {userRole}", "Info", "System");
+                                    Activitylogs.Instance?.AddLogEntry(username, "Login", $"User '{username}' logged into the system", "Info", "System");
+                                }
+                                catch (Exception logEx)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Login logging failed: {logEx.Message}");
+                                }
+
+                                this.Cursor = Cursors.Default;
+                                if (btnSignIn != null) btnSignIn.Enabled = true;
+
+                                // Hide login form
                                 this.Hide();
 
-                                // ⭐ ROUTING LOGIC - Admin/Manager to Form1, Staff/Cashier to CashierForm
+                                // ⭐ ROUTING LOGIC based on role
                                 string role = userRole.ToUpper();
 
-                                if (role == "ADMIN" || role == "MANAGER")
+                                try
                                 {
-                                    // Admin or Manager goes to Form1 (User Management with Game Rates, Equipment, etc.)
-                                    Form1 adminForm = new Form1();
-
-                                    // Set user info in Form1
-                                    adminForm.LoggedInUsername = username;
-                                    adminForm.LoggedInUserRole = userRole;
-                                    adminForm.SetCurrentUser(username, userRole);
-
-                                    adminForm.Closed += (s, args) =>
+                                    if (role == "ADMIN" || role == "MANAGER")
                                     {
-                                        this.Close();
-                                    };
-                                    adminForm.Show();
-                                }
-                                else if (role == "STAFF" || role == "CASHIER")
-                                {
-                                    // Staff/Cashier goes to CashierForm
-                                    KGHCashierPOS.CashierForm cashierForm = new KGHCashierPOS.CashierForm();
-
-                                    // Set user info in CashierForm
-                                    cashierForm.SetCurrentUser(username, userRole);
-
-                                    cashierForm.Closed += (s, args) =>
+                                        // Admin/Manager goes to Form1
+                                        Form1 adminForm = new Form1();
+                                        adminForm.LoggedInUsername = username;
+                                        adminForm.LoggedInUserRole = userRole;
+                                        adminForm.SetCurrentUser(username, userRole);
+                                        adminForm.FormClosed += (s, args) =>
+                                        {
+                                            Application.Exit();
+                                        };
+                                        adminForm.Show();
+                                    }
+                                    else if (role == "STAFF")
                                     {
-                                        this.Close();
-                                    };
-                                    cashierForm.Show();
-                                }
-                                else if (role == "CUSTOMER")
-                                {
-                                    // Customer goes to OrderForm
-                                    // Note: Ensure OrderForm exists in your project or add the correct namespace
-                                    OrderForm customerForm = new OrderForm();
+                                        // Staff goes to CashierForm (POS)
+                                        KGHCashierPOS.CashierForm staffForm = new KGHCashierPOS.CashierForm();
+                                        staffForm.SetLoginForm(this);
+                                        staffForm.SetCurrentUser(username, userRole);
+                                        staffForm.FormClosed += (s, args) =>
+                                        {
+                                            Application.Exit();
+                                        };
+                                        staffForm.Show();
 
-                                    // Optional: Pass user info if OrderForm needs it
-                                    // customerForm.SetCurrentUser(username, userRole);
-
-                                    customerForm.FormClosed += (s, args) =>
+                                        // Log successful staff login
+                                        try
+                                        {
+                                            GlobalLogger.LogInfo("Staff", $"Staff {username} logged in successfully");
+                                        }
+                                        catch { }
+                                    }
+                                    else
                                     {
-                                        this.Close(); // Fully close app when order form is closed
-                                    };
-
-                                    customerForm.Show();
+                                        MessageBox.Show("Invalid user role. Please contact administrator.",
+                                            "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                        this.Show();
+                                        ClearLoginFields();
+                                        isLoggingIn = false;
+                                        return;
+                                    }
                                 }
-                                else
+                                catch (Exception formEx)
                                 {
-                                    MessageBox.Show("Invalid user role. Please contact administrator.",
-                                        "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                    MessageBox.Show($"Error opening form: {formEx.Message}\n\n" +
+                                        "Please check if the form is properly configured.",
+                                        "Form Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                     this.Show();
                                     ClearLoginFields();
+                                    isLoggingIn = false;
+                                    return;
                                 }
                             }
                             else
                             {
+                                // Login failed - log failed attempt
+                                try
+                                {
+                                    GlobalLogger.LogWarning("System", $"Failed login attempt for username: {username}");
+                                }
+                                catch { }
+
                                 // Check if user exists but is inactive
-                                string inactiveQuery = "SELECT * FROM users WHERE Username = @username AND Password = @password";
+                                string inactiveQuery = "SELECT * FROM users WHERE Username = @username";
                                 using (MySqlCommand inactiveCmd = new MySqlCommand(inactiveQuery, conn))
                                 {
                                     inactiveCmd.Parameters.AddWithValue("@username", username);
-                                    inactiveCmd.Parameters.AddWithValue("@password", password);
 
                                     using (MySqlDataReader inactiveReader = inactiveCmd.ExecuteReader())
                                     {
@@ -513,30 +503,60 @@ namespace cms
                                             }
                                             else
                                             {
-                                                MessageBox.Show("Invalid username or password. Please try again.",
+                                                MessageBox.Show("Invalid password. Please try again.",
                                                     "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                             }
                                         }
                                         else
                                         {
-                                            MessageBox.Show("Invalid username or password. Please try again.",
+                                            MessageBox.Show("Username not found. Please check your username.",
                                                 "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                         }
                                     }
                                 }
 
                                 this.Cursor = Cursors.Default;
-                                btnSignIn.Enabled = true;
+                                if (btnSignIn != null) btnSignIn.Enabled = true;
                                 ClearLoginFields();
+                                isLoggingIn = false;
                             }
                         }
                     }
                 }
             }
+            catch (MySqlException mysqlEx)
+            {
+                this.Cursor = Cursors.Default;
+                if (btnSignIn != null) btnSignIn.Enabled = true;
+                isLoggingIn = false;
+
+                // Log database error
+                try
+                {
+                    GlobalLogger.LogError("Database", $"MySQL Error: {mysqlEx.Message}");
+                }
+                catch { }
+
+                MessageBox.Show($"MySQL Error: {mysqlEx.Message}\n\n" +
+                    "Please make sure:\n" +
+                    "1. XAMPP is running\n" +
+                    "2. MySQL is started in XAMPP Control Panel\n" +
+                    "3. MySQL is running on port 3306",
+                    "Database Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
             catch (Exception ex)
             {
                 this.Cursor = Cursors.Default;
-                btnSignIn.Enabled = true;
+                if (btnSignIn != null) btnSignIn.Enabled = true;
+                isLoggingIn = false;
+
+                // Log general error
+                try
+                {
+                    GlobalLogger.LogError("Login", $"Login error: {ex.Message}");
+                }
+                catch { }
+
                 MessageBox.Show($"Login error:\n{ex.Message}\n\nPlease make sure XAMPP is running and MySQL is started.",
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
@@ -545,41 +565,53 @@ namespace cms
         private void ClearLoginFields()
         {
             passwordText = "";
-            txtPassword.Text = "Enter your password";
-            txtPassword.ForeColor = Color.FromArgb(120, 120, 120);
-            txtPassword.UseSystemPasswordChar = false;
-            isPasswordVisible = false;
-            if (showPassIcon != null)
+            if (txtPassword != null)
             {
-                showPassIcon.Text = "👁️";
-                showPassIcon.ForeColor = Color.FromArgb(120, 120, 120);
+                txtPassword.Text = "Enter your password";
+                txtPassword.ForeColor = Color.FromArgb(120, 120, 120);
+                txtPassword.UseSystemPasswordChar = false;
+            }
+            isPasswordVisible = false;
+            if (btnShowPassword != null)
+            {
+                btnShowPassword.Text = "👁";
+                btnShowPassword.ForeColor = Color.FromArgb(180, 180, 180);
             }
 
-            txtUsername.Focus();
-            if (txtUsername.Text != "Enter your username")
+            if (txtUsername != null)
             {
-                txtUsername.SelectAll();
+                txtUsername.Focus();
+                if (txtUsername.Text != "Enter your username")
+                {
+                    txtUsername.SelectAll();
+                }
             }
         }
 
         private void lblForgotPassword_Click(object sender, EventArgs e)
         {
+            // Log that user viewed forgot password info
+            try
+            {
+                GlobalLogger.LogInfo("System", "User viewed forgot password information");
+            }
+            catch { }
+
             MessageBox.Show(
                 "Please contact your system administrator to reset your password.\n\n" +
                 "📧 Email: admin@matchpoint.com\n" +
                 "📞 Phone: (02) 8123-4567\n\n" +
                 "Test Credentials:\n" +
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
-                "👑 ADMIN (Management Access):\n" +
+                "👑 ADMIN (Full Management Access):\n" +
                 "   Username: admin\n" +
                 "   Password: admin123\n\n" +
-                "👔 MANAGER (Management Access):\n" +
+                "👔 MANAGER (Limited Management Access):\n" +
                 "   Username: manager\n" +
                 "   Password: manager123\n\n" +
-                "💼 STAFF (Cashier Access):\n" +
+                "👤 STAFF (POS Access):\n" +
                 "   Username: staff\n" +
                 "   Password: staff123\n\n" +
-                "Note: New users created will have default password: 12345\n\n" +
                 "⚠️ Make sure XAMPP is running with MySQL started.",
                 "Forgot Password",
                 MessageBoxButtons.OK,
@@ -595,6 +627,14 @@ namespace cms
 
             if (result == DialogResult.Yes)
             {
+                // Log application exit
+                try
+                {
+                    GlobalLogger.LogInfo("System", "Application closed by user");
+                }
+                catch { }
+
+                isClosing = true;
                 Application.Exit();
             }
         }
@@ -606,17 +646,123 @@ namespace cms
             {
                 panelLogin.Left = (this.ClientSize.Width - panelLogin.Width) / 2;
                 panelLogin.Top = (this.ClientSize.Height - panelLogin.Height) / 2;
-
-                if (showPassIcon != null && txtPassword != null)
-                {
-                    showPassIcon.Location = new Point(txtPassword.Right - 35, txtPassword.Top + 8);
-                }
             }
         }
 
         private void Form2_Load(object sender, EventArgs e)
         {
-            // Database already initialized in constructor
+            // Initialize Activity Logs early
+            try
+            {
+                Activitylogs.EnsureInitialized();
+                System.Diagnostics.Debug.WriteLine("Activity Logs initialized successfully!");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to initialize Activity Logs: {ex.Message}");
+            }
+        }
+
+        private void Form2_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (isClosing) return;
+
+            // Don't close if we're in the middle of logging in
+            if (isLoggingIn)
+            {
+                e.Cancel = true;
+                return;
+            }
+        }
+
+        private void Form2_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            CleanupEventHandlers();
+        }
+
+        private void CleanupEventHandlers()
+        {
+            try
+            {
+                isClosing = true;
+
+                // Stop and dispose timer
+                if (fadeTimer != null)
+                {
+                    fadeTimer.Stop();
+                    fadeTimer.Tick -= FadeTimer_Tick;
+                    fadeTimer.Dispose();
+                    fadeTimer = null;
+                }
+
+                // Remove form events
+                this.FormClosing -= Form2_FormClosing;
+                this.FormClosed -= Form2_FormClosed;
+                this.Load -= Form2_Load;
+
+                // Clean up controls
+                CleanupControls(this);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Cleanup error: {ex.Message}");
+            }
+        }
+
+        private void CleanupControls(Control parent)
+        {
+            if (parent == null) return;
+
+            try
+            {
+                // Remove event handlers from the parent control
+                parent.Click -= null;
+                parent.MouseClick -= null;
+                parent.MouseEnter -= null;
+                parent.MouseLeave -= null;
+                parent.MouseMove -= null;
+                parent.Paint -= null;
+
+                // Handle specific control types
+                if (parent is Button button)
+                {
+                    button.Click -= null;
+                    button.MouseEnter -= null;
+                    button.MouseLeave -= null;
+                }
+                else if (parent is TextBox textBox)
+                {
+                    textBox.TextChanged -= null;
+                    textBox.KeyPress -= null;
+                    textBox.KeyDown -= null;
+                    textBox.GotFocus -= null;
+                    textBox.LostFocus -= null;
+                }
+                else if (parent is Label label)
+                {
+                    label.Click -= null;
+                    label.MouseEnter -= null;
+                    label.MouseLeave -= null;
+                }
+                else if (parent is PictureBox pictureBox)
+                {
+                    pictureBox.Click -= null;
+                    pictureBox.MouseEnter -= null;
+                    pictureBox.MouseLeave -= null;
+                }
+
+                // Recursively clean up child controls
+                foreach (Control child in parent.Controls)
+                {
+                    CleanupControls(child);
+                }
+            }
+            catch { }
+        }
+
+        private void pictureBoxBg_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

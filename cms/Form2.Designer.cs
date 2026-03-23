@@ -123,16 +123,15 @@
             this.btnShowPassword.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(41)))), ((int)(((byte)(38)))));
             this.btnShowPassword.FlatAppearance.BorderSize = 0;
             this.btnShowPassword.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnShowPassword.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Regular);
+            this.btnShowPassword.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.btnShowPassword.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.btnShowPassword.Location = new System.Drawing.Point(460, 430);
             this.btnShowPassword.Name = "btnShowPassword";
             this.btnShowPassword.Size = new System.Drawing.Size(35, 34);
             this.btnShowPassword.TabIndex = 10;
             this.btnShowPassword.Text = "👁";
-            this.btnShowPassword.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.btnShowPassword.UseVisualStyleBackColor = false;
-            this.btnShowPassword.Visible = false; // Hidden because we use Label in code-behind
+            this.btnShowPassword.Visible = false;
             // 
             // logoSmall
             // 
