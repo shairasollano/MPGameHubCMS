@@ -618,5 +618,10 @@ namespace cms
         {
             // Database already initialized in constructor
         }
+
+        private void txtUsername_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }
