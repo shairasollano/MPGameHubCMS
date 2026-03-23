@@ -150,7 +150,7 @@
             // 
             this.lblCashierName.AutoSize = true;
             this.lblCashierName.ForeColor = System.Drawing.SystemColors.Control;
-            this.lblCashierName.Location = new System.Drawing.Point(1037, 48);
+            this.lblCashierName.Location = new System.Drawing.Point(1028, 48);
             this.lblCashierName.Name = "lblCashierName";
             this.lblCashierName.Size = new System.Drawing.Size(58, 20);
             this.lblCashierName.TabIndex = 35;
@@ -229,9 +229,9 @@
             this.panel2.Controls.Add(this.btnTableTennis);
             this.panel2.Controls.Add(this.btnScooter);
             this.panel2.Controls.Add(this.btnBadminton);
-            this.panel2.Location = new System.Drawing.Point(59, 123);
+            this.panel2.Location = new System.Drawing.Point(59, 101);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(360, 349);
+            this.panel2.Size = new System.Drawing.Size(391, 367);
             this.panel2.TabIndex = 9;
             // 
             // lblSelect
@@ -251,7 +251,7 @@
             this.btnBilliards.BackgroundImage = global::KGHCashierPOS.Properties.Resources.BILLIARDS;
             this.btnBilliards.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.btnBilliards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBilliards.Location = new System.Drawing.Point(24, 47);
+            this.btnBilliards.Location = new System.Drawing.Point(36, 61);
             this.btnBilliards.Name = "btnBilliards";
             this.btnBilliards.Size = new System.Drawing.Size(151, 134);
             this.btnBilliards.TabIndex = 1;
@@ -264,7 +264,7 @@
             this.btnTableTennis.BackgroundImage = global::KGHCashierPOS.Properties.Resources.TABLETENNIS;
             this.btnTableTennis.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.btnTableTennis.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnTableTennis.Location = new System.Drawing.Point(181, 190);
+            this.btnTableTennis.Location = new System.Drawing.Point(209, 208);
             this.btnTableTennis.Name = "btnTableTennis";
             this.btnTableTennis.Size = new System.Drawing.Size(151, 134);
             this.btnTableTennis.TabIndex = 2;
@@ -277,7 +277,7 @@
             this.btnScooter.BackgroundImage = global::KGHCashierPOS.Properties.Resources.SCOOTER;
             this.btnScooter.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.btnScooter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnScooter.Location = new System.Drawing.Point(181, 47);
+            this.btnScooter.Location = new System.Drawing.Point(209, 61);
             this.btnScooter.Name = "btnScooter";
             this.btnScooter.Size = new System.Drawing.Size(151, 134);
             this.btnScooter.TabIndex = 6;
@@ -290,7 +290,7 @@
             this.btnBadminton.BackgroundImage = global::KGHCashierPOS.Properties.Resources.BADMINTON;
             this.btnBadminton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.btnBadminton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBadminton.Location = new System.Drawing.Point(24, 190);
+            this.btnBadminton.Location = new System.Drawing.Point(36, 208);
             this.btnBadminton.Name = "btnBadminton";
             this.btnBadminton.Size = new System.Drawing.Size(151, 134);
             this.btnBadminton.TabIndex = 8;
@@ -305,7 +305,7 @@
             this.panel3.Controls.Add(this.label1);
             this.panel3.Location = new System.Drawing.Point(59, 496);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(360, 191);
+            this.panel3.Size = new System.Drawing.Size(391, 218);
             this.panel3.TabIndex = 10;
             // 
             // btn30min
@@ -314,7 +314,7 @@
             this.btn30min.BackgroundImage = global::KGHCashierPOS.Properties.Resources._30MINS1;
             this.btn30min.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.btn30min.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn30min.Location = new System.Drawing.Point(24, 40);
+            this.btn30min.Location = new System.Drawing.Point(36, 59);
             this.btn30min.Name = "btn30min";
             this.btn30min.Size = new System.Drawing.Size(151, 134);
             this.btn30min.TabIndex = 10;
@@ -327,7 +327,7 @@
             this.btn1hour.BackgroundImage = global::KGHCashierPOS.Properties.Resources._1HOUR;
             this.btn1hour.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.btn1hour.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn1hour.Location = new System.Drawing.Point(181, 40);
+            this.btn1hour.Location = new System.Drawing.Point(209, 59);
             this.btn1hour.Name = "btn1hour";
             this.btn1hour.Size = new System.Drawing.Size(151, 134);
             this.btn1hour.TabIndex = 11;
@@ -348,11 +348,12 @@
             // lblTotal
             // 
             this.lblTotal.AutoSize = true;
-            this.lblTotal.BackColor = System.Drawing.SystemColors.Control;
-            this.lblTotal.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold);
+            this.lblTotal.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.lblTotal.Font = new System.Drawing.Font("Nirmala Text", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTotal.ForeColor = System.Drawing.Color.White;
             this.lblTotal.Location = new System.Drawing.Point(129, 605);
             this.lblTotal.Name = "lblTotal";
-            this.lblTotal.Size = new System.Drawing.Size(35, 32);
+            this.lblTotal.Size = new System.Drawing.Size(41, 38);
             this.lblTotal.TabIndex = 12;
             this.lblTotal.Text = "   ";
             // 
@@ -361,9 +362,9 @@
             this.btnProceedPayment.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(162)))), ((int)(((byte)(166)))));
             this.btnProceedPayment.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnProceedPayment.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold);
-            this.btnProceedPayment.Location = new System.Drawing.Point(477, 625);
+            this.btnProceedPayment.Location = new System.Drawing.Point(478, 650);
             this.btnProceedPayment.Name = "btnProceedPayment";
-            this.btnProceedPayment.Size = new System.Drawing.Size(260, 54);
+            this.btnProceedPayment.Size = new System.Drawing.Size(315, 64);
             this.btnProceedPayment.TabIndex = 14;
             this.btnProceedPayment.Text = "PROCEED TO PAYMENT";
             this.btnProceedPayment.UseVisualStyleBackColor = false;
@@ -374,9 +375,9 @@
             this.btnRemoveGame.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(206)))), ((int)(((byte)(59)))), ((int)(((byte)(114)))));
             this.btnRemoveGame.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRemoveGame.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
-            this.btnRemoveGame.Location = new System.Drawing.Point(612, 578);
+            this.btnRemoveGame.Location = new System.Drawing.Point(643, 585);
             this.btnRemoveGame.Name = "btnRemoveGame";
-            this.btnRemoveGame.Size = new System.Drawing.Size(125, 41);
+            this.btnRemoveGame.Size = new System.Drawing.Size(150, 59);
             this.btnRemoveGame.TabIndex = 15;
             this.btnRemoveGame.Text = "REMOVE GAME";
             this.btnRemoveGame.UseVisualStyleBackColor = false;
@@ -385,10 +386,10 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(478, 162);
+            this.label6.Font = new System.Drawing.Font("Nirmala UI", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Location = new System.Drawing.Point(471, 101);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(232, 32);
+            this.label6.Size = new System.Drawing.Size(285, 38);
             this.label6.TabIndex = 18;
             this.label6.Text = "Enter Order Number";
             // 
@@ -396,18 +397,18 @@
             // 
             this.txtOrderNumber.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtOrderNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
-            this.txtOrderNumber.Location = new System.Drawing.Point(479, 198);
+            this.txtOrderNumber.Location = new System.Drawing.Point(478, 142);
             this.txtOrderNumber.Name = "txtOrderNumber";
-            this.txtOrderNumber.Size = new System.Drawing.Size(258, 44);
+            this.txtOrderNumber.Size = new System.Drawing.Size(315, 44);
             this.txtOrderNumber.TabIndex = 19;
             // 
             // btn1
             // 
             this.btn1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn1.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn1.Location = new System.Drawing.Point(479, 254);
+            this.btn1.Location = new System.Drawing.Point(478, 216);
             this.btn1.Name = "btn1";
-            this.btn1.Size = new System.Drawing.Size(82, 75);
+            this.btn1.Size = new System.Drawing.Size(101, 81);
             this.btn1.TabIndex = 21;
             this.btn1.Text = "1";
             this.btn1.Click += new System.EventHandler(this.NumberButton_Click);
@@ -416,9 +417,9 @@
             // 
             this.btn2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn2.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn2.Location = new System.Drawing.Point(567, 254);
+            this.btn2.Location = new System.Drawing.Point(585, 216);
             this.btn2.Name = "btn2";
-            this.btn2.Size = new System.Drawing.Size(82, 75);
+            this.btn2.Size = new System.Drawing.Size(101, 81);
             this.btn2.TabIndex = 22;
             this.btn2.Text = "2";
             this.btn2.Click += new System.EventHandler(this.NumberButton_Click);
@@ -427,9 +428,9 @@
             // 
             this.btn3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn3.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn3.Location = new System.Drawing.Point(655, 254);
+            this.btn3.Location = new System.Drawing.Point(692, 216);
             this.btn3.Name = "btn3";
-            this.btn3.Size = new System.Drawing.Size(82, 75);
+            this.btn3.Size = new System.Drawing.Size(101, 81);
             this.btn3.TabIndex = 23;
             this.btn3.Text = "3";
             this.btn3.Click += new System.EventHandler(this.NumberButton_Click);
@@ -438,9 +439,9 @@
             // 
             this.btn4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn4.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn4.Location = new System.Drawing.Point(479, 335);
+            this.btn4.Location = new System.Drawing.Point(478, 306);
             this.btn4.Name = "btn4";
-            this.btn4.Size = new System.Drawing.Size(82, 75);
+            this.btn4.Size = new System.Drawing.Size(101, 81);
             this.btn4.TabIndex = 24;
             this.btn4.Text = "4";
             this.btn4.Click += new System.EventHandler(this.NumberButton_Click);
@@ -449,9 +450,9 @@
             // 
             this.btn5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn5.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn5.Location = new System.Drawing.Point(567, 335);
+            this.btn5.Location = new System.Drawing.Point(585, 306);
             this.btn5.Name = "btn5";
-            this.btn5.Size = new System.Drawing.Size(82, 75);
+            this.btn5.Size = new System.Drawing.Size(101, 81);
             this.btn5.TabIndex = 25;
             this.btn5.Text = "5";
             this.btn5.Click += new System.EventHandler(this.NumberButton_Click);
@@ -460,9 +461,9 @@
             // 
             this.btn6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn6.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn6.Location = new System.Drawing.Point(655, 335);
+            this.btn6.Location = new System.Drawing.Point(692, 306);
             this.btn6.Name = "btn6";
-            this.btn6.Size = new System.Drawing.Size(82, 75);
+            this.btn6.Size = new System.Drawing.Size(101, 81);
             this.btn6.TabIndex = 26;
             this.btn6.Text = "6";
             this.btn6.Click += new System.EventHandler(this.NumberButton_Click);
@@ -471,9 +472,9 @@
             // 
             this.btn7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn7.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn7.Location = new System.Drawing.Point(479, 416);
+            this.btn7.Location = new System.Drawing.Point(478, 393);
             this.btn7.Name = "btn7";
-            this.btn7.Size = new System.Drawing.Size(82, 75);
+            this.btn7.Size = new System.Drawing.Size(101, 81);
             this.btn7.TabIndex = 27;
             this.btn7.Text = "7";
             this.btn7.Click += new System.EventHandler(this.NumberButton_Click);
@@ -482,9 +483,9 @@
             // 
             this.btn8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn8.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn8.Location = new System.Drawing.Point(567, 416);
+            this.btn8.Location = new System.Drawing.Point(585, 393);
             this.btn8.Name = "btn8";
-            this.btn8.Size = new System.Drawing.Size(82, 75);
+            this.btn8.Size = new System.Drawing.Size(101, 81);
             this.btn8.TabIndex = 28;
             this.btn8.Text = "8";
             this.btn8.Click += new System.EventHandler(this.NumberButton_Click);
@@ -493,9 +494,9 @@
             // 
             this.btn9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn9.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn9.Location = new System.Drawing.Point(655, 416);
+            this.btn9.Location = new System.Drawing.Point(692, 393);
             this.btn9.Name = "btn9";
-            this.btn9.Size = new System.Drawing.Size(82, 75);
+            this.btn9.Size = new System.Drawing.Size(101, 81);
             this.btn9.TabIndex = 29;
             this.btn9.Text = "9";
             this.btn9.Click += new System.EventHandler(this.NumberButton_Click);
@@ -505,9 +506,9 @@
             this.btnBackspace.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(206)))), ((int)(((byte)(59)))), ((int)(((byte)(114)))));
             this.btnBackspace.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnBackspace.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btnBackspace.Location = new System.Drawing.Point(567, 497);
+            this.btnBackspace.Location = new System.Drawing.Point(585, 480);
             this.btnBackspace.Name = "btnBackspace";
-            this.btnBackspace.Size = new System.Drawing.Size(82, 75);
+            this.btnBackspace.Size = new System.Drawing.Size(101, 81);
             this.btnBackspace.TabIndex = 30;
             this.btnBackspace.Text = "⌫";
             this.btnBackspace.UseVisualStyleBackColor = false;
@@ -517,9 +518,9 @@
             // 
             this.btn0.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn0.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
-            this.btn0.Location = new System.Drawing.Point(479, 497);
+            this.btn0.Location = new System.Drawing.Point(478, 480);
             this.btn0.Name = "btn0";
-            this.btn0.Size = new System.Drawing.Size(82, 75);
+            this.btn0.Size = new System.Drawing.Size(101, 81);
             this.btn0.TabIndex = 31;
             this.btn0.Text = "0";
             this.btn0.Click += new System.EventHandler(this.NumberButton_Click);
@@ -529,9 +530,9 @@
             this.btnEnter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(162)))), ((int)(((byte)(166)))));
             this.btnEnter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEnter.Font = new System.Drawing.Font("Nirmala Text", 9F);
-            this.btnEnter.Location = new System.Drawing.Point(655, 497);
+            this.btnEnter.Location = new System.Drawing.Point(692, 482);
             this.btnEnter.Name = "btnEnter";
-            this.btnEnter.Size = new System.Drawing.Size(82, 75);
+            this.btnEnter.Size = new System.Drawing.Size(101, 81);
             this.btnEnter.TabIndex = 32;
             this.btnEnter.Text = "Enter";
             this.btnEnter.UseVisualStyleBackColor = false;
@@ -540,11 +541,12 @@
             // totalValue
             // 
             this.totalValue.AutoSize = true;
-            this.totalValue.BackColor = System.Drawing.SystemColors.Control;
-            this.totalValue.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold);
+            this.totalValue.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.totalValue.Font = new System.Drawing.Font("Nirmala Text", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.totalValue.ForeColor = System.Drawing.Color.White;
             this.totalValue.Location = new System.Drawing.Point(26, 605);
             this.totalValue.Name = "totalValue";
-            this.totalValue.Size = new System.Drawing.Size(99, 32);
+            this.totalValue.Size = new System.Drawing.Size(116, 38);
             this.totalValue.TabIndex = 33;
             this.totalValue.Text = "TOTAL: ";
             // 
@@ -553,9 +555,9 @@
             this.btnClearCashierForm.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(233)))), ((int)(((byte)(190)))), ((int)(((byte)(95)))));
             this.btnClearCashierForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClearCashierForm.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
-            this.btnClearCashierForm.Location = new System.Drawing.Point(479, 578);
+            this.btnClearCashierForm.Location = new System.Drawing.Point(478, 585);
             this.btnClearCashierForm.Name = "btnClearCashierForm";
-            this.btnClearCashierForm.Size = new System.Drawing.Size(127, 41);
+            this.btnClearCashierForm.Size = new System.Drawing.Size(159, 59);
             this.btnClearCashierForm.TabIndex = 17;
             this.btnClearCashierForm.Text = "CLEAR";
             this.btnClearCashierForm.UseVisualStyleBackColor = false;
@@ -566,10 +568,10 @@
             this.rtbSelectedGames.BackColor = System.Drawing.Color.WhiteSmoke;
             this.rtbSelectedGames.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.rtbSelectedGames.Font = new System.Drawing.Font("Courier New", 9F);
-            this.rtbSelectedGames.Location = new System.Drawing.Point(27, 24);
+            this.rtbSelectedGames.Location = new System.Drawing.Point(32, 24);
             this.rtbSelectedGames.Name = "rtbSelectedGames";
             this.rtbSelectedGames.ReadOnly = true;
-            this.rtbSelectedGames.Size = new System.Drawing.Size(380, 578);
+            this.rtbSelectedGames.Size = new System.Drawing.Size(364, 578);
             this.rtbSelectedGames.TabIndex = 36;
             this.rtbSelectedGames.Text = "";
             // 

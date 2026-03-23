@@ -58,10 +58,12 @@
             this.timerDateTime1 = new System.Windows.Forms.Timer(this.components);
             this.btnClear = new System.Windows.Forms.Button();
             this.equipmentRentalControl1 = new KGHCashierPOS.EquipmentRentalControl();
+            this.panel4 = new System.Windows.Forms.Panel();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel3.SuspendLayout();
             this.panel2.SuspendLayout();
+            this.panel4.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
@@ -160,7 +162,8 @@
             // 
             this.lblTotalValue.AutoSize = true;
             this.lblTotalValue.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotalValue.Location = new System.Drawing.Point(953, 611);
+            this.lblTotalValue.ForeColor = System.Drawing.Color.White;
+            this.lblTotalValue.Location = new System.Drawing.Point(112, 558);
             this.lblTotalValue.Name = "lblTotalValue";
             this.lblTotalValue.Size = new System.Drawing.Size(120, 32);
             this.lblTotalValue.TabIndex = 44;
@@ -170,7 +173,8 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(867, 611);
+            this.label6.ForeColor = System.Drawing.Color.White;
+            this.label6.Location = new System.Drawing.Point(19, 558);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(99, 32);
             this.label6.TabIndex = 43;
@@ -182,9 +186,9 @@
             this.btnRemove.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRemove.Font = new System.Drawing.Font("Microsoft Sans Serif", 6F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnRemove.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.btnRemove.Location = new System.Drawing.Point(455, 424);
+            this.btnRemove.Location = new System.Drawing.Point(440, 457);
             this.btnRemove.Name = "btnRemove";
-            this.btnRemove.Size = new System.Drawing.Size(159, 61);
+            this.btnRemove.Size = new System.Drawing.Size(170, 61);
             this.btnRemove.TabIndex = 41;
             this.btnRemove.Text = "REMOVE SELECTED";
             this.btnRemove.UseVisualStyleBackColor = false;
@@ -195,9 +199,9 @@
             this.btnPayCashier.BackColor = System.Drawing.Color.LimeGreen;
             this.btnPayCashier.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPayCashier.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnPayCashier.Location = new System.Drawing.Point(860, 658);
+            this.btnPayCashier.Location = new System.Drawing.Point(440, 524);
             this.btnPayCashier.Name = "btnPayCashier";
-            this.btnPayCashier.Size = new System.Drawing.Size(362, 51);
+            this.btnPayCashier.Size = new System.Drawing.Size(347, 68);
             this.btnPayCashier.TabIndex = 40;
             this.btnPayCashier.Text = "PAY TO THE CASHIER";
             this.btnPayCashier.UseVisualStyleBackColor = false;
@@ -207,16 +211,17 @@
             // 
             this.lbDisplay.FormattingEnabled = true;
             this.lbDisplay.ItemHeight = 20;
-            this.lbDisplay.Location = new System.Drawing.Point(860, 136);
+            this.lbDisplay.Location = new System.Drawing.Point(25, 68);
             this.lbDisplay.Name = "lbDisplay";
-            this.lbDisplay.Size = new System.Drawing.Size(371, 464);
+            this.lbDisplay.Size = new System.Drawing.Size(371, 484);
             this.lbDisplay.TabIndex = 39;
             // 
             // label5
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(854, 86);
+            this.label5.ForeColor = System.Drawing.Color.White;
+            this.label5.Location = new System.Drawing.Point(19, 18);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(202, 32);
             this.label5.TabIndex = 38;
@@ -225,10 +230,10 @@
             // ordernum
             // 
             this.ordernum.AutoSize = true;
-            this.ordernum.Font = new System.Drawing.Font("Miriam Libre", 9.999999F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ordernum.Location = new System.Drawing.Point(52, 156);
+            this.ordernum.Font = new System.Drawing.Font("Nirmala UI", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ordernum.Location = new System.Drawing.Point(63, 139);
             this.ordernum.Name = "ordernum";
-            this.ordernum.Size = new System.Drawing.Size(101, 26);
+            this.ordernum.Size = new System.Drawing.Size(153, 45);
             this.ordernum.TabIndex = 37;
             this.ordernum.Text = "Order #: ";
             // 
@@ -240,19 +245,19 @@
             this.panel3.Controls.Add(this.btnTableTennis);
             this.panel3.Controls.Add(this.btnScooter);
             this.panel3.Controls.Add(this.btnBadminton);
-            this.panel3.Location = new System.Drawing.Point(57, 223);
+            this.panel3.Location = new System.Drawing.Point(44, 223);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(371, 349);
+            this.panel3.Size = new System.Drawing.Size(375, 369);
             this.panel3.TabIndex = 47;
             // 
             // lblSelect
             // 
             this.lblSelect.AutoSize = true;
-            this.lblSelect.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold);
+            this.lblSelect.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblSelect.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.lblSelect.Location = new System.Drawing.Point(19, 13);
             this.lblSelect.Name = "lblSelect";
-            this.lblSelect.Size = new System.Drawing.Size(131, 25);
+            this.lblSelect.Size = new System.Drawing.Size(171, 32);
             this.lblSelect.TabIndex = 7;
             this.lblSelect.Text = "SELECT GAME";
             // 
@@ -265,7 +270,7 @@
             this.btnBilliards.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btnBilliards.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btnBilliards.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBilliards.Location = new System.Drawing.Point(188, 47);
+            this.btnBilliards.Location = new System.Drawing.Point(199, 58);
             this.btnBilliards.Name = "btnBilliards";
             this.btnBilliards.Size = new System.Drawing.Size(151, 134);
             this.btnBilliards.TabIndex = 1;
@@ -281,7 +286,7 @@
             this.btnTableTennis.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btnTableTennis.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btnTableTennis.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnTableTennis.Location = new System.Drawing.Point(188, 187);
+            this.btnTableTennis.Location = new System.Drawing.Point(199, 207);
             this.btnTableTennis.Name = "btnTableTennis";
             this.btnTableTennis.Size = new System.Drawing.Size(151, 134);
             this.btnTableTennis.TabIndex = 2;
@@ -297,7 +302,7 @@
             this.btnScooter.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btnScooter.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btnScooter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnScooter.Location = new System.Drawing.Point(31, 187);
+            this.btnScooter.Location = new System.Drawing.Point(31, 207);
             this.btnScooter.Name = "btnScooter";
             this.btnScooter.Size = new System.Drawing.Size(151, 134);
             this.btnScooter.TabIndex = 6;
@@ -313,7 +318,7 @@
             this.btnBadminton.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btnBadminton.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btnBadminton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnBadminton.Location = new System.Drawing.Point(31, 47);
+            this.btnBadminton.Location = new System.Drawing.Point(31, 58);
             this.btnBadminton.Name = "btnBadminton";
             this.btnBadminton.Size = new System.Drawing.Size(151, 134);
             this.btnBadminton.TabIndex = 8;
@@ -326,9 +331,9 @@
             this.panel2.Controls.Add(this.btn30min);
             this.panel2.Controls.Add(this.btn1hour);
             this.panel2.Controls.Add(this.label3);
-            this.panel2.Location = new System.Drawing.Point(455, 223);
+            this.panel2.Location = new System.Drawing.Point(432, 223);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(330, 181);
+            this.panel2.Size = new System.Drawing.Size(355, 209);
             this.panel2.TabIndex = 11;
             // 
             // btn30min
@@ -340,9 +345,9 @@
             this.btn30min.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btn30min.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btn30min.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn30min.Location = new System.Drawing.Point(19, 47);
+            this.btn30min.Location = new System.Drawing.Point(22, 58);
             this.btn30min.Name = "btn30min";
-            this.btn30min.Size = new System.Drawing.Size(140, 116);
+            this.btn30min.Size = new System.Drawing.Size(151, 134);
             this.btn30min.TabIndex = 10;
             this.btn30min.UseVisualStyleBackColor = false;
             this.btn30min.Click += new System.EventHandler(this.btn30min_Click);
@@ -356,9 +361,9 @@
             this.btn1hour.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btn1hour.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(216)))), ((int)(((byte)(177)))), ((int)(((byte)(56)))));
             this.btn1hour.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btn1hour.Location = new System.Drawing.Point(165, 47);
+            this.btn1hour.Location = new System.Drawing.Point(179, 58);
             this.btn1hour.Name = "btn1hour";
-            this.btn1hour.Size = new System.Drawing.Size(140, 116);
+            this.btn1hour.Size = new System.Drawing.Size(151, 134);
             this.btn1hour.TabIndex = 11;
             this.btn1hour.UseVisualStyleBackColor = false;
             this.btn1hour.Click += new System.EventHandler(this.btn1hour_Click);
@@ -366,21 +371,21 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold);
+            this.label3.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
             this.label3.Location = new System.Drawing.Point(16, 12);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(156, 25);
+            this.label3.Size = new System.Drawing.Size(204, 32);
             this.label3.TabIndex = 7;
             this.label3.Text = "TIME DURATION";
             // 
             // lblOrderNum
             // 
             this.lblOrderNum.AutoSize = true;
-            this.lblOrderNum.Font = new System.Drawing.Font("Miriam Libre", 9.999999F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblOrderNum.Location = new System.Drawing.Point(159, 156);
+            this.lblOrderNum.Font = new System.Drawing.Font("Nirmala UI", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblOrderNum.Location = new System.Drawing.Point(185, 139);
             this.lblOrderNum.Name = "lblOrderNum";
-            this.lblOrderNum.Size = new System.Drawing.Size(101, 26);
+            this.lblOrderNum.Size = new System.Drawing.Size(153, 45);
             this.lblOrderNum.TabIndex = 48;
             this.lblOrderNum.Text = "Order #: ";
             // 
@@ -395,9 +400,9 @@
             this.btnClear.BackColor = System.Drawing.Color.DarkOrange;
             this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClear.Font = new System.Drawing.Font("Microsoft Sans Serif", 6F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnClear.Location = new System.Drawing.Point(620, 424);
+            this.btnClear.Location = new System.Drawing.Point(616, 458);
             this.btnClear.Name = "btnClear";
-            this.btnClear.Size = new System.Drawing.Size(159, 61);
+            this.btnClear.Size = new System.Drawing.Size(171, 61);
             this.btnClear.TabIndex = 49;
             this.btnClear.Text = "CLEAR";
             this.btnClear.UseVisualStyleBackColor = false;
@@ -406,11 +411,23 @@
             // equipmentRentalControl1
             // 
             this.equipmentRentalControl1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.equipmentRentalControl1.Location = new System.Drawing.Point(379, 86);
+            this.equipmentRentalControl1.Location = new System.Drawing.Point(304, 615);
             this.equipmentRentalControl1.Name = "equipmentRentalControl1";
             this.equipmentRentalControl1.Size = new System.Drawing.Size(498, 548);
             this.equipmentRentalControl1.TabIndex = 50;
             this.equipmentRentalControl1.Visible = false;
+            // 
+            // panel4
+            // 
+            this.panel4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(35)))));
+            this.panel4.Controls.Add(this.lbDisplay);
+            this.panel4.Controls.Add(this.label6);
+            this.panel4.Controls.Add(this.lblTotalValue);
+            this.panel4.Controls.Add(this.label5);
+            this.panel4.Location = new System.Drawing.Point(808, 86);
+            this.panel4.Name = "panel4";
+            this.panel4.Size = new System.Drawing.Size(427, 614);
+            this.panel4.TabIndex = 115;
             // 
             // OrderForm
             // 
@@ -420,15 +437,12 @@
             this.Controls.Add(this.lblOrderNum);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel3);
-            this.Controls.Add(this.lblTotalValue);
-            this.Controls.Add(this.label6);
+            this.Controls.Add(this.equipmentRentalControl1);
             this.Controls.Add(this.btnRemove);
             this.Controls.Add(this.btnPayCashier);
-            this.Controls.Add(this.lbDisplay);
-            this.Controls.Add(this.label5);
             this.Controls.Add(this.ordernum);
             this.Controls.Add(this.panel1);
-            this.Controls.Add(this.equipmentRentalControl1);
+            this.Controls.Add(this.panel4);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Name = "OrderForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -441,6 +455,8 @@
             this.panel3.PerformLayout();
             this.panel2.ResumeLayout(false);
             this.panel2.PerformLayout();
+            this.panel4.ResumeLayout(false);
+            this.panel4.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -477,5 +493,6 @@
         private EquipmentRentalControl equipmentRentalControl1;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Panel panel4;
     }
 }
