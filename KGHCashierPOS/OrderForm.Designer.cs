@@ -88,7 +88,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.SystemColors.Control;
-            this.label4.Location = new System.Drawing.Point(87, 39);
+            this.label4.Location = new System.Drawing.Point(88, 39);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(65, 28);
             this.label4.TabIndex = 37;
@@ -99,7 +99,7 @@
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.SystemColors.Control;
-            this.label1.Location = new System.Drawing.Point(87, 10);
+            this.label1.Location = new System.Drawing.Point(88, 10);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(68, 28);
             this.label1.TabIndex = 36;
@@ -131,7 +131,7 @@
             this.lblDate.AutoSize = true;
             this.lblDate.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblDate.ForeColor = System.Drawing.SystemColors.Control;
-            this.lblDate.Location = new System.Drawing.Point(161, 10);
+            this.lblDate.Location = new System.Drawing.Point(158, 10);
             this.lblDate.Name = "lblDate";
             this.lblDate.Size = new System.Drawing.Size(54, 28);
             this.lblDate.TabIndex = 6;
@@ -161,28 +161,28 @@
             // lblTotalValue
             // 
             this.lblTotalValue.AutoSize = true;
-            this.lblTotalValue.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTotalValue.Font = new System.Drawing.Font("Nirmala Text", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblTotalValue.ForeColor = System.Drawing.Color.White;
             this.lblTotalValue.Location = new System.Drawing.Point(112, 558);
             this.lblTotalValue.Name = "lblTotalValue";
-            this.lblTotalValue.Size = new System.Drawing.Size(120, 32);
+            this.lblTotalValue.Size = new System.Drawing.Size(139, 38);
             this.lblTotalValue.TabIndex = 44;
             this.lblTotalValue.Text = "totalValue";
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Font = new System.Drawing.Font("Nirmala Text", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.White;
             this.label6.Location = new System.Drawing.Point(19, 558);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(99, 32);
+            this.label6.Size = new System.Drawing.Size(116, 38);
             this.label6.TabIndex = 43;
             this.label6.Text = "TOTAL: ";
             // 
             // btnRemove
             // 
-            this.btnRemove.BackColor = System.Drawing.Color.Red;
+            this.btnRemove.BackColor = System.Drawing.Color.Crimson;
             this.btnRemove.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRemove.Font = new System.Drawing.Font("Microsoft Sans Serif", 6F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnRemove.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
@@ -196,7 +196,7 @@
             // 
             // btnPayCashier
             // 
-            this.btnPayCashier.BackColor = System.Drawing.Color.LimeGreen;
+            this.btnPayCashier.BackColor = System.Drawing.Color.Goldenrod;
             this.btnPayCashier.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPayCashier.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnPayCashier.Location = new System.Drawing.Point(440, 524);
@@ -397,7 +397,7 @@
             // 
             // btnClear
             // 
-            this.btnClear.BackColor = System.Drawing.Color.DarkOrange;
+            this.btnClear.BackColor = System.Drawing.Color.Silver;
             this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClear.Font = new System.Drawing.Font("Microsoft Sans Serif", 6F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnClear.Location = new System.Drawing.Point(616, 458);

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using MySql.Data.MySqlClient;
+// using cms; // Comment this out if it's causing issues
 
 namespace KGHCashierPOS
 {
@@ -26,6 +27,10 @@ namespace KGHCashierPOS
 
         // MySQL Connection String
         private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
+
+        // Reference to login form to show after sign out (using dynamic type to avoid namespace issues)
+        private object loginForm;
+        private bool isSigningOut = false;
 
         // ============ CONSTRUCTOR ============
         public CashierForm()
@@ -75,6 +80,19 @@ namespace KGHCashierPOS
             currentUsername = username;
             currentUserRole = role;
 
+            // Set global logger user info (this is in the cms namespace)
+            try
+            {
+                // Use reflection to access GlobalLogger if namespace issues
+                Type loggerType = Type.GetType("cms.GlobalLogger, cms");
+                if (loggerType != null)
+                {
+                    loggerType.GetProperty("CurrentUsername")?.SetValue(null, username);
+                    loggerType.GetProperty("CurrentUserRole")?.SetValue(null, role);
+                }
+            }
+            catch { }
+
             // Try to get user ID from database
             try
             {
@@ -105,6 +123,20 @@ namespace KGHCashierPOS
 
             // Log login activity
             LogActivity("Logged in to Cashier POS");
+
+            // Try to log via GlobalLogger
+            try
+            {
+                Type loggerType = Type.GetType("cms.GlobalLogger, cms");
+                loggerType?.GetMethod("LogInfo")?.Invoke(null, new object[] { "Cashier", $"User '{username}' logged in to Cashier POS" });
+            }
+            catch { }
+        }
+
+        // Method to set login form reference (accepts any Form type)
+        public void SetLoginForm(Form form)
+        {
+            loginForm = form;
         }
 
         private void UpdateCashierDisplay()
@@ -145,22 +177,9 @@ namespace KGHCashierPOS
             {
                 System.Diagnostics.Debug.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] User: {currentUsername} ({currentUserRole}) - {action}");
 
-                // Log to database if you have an activity log table
-                // using (MySqlConnection conn = new MySqlConnection(connectionString))
-                // {
-                //     conn.Open();
-                //     conn.ChangeDatabase("matchpoint_db");
-                //     
-                //     string query = "INSERT INTO activity_logs (UserID, Username, Action, Timestamp) VALUES (@userId, @username, @action, @timestamp)";
-                //     using (MySqlCommand cmd = new MySqlCommand(query, conn))
-                //     {
-                //         cmd.Parameters.AddWithValue("@userId", currentUserId);
-                //         cmd.Parameters.AddWithValue("@username", currentUsername);
-                //         cmd.Parameters.AddWithValue("@action", action);
-                //         cmd.Parameters.AddWithValue("@timestamp", DateTime.Now);
-                //         cmd.ExecuteNonQuery();
-                //     }
-                // }
+                // Try to log via GlobalLogger
+                Type loggerType = Type.GetType("cms.GlobalLogger, cms");
+                loggerType?.GetMethod("LogInfo")?.Invoke(null, new object[] { "Cashier", action });
             }
             catch (Exception ex)
             {
@@ -371,8 +390,10 @@ namespace KGHCashierPOS
 
         private void AddSessionWithEquipment(int minutes, List<Equipment> equipment, decimal equipmentCost)
         {
+            string gameName = sessionManager.SelectedGame;
+
             sessionManager.AddOrExtendSession(
-                sessionManager.SelectedGame,
+                gameName,
                 minutes,
                 equipment,
                 equipmentCost
@@ -387,22 +408,36 @@ namespace KGHCashierPOS
                 : "";
 
             MessageBox.Show(
-                $"{sessionManager.SelectedGame} added!\n" +
+                $"{gameName} added!\n" +
                 $"Duration: {DurationFormatter.Format(minutes)}\n" +
-                $"Game: {PriceFormatter.Format(PriceManager.GetPrice(sessionManager.SelectedGame, minutes))}" +
+                $"Game: {PriceFormatter.Format(PriceManager.GetPrice(gameName, minutes))}" +
                 equipSummary,
                 "Session Added",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information
             );
 
-            LogActivity($"Added {sessionManager.SelectedGame} for {minutes} minutes with equipment (₱{equipmentCost})");
+            LogActivity($"Added {gameName} for {minutes} minutes with equipment (₱{equipmentCost})");
+
+            // Log equipment checkout if equipment was rented
+            if (equipment != null && equipment.Count > 0)
+            {
+                foreach (var eq in equipment)
+                {
+                    if (eq.RentalQuantity > 0)
+                    {
+                        LogActivity($"Rented equipment: {eq.Name} x{eq.RentalQuantity}");
+                    }
+                }
+            }
         }
 
         private void AddSessionWithoutEquipment(int minutes)
         {
+            string gameName = sessionManager.SelectedGame;
+
             sessionManager.AddOrExtendSession(
-                sessionManager.SelectedGame,
+                gameName,
                 minutes,
                 new List<Equipment>(),
                 0
@@ -412,15 +447,15 @@ namespace KGHCashierPOS
             ResetGameSelection();
 
             MessageBox.Show(
-                $"{sessionManager.SelectedGame} added!\n" +
+                $"{gameName} added!\n" +
                 $"Duration: {DurationFormatter.Format(minutes)}\n" +
-                $"Price: {PriceFormatter.Format(PriceManager.GetPrice(sessionManager.SelectedGame, minutes))}",
+                $"Price: {PriceFormatter.Format(PriceManager.GetPrice(gameName, minutes))}",
                 "Session Added",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information
             );
 
-            LogActivity($"Added {sessionManager.SelectedGame} for {minutes} minutes (no equipment)");
+            LogActivity($"Added {gameName} for {minutes} minutes (no equipment)");
         }
 
         private void ResetGameSelection()
@@ -826,9 +861,38 @@ namespace KGHCashierPOS
 
             if (result == DialogResult.Yes)
             {
+                isSigningOut = true;
                 LogActivity("Signed out from Cashier POS");
+
+                // Close current form
                 this.Close();
-                Application.Restart();
+
+                // Show login form
+                if (loginForm != null && loginForm is Form form)
+                {
+                    form.Show();
+                }
+                else
+                {
+                    // Create a new login form using reflection to avoid namespace issues
+                    try
+                    {
+                        Type form2Type = Type.GetType("cms.Form2, cms");
+                        if (form2Type != null)
+                        {
+                            var login = (Form)Activator.CreateInstance(form2Type);
+                            login.Show();
+                        }
+                        else
+                        {
+                            Application.Restart();
+                        }
+                    }
+                    catch
+                    {
+                        Application.Restart();
+                    }
+                }
             }
         }
 
@@ -843,7 +907,7 @@ namespace KGHCashierPOS
                 dateTimeTimer = null;
             }
 
-            if (sessionManager != null && sessionManager.ActiveSessions.Count > 0)
+            if (!isSigningOut && sessionManager != null && sessionManager.ActiveSessions.Count > 0)
             {
                 DialogResult result = MessageBox.Show("You have pending orders. Are you sure you want to exit?",
                     "Confirm Exit",

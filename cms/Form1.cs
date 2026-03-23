@@ -28,9 +28,9 @@ namespace cms
         // GameEquipment control reference
         private GameEquipment gameEquipmentControl;
 
-        // User info
-        public string LoggedInUserRole { get; set; }
-        public string LoggedInUsername { get; set; }
+        // User info properties
+        public string LoggedInUserRole { get; set; } = "ADMIN";
+        public string LoggedInUsername { get; set; } = "admin";
 
         // Helper class to store original colors
         private class LabelColors
@@ -44,7 +44,7 @@ namespace cms
         public Form1()
         {
             InitializeComponent();
-            InitializeGameTabs(); // Initialize ONCE at startup
+            InitializeGameTabs();
 
             // Set all menu labels to yellow color
             SetMenuLabelsToYellow();
@@ -55,20 +55,58 @@ namespace cms
             // Show dashboard by default when form loads
             ShowDashboard();
 
-            // Connect the Sign Out event
+            // Connect the Sign Out event to pictureBox2
             AttachSignOutEvent();
 
-            // Add hover effects for menu labels
-            AttachMenuHoverEffects();
+            // Connect Settings event to pictureBox3
+            AttachSettingsEvent();
 
-            // Add hover effects for Sales label
-            AttachSalesLabelHoverEffects();
+            // Add hover effects and click events for menu labels
+            AttachMenuHoverEffects();
+            AttachMenuClickEvents();
+
+            // Add hover effects for pictureBox2 (Sign Out) and pictureBox3 (Settings)
+            AttachPictureBoxHoverEffects();
 
             // Set the welcome message
             SetWelcomeMessage();
 
             // Apply role-based access control
             ApplyRoleBasedAccess();
+
+            // Hide the old label5 and label6
+            HideOldControls();
+
+            // Reposition icons to top right corner
+            RepositionTopIcons();
+
+            // Initialize Activity Logs
+            InitializeActivityLogs();
+        }
+
+        // Initialize Activity Logs and set current user
+        private void InitializeActivityLogs()
+        {
+            try
+            {
+                Activitylogs.EnsureInitialized();
+
+                // Set global logger with current user info
+                if (!string.IsNullOrEmpty(LoggedInUsername))
+                {
+                    GlobalLogger.CurrentUsername = LoggedInUsername;
+                    GlobalLogger.CurrentUserRole = LoggedInUserRole ?? "ADMIN";
+
+                    // Log that admin form was loaded
+                    GlobalLogger.LogInfo("System", $"Admin/Manager form loaded by {LoggedInUsername}");
+                }
+
+                System.Diagnostics.Debug.WriteLine("Activity Logs initialized in Form1!");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to initialize Activity Logs: {ex.Message}");
+            }
         }
 
         // Method to set user info (called from login)
@@ -76,8 +114,20 @@ namespace cms
         {
             LoggedInUsername = username;
             LoggedInUserRole = role;
+
+            // Update global logger
+            GlobalLogger.CurrentUsername = username;
+            GlobalLogger.CurrentUserRole = role ?? "ADMIN";
+
             SetWelcomeMessage();
             ApplyRoleBasedAccess();
+
+            // Log the session start
+            try
+            {
+                GlobalLogger.LogInfo("System", $"User session started: {username} ({role})");
+            }
+            catch { }
         }
 
         // Apply role-based access control
@@ -89,12 +139,19 @@ namespace cms
             // Admin and Manager have full access
             bool isAdminOrManager = (role == "ADMIN" || role == "MANAGER");
 
-            // Staff/Cashier have limited access
-            bool isStaff = (role == "STAFF" || role == "CASHIER");
+            // Cashier have limited access
+            bool isCashier = (role == "CASHIER");
 
-            if (isStaff)
+            // Hide/show picture boxes based on role
+            if (pictureBox4 != null) pictureBox4.Visible = isAdminOrManager;
+            if (pictureBox5 != null) pictureBox5.Visible = isAdminOrManager;
+            if (pictureBox6 != null) pictureBox6.Visible = isAdminOrManager;
+            if (pictureBox7 != null) pictureBox7.Visible = isAdminOrManager;
+            if (pictureBox8 != null) pictureBox8.Visible = isAdminOrManager;
+
+            if (isCashier)
             {
-                // Hide or disable admin-only menus for staff
+                // Hide or disable admin-only menus for cashier
                 if (label1 != null) // User Management
                 {
                     label1.Visible = false;
@@ -107,16 +164,23 @@ namespace cms
                     label3.Enabled = false;
                 }
 
-                if (label6 != null) // Settings
+                // Hide settings pictureBox for cashier
+                if (pictureBox3 != null)
                 {
-                    label6.Visible = false;
-                    label6.Enabled = false;
+                    pictureBox3.Visible = false;
+                    pictureBox3.Enabled = false;
                 }
 
-                // Staff can only see Dashboard and Game Rates/Equipment
-                // Force show dashboard
+                // Cashier can only see Dashboard and Game Rates/Equipment
                 ShowDashboard();
                 HighlightMenuItem(dash);
+
+                // Log role-based restriction
+                try
+                {
+                    GlobalLogger.LogInfo("System", $"Cashier access: Limited view applied for {LoggedInUsername}");
+                }
+                catch { }
             }
             else if (isAdminOrManager)
             {
@@ -133,15 +197,54 @@ namespace cms
                     label3.Enabled = true;
                 }
 
-                if (label6 != null)
+                // Show settings pictureBox for admin/manager
+                if (pictureBox3 != null)
                 {
-                    label6.Visible = true;
-                    label6.Enabled = true;
+                    pictureBox3.Visible = true;
+                    pictureBox3.Enabled = true;
                 }
             }
         }
 
-        // Initialize the tab control ONCE at startup - NOT recreated each time
+        // Hide the old label5 (Sign Out) and label6 (Settings)
+        private void HideOldControls()
+        {
+            if (label5 != null)
+            {
+                label5.Visible = false;
+                label5.Enabled = false;
+            }
+
+            if (label6 != null)
+            {
+                label6.Visible = false;
+                label6.Enabled = false;
+            }
+        }
+
+        // Reposition the icons to top right corner
+        private void RepositionTopIcons()
+        {
+            // Move pictureBox2 (Sign Out) to top right
+            if (pictureBox2 != null)
+            {
+                pictureBox2.Location = new Point(this.ClientSize.Width - 50, 15);
+                pictureBox2.Size = new Size(35, 35);
+                pictureBox2.BackColor = Color.Transparent;
+                pictureBox2.Cursor = Cursors.Hand;
+            }
+
+            // Move pictureBox3 (Settings) to left of sign out
+            if (pictureBox3 != null)
+            {
+                pictureBox3.Location = new Point(this.ClientSize.Width - 95, 15);
+                pictureBox3.Size = new Size(35, 35);
+                pictureBox3.BackColor = Color.Transparent;
+                pictureBox3.Cursor = Cursors.Hand;
+            }
+        }
+
+        // Initialize the tab control ONCE at startup
         private void InitializeGameTabs()
         {
             // Create the tab control (only once)
@@ -177,24 +280,23 @@ namespace cms
             gameTabControl.TabPages.Add(tabEquipment);
         }
 
-        // Event handler for when Equipment tab is selected
         private void TabEquipment_Enter(object sender, EventArgs e)
         {
-            // Load GameEquipment control only when tab is clicked
             LoadGameEquipment();
+
+            // Log equipment tab access
+            try
+            {
+                GlobalLogger.LogInfo("GameEquipment", $"Equipment tab accessed by {LoggedInUsername}");
+            }
+            catch { }
         }
 
-        // Method to load GameEquipment control
         private void LoadGameEquipment()
         {
-            // Clear the tab first
             tabEquipment.Controls.Clear();
-
-            // Create fresh GameEquipment control
             gameEquipmentControl = new GameEquipment();
             gameEquipmentControl.Dock = DockStyle.Fill;
-
-            // Add to tab
             tabEquipment.Controls.Add(gameEquipmentControl);
         }
 
@@ -225,7 +327,7 @@ namespace cms
                 {
                     loggedName.ForeColor = Color.FromArgb(100, 200, 200);
                 }
-                else if (role == "STAFF" || role == "CASHIER")
+                else if (role == "CASHIER")
                 {
                     loggedName.ForeColor = Color.FromArgb(100, 200, 100);
                 }
@@ -234,29 +336,124 @@ namespace cms
                     loggedName.ForeColor = Color.FromArgb(228, 186, 94);
                 }
             }
-        }
 
-        private void AttachSignOutEvent()
-        {
-            var allLabels5 = this.Controls.Find("label5", true).OfType<Label>().ToList();
-
-            if (allLabels5.Count > 0)
+            if (label9 != null)
             {
-                foreach (Label label5 in allLabels5)
+                // Update role display
+                if (!string.IsNullOrEmpty(LoggedInUserRole))
                 {
-                    label5.Click += label5_Click;
-                    label5.Cursor = Cursors.Hand;
-                    label5.ForeColor = Color.FromArgb(40, 41, 34);
-                    label5.Font = new System.Drawing.Font(label5.Font, FontStyle.Bold);
-                    label5.MouseEnter += SignOut_MouseEnter;
-                    label5.MouseLeave += SignOut_MouseLeave;
+                    label9.Text = LoggedInUserRole;
                 }
             }
         }
 
+        private void AttachSignOutEvent()
+        {
+            // Attach click event to pictureBox2 for Sign Out
+            if (pictureBox2 != null)
+            {
+                pictureBox2.Click += PictureBox2_Click;
+                pictureBox2.Cursor = Cursors.Hand;
+            }
+        }
+
+        private void AttachSettingsEvent()
+        {
+            // Attach click event to pictureBox3 for Settings
+            if (pictureBox3 != null)
+            {
+                pictureBox3.Click += PictureBox3_Click;
+                pictureBox3.Cursor = Cursors.Hand;
+            }
+        }
+
+        private void AttachPictureBoxHoverEffects()
+        {
+            // Hover effects for pictureBox2 (Sign Out)
+            if (pictureBox2 != null)
+            {
+                pictureBox2.MouseEnter += (s, e) => pictureBox2.BackColor = Color.FromArgb(60, 70, 80);
+                pictureBox2.MouseLeave += (s, e) => pictureBox2.BackColor = Color.Transparent;
+            }
+
+            // Hover effects for pictureBox3 (Settings)
+            if (pictureBox3 != null)
+            {
+                pictureBox3.MouseEnter += (s, e) => pictureBox3.BackColor = Color.FromArgb(60, 70, 80);
+                pictureBox3.MouseLeave += (s, e) => pictureBox3.BackColor = Color.Transparent;
+            }
+        }
+
+        private void PictureBox2_Click(object sender, EventArgs e)
+        {
+            // Sign Out
+            DialogResult result = MessageBox.Show("Are you sure you want to sign out?",
+                "Sign Out Verification",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                try
+                {
+                    // Log sign out
+                    try
+                    {
+                        GlobalLogger.Log("Logout", $"User '{LoggedInUsername}' signed out", "Info", "System");
+                        Activitylogs.Instance?.AddLogEntry(LoggedInUsername, "Logout", $"User '{LoggedInUsername}' logged out of the system", "Info", "System");
+                    }
+                    catch { }
+
+                    isSigningOut = true;
+
+                    // Close the current form
+                    this.Close();
+
+                    // Create a new login form
+                    Form2 loginForm = new Form2();
+                    loginForm.Show();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error signing out: {ex.Message}",
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    isSigningOut = false;
+                }
+            }
+        }
+
+        private void PictureBox3_Click(object sender, EventArgs e)
+        {
+            // Check if user has permission to access Settings
+            string role = (LoggedInUserRole ?? "").ToUpper();
+            if (role == "CASHIER")
+            {
+                MessageBox.Show("Access Denied! Cashier cannot access Settings.",
+                    "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                // Log access denied
+                try
+                {
+                    GlobalLogger.LogWarning("System", $"Access denied: {LoggedInUsername} attempted to access Settings");
+                }
+                catch { }
+                return;
+            }
+
+            // Log settings access
+            try
+            {
+                GlobalLogger.LogInfo("System", $"{LoggedInUsername} opened Settings");
+            }
+            catch { }
+
+            ShowSettings();
+            HighlightMenuItem(null);
+        }
+
         private void AttachMenuHoverEffects()
         {
-            Label[] menuLabels = { dash, label1, label2, label3 };
+            Label[] menuLabels = { dash, label1, label2, label3, salesBtn };
 
             foreach (var label in menuLabels)
             {
@@ -269,50 +466,13 @@ namespace cms
             }
         }
 
-        // ⭐ Attach hover effects for Sales label
-        private void AttachSalesLabelHoverEffects()
+        private void AttachMenuClickEvents()
         {
-            if (salesBtn != null)
-            {
-                // Store original colors
-                if (!originalLabelColors.ContainsKey(salesBtn))
-                {
-                    originalLabelColors[salesBtn] = new LabelColors
-                    {
-                        ForeColor = salesBtn.ForeColor,
-                        BackColor = salesBtn.BackColor
-                    };
-                }
-
-                // Add hover events
-                salesBtn.MouseEnter += SalesLabel_MouseEnter;
-                salesBtn.MouseLeave += SalesLabel_MouseLeave;
-                salesBtn.Cursor = Cursors.Hand;
-            }
-        }
-
-        private void label5_Click(object sender, EventArgs e)
-        {
-            DialogResult result = MessageBox.Show("Are you sure you want to sign out?",
-                "Sign Out Verification",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
-            {
-                try
-                {
-                    isSigningOut = true;
-                    this.Close();
-                    Application.Restart();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error signing out: {ex.Message}",
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    isSigningOut = false;
-                }
-            }
+            if (dash != null) dash.Click += dash_Click;
+            if (label1 != null) label1.Click += label1_Click_1;
+            if (label2 != null) label2.Click += label2_Click;
+            if (label3 != null) label3.Click += label3_Click;
+            if (salesBtn != null) salesBtn.Click += salesBtn_Click;
         }
 
         // ==============================================
@@ -323,57 +483,86 @@ namespace cms
         {
             ShowDashboard();
             HighlightMenuItem(dash);
+            dash.Refresh();
+
+            // Log dashboard access
+            try
+            {
+                GlobalLogger.LogInfo("Dashboard", $"{LoggedInUsername} viewed dashboard");
+            }
+            catch { }
         }
 
         private void label1_Click_1(object sender, EventArgs e)
         {
-            // Check if user has permission to access User Management
             string role = (LoggedInUserRole ?? "").ToUpper();
-            if (role == "STAFF" || role == "CASHIER")
+            if (role == "CASHIER")
             {
-                MessageBox.Show("Access Denied! Staff members cannot access User Management.",
+                MessageBox.Show("Access Denied! Cashier cannot access User Management.",
                     "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                // Log access denied
+                try
+                {
+                    GlobalLogger.LogWarning("Users", $"Access denied: {LoggedInUsername} attempted to access User Management");
+                }
+                catch { }
                 return;
             }
 
             ShowUserManagement();
             HighlightMenuItem(label1);
+            label1.Refresh();
+
+            // Log user management access
+            try
+            {
+                GlobalLogger.LogInfo("Users", $"{LoggedInUsername} opened User Management");
+            }
+            catch { }
         }
 
         private void label2_Click(object sender, EventArgs e)
         {
             ShowGameRatesAndEquipment();
             HighlightMenuItem(label2);
+            label2.Refresh();
+
+            // Log game rates & equipment access
+            try
+            {
+                GlobalLogger.LogInfo("GameRates", $"{LoggedInUsername} opened Game Rates & Equipment");
+            }
+            catch { }
         }
 
         private void label3_Click(object sender, EventArgs e)
         {
-            // Check if user has permission to access Activity Logs
             string role = (LoggedInUserRole ?? "").ToUpper();
-            if (role == "STAFF" || role == "CASHIER")
+            if (role == "CASHIER")
             {
-                MessageBox.Show("Access Denied! Staff members cannot access Activity Logs.",
+                MessageBox.Show("Access Denied! Cashier cannot access Activity Logs.",
                     "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                // Log access denied
+                try
+                {
+                    GlobalLogger.LogWarning("ActivityLogs", $"Access denied: {LoggedInUsername} attempted to access Activity Logs");
+                }
+                catch { }
                 return;
             }
 
             ShowActivityLogs();
             HighlightMenuItem(label3);
-        }
+            label3.Refresh();
 
-        private void label6_Click(object sender, EventArgs e)
-        {
-            // Check if user has permission to access Settings
-            string role = (LoggedInUserRole ?? "").ToUpper();
-            if (role == "STAFF" || role == "CASHIER")
+            // Log activity logs access
+            try
             {
-                MessageBox.Show("Access Denied! Staff members cannot access Settings.",
-                    "Permission Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                GlobalLogger.LogInfo("ActivityLogs", $"{LoggedInUsername} opened Activity Logs");
             }
-
-            ShowSettings();
-            ResetMenuColors();
+            catch { }
         }
 
         // ==============================================
@@ -402,20 +591,16 @@ namespace cms
             panel2.Visible = true;
         }
 
-        // Shows both Game Rates and Equipment in tabs
         private void ShowGameRatesAndEquipment()
         {
             ClearPanel2();
 
-            // Create a fresh GameRates control
             gameRatesControl = new GameRates();
             gameRatesControl.Dock = DockStyle.Fill;
 
-            // Clear the Rates tab and add the new control
             tabRates.Controls.Clear();
             tabRates.Controls.Add(gameRatesControl);
 
-            // Reset Equipment tab to placeholder (will load when clicked)
             tabEquipment.Controls.Clear();
             Label eqPlaceholder = new Label
             {
@@ -427,28 +612,21 @@ namespace cms
             };
             tabEquipment.Controls.Add(eqPlaceholder);
 
-            // Create container panel for the tab control (if needed)
             if (gameContentPanel == null || gameContentPanel.IsDisposed)
             {
-                gameContentPanel = new Panel
-                {
-                    Dock = DockStyle.Fill
-                };
+                gameContentPanel = new Panel { Dock = DockStyle.Fill };
             }
             else
             {
                 gameContentPanel.Controls.Clear();
             }
 
-            // Add the tab control to the container (ONCE)
             if (!gameContentPanel.Controls.Contains(gameTabControl))
             {
                 gameContentPanel.Controls.Add(gameTabControl);
             }
 
             gameTabControl.Visible = true;
-
-            // Add the container to panel2
             panel2.Controls.Add(gameContentPanel);
             panel2.Visible = true;
         }
@@ -456,19 +634,28 @@ namespace cms
         private void ShowActivityLogs()
         {
             ClearPanel2();
-
             try
             {
-                activityLogsControl = new Activitylogs();
+                // Use the singleton instance to maintain state
+                activityLogsControl = Activitylogs.Instance;
                 activityLogsControl.Dock = DockStyle.Fill;
-
                 panel2.Controls.Add(activityLogsControl);
                 panel2.Visible = true;
+
+                // Refresh to show latest logs
+                activityLogsControl.RefreshData();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading Activity Logs: {ex.Message}",
                               "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // Log error
+                try
+                {
+                    GlobalLogger.LogError("ActivityLogs", $"Error loading logs: {ex.Message}");
+                }
+                catch { }
 
                 Label placeholder = new Label();
                 placeholder.Text = "ACTIVITY LOG\n\nError loading activity logs.\n" + ex.Message;
@@ -483,10 +670,8 @@ namespace cms
         private void ShowSettings()
         {
             ClearPanel2();
-
             settingsControl = new SETTINGS();
             settingsControl.Dock = DockStyle.Fill;
-
             panel2.Controls.Add(settingsControl);
             panel2.Visible = true;
         }
@@ -494,143 +679,70 @@ namespace cms
         private void ShowSales()
         {
             ClearPanel2();
-
             salesControl = new SALES();
             salesControl.Dock = DockStyle.Fill;
-
             panel2.Controls.Add(salesControl);
             panel2.Visible = true;
+
+            // Log sales access
+            try
+            {
+                GlobalLogger.LogInfo("Sales", $"{LoggedInUsername} opened Sales report");
+            }
+            catch { }
         }
 
-        // ClearPanel2 - DON'T dispose the tab control, just remove it from view
         private void ClearPanel2()
         {
-            // Dispose existing controls (but NOT the tab control)
-            if (dashboardControl != null && !dashboardControl.IsDisposed)
-            {
-                dashboardControl.Dispose();
-                dashboardControl = null;
-            }
+            if (dashboardControl != null && !dashboardControl.IsDisposed) { dashboardControl.Dispose(); dashboardControl = null; }
+            if (userManagementControl != null && !userManagementControl.IsDisposed) { userManagementControl.Dispose(); userManagementControl = null; }
+            if (gameRatesControl != null && !gameRatesControl.IsDisposed) { gameRatesControl.Dispose(); gameRatesControl = null; }
+            if (gameEquipmentControl != null && !gameEquipmentControl.IsDisposed) { gameEquipmentControl.Dispose(); gameEquipmentControl = null; }
+            if (settingsControl != null && !settingsControl.IsDisposed) { settingsControl.Dispose(); settingsControl = null; }
+            if (activityLogsControl != null && !activityLogsControl.IsDisposed) { activityLogsControl.Dispose(); activityLogsControl = null; }
+            if (salesControl != null && !salesControl.IsDisposed) { salesControl.Dispose(); salesControl = null; }
 
-            if (userManagementControl != null && !userManagementControl.IsDisposed)
-            {
-                userManagementControl.Dispose();
-                userManagementControl = null;
-            }
-
-            if (gameRatesControl != null && !gameRatesControl.IsDisposed)
-            {
-                gameRatesControl.Dispose();
-                gameRatesControl = null;
-            }
-
-            // Dispose GameEquipment control
-            if (gameEquipmentControl != null && !gameEquipmentControl.IsDisposed)
-            {
-                gameEquipmentControl.Dispose();
-                gameEquipmentControl = null;
-            }
-
-            if (settingsControl != null && !settingsControl.IsDisposed)
-            {
-                settingsControl.Dispose();
-                settingsControl = null;
-            }
-
-            if (activityLogsControl != null && !activityLogsControl.IsDisposed)
-            {
-                activityLogsControl.Dispose();
-                activityLogsControl = null;
-            }
-
-            if (salesControl != null && !salesControl.IsDisposed)
-            {
-                salesControl.Dispose();
-                salesControl = null;
-            }
-
-            // Clear the Rates tab (but keep the tab control itself)
-            if (tabRates != null && !tabRates.IsDisposed)
-            {
-                tabRates.Controls.Clear();
-            }
-
-            // Clear Equipment tab (will be reloaded when clicked)
-            if (tabEquipment != null && !tabEquipment.IsDisposed)
-            {
-                tabEquipment.Controls.Clear();
-            }
-
-            // Remove the tab control from view but DON'T dispose it
-            if (gameContentPanel != null && !gameContentPanel.IsDisposed)
-            {
-                gameContentPanel.Controls.Clear();
-                gameContentPanel.Dispose();
-                gameContentPanel = null;
-            }
-
-            // Hide the tab control
-            if (gameTabControl != null && !gameTabControl.IsDisposed)
-            {
-                gameTabControl.Visible = false;
-            }
-
-            // Clear panel2
+            if (tabRates != null && !tabRates.IsDisposed) { tabRates.Controls.Clear(); }
+            if (tabEquipment != null && !tabEquipment.IsDisposed) { tabEquipment.Controls.Clear(); }
+            if (gameContentPanel != null && !gameContentPanel.IsDisposed) { gameContentPanel.Controls.Clear(); gameContentPanel.Dispose(); gameContentPanel = null; }
+            if (gameTabControl != null && !gameTabControl.IsDisposed) { gameTabControl.Visible = false; }
             panel2.Controls.Clear();
         }
 
         // ==============================================
-        // MENU LABELS YELLOW COLOR SETUP
+        // MENU STYLING METHODS
         // ==============================================
 
         private void SetMenuLabelsToYellow()
         {
             Color yellowColor = Color.FromArgb(228, 186, 94);
+            Label[] menuLabels = { dash, label1, label2, label3, salesBtn };
 
-            if (dash != null)
+            foreach (var label in menuLabels)
             {
-                dash.ForeColor = yellowColor;
-                originalLabelColors[dash] = new LabelColors { ForeColor = yellowColor, BackColor = dash.BackColor };
-            }
-
-            if (label1 != null)
-            {
-                label1.ForeColor = yellowColor;
-                originalLabelColors[label1] = new LabelColors { ForeColor = yellowColor, BackColor = label1.BackColor };
-            }
-
-            if (label2 != null)
-            {
-                label2.ForeColor = yellowColor;
-                originalLabelColors[label2] = new LabelColors { ForeColor = yellowColor, BackColor = label2.BackColor };
-            }
-
-            if (label3 != null)
-            {
-                label3.ForeColor = yellowColor;
-                originalLabelColors[label3] = new LabelColors { ForeColor = yellowColor, BackColor = label3.BackColor };
-            }
-
-            // Also store Sales label original colors
-            if (salesBtn != null)
-            {
-                originalLabelColors[salesBtn] = new LabelColors
+                if (label != null)
                 {
-                    ForeColor = salesBtn.ForeColor,
-                    BackColor = salesBtn.BackColor
-                };
+                    label.ForeColor = yellowColor;
+                    label.BackColor = Color.Transparent;
+                    // Store the ORIGINAL colors (not the highlighted ones)
+                    if (!originalLabelColors.ContainsKey(label))
+                    {
+                        originalLabelColors[label] = new LabelColors
+                        {
+                            ForeColor = yellowColor,
+                            BackColor = Color.Transparent
+                        };
+                    }
+                }
             }
         }
 
-        // ==============================================
-        // MENU HIGHLIGHTING METHODS
-        // ==============================================
-
         private void HighlightMenuItem(Label clickedLabel)
         {
-            StoreOriginalColors();
-            ResetMenuColors();
+            // Reset all menu items to their ORIGINAL colors (not highlighted state)
+            ResetAllMenuItemsToOriginal();
 
+            // Then highlight only the clicked one
             if (clickedLabel != null)
             {
                 clickedLabel.BackColor = Color.FromArgb(40, 50, 60);
@@ -638,83 +750,31 @@ namespace cms
             }
         }
 
-        private void StoreOriginalColors()
+        private void ResetAllMenuItemsToOriginal()
         {
-            Label[] menuLabels = { dash, label1, label2, label3 };
+            Label[] menuLabels = { dash, label1, label2, label3, salesBtn };
 
             foreach (var label in menuLabels)
             {
-                if (label != null && !originalLabelColors.ContainsKey(label))
+                if (label != null && originalLabelColors.ContainsKey(label))
                 {
-                    originalLabelColors[label] = new LabelColors
-                    {
-                        ForeColor = label.ForeColor,
-                        BackColor = label.BackColor
-                    };
+                    // Always reset to the ORIGINAL colors stored
+                    label.ForeColor = originalLabelColors[label].ForeColor;
+                    label.BackColor = originalLabelColors[label].BackColor;
                 }
             }
         }
 
+        private void StoreOriginalColors()
+        {
+            // This method is kept for compatibility but does nothing
+            // Colors are already stored in SetMenuLabelsToYellow()
+        }
+
         private void ResetMenuColors()
         {
-            Color yellowColor = Color.FromArgb(228, 186, 94);
-            Color defaultBackColor = Color.Transparent;
-
-            if (dash != null)
-            {
-                if (originalLabelColors.ContainsKey(dash))
-                {
-                    dash.ForeColor = originalLabelColors[dash].ForeColor;
-                    dash.BackColor = originalLabelColors[dash].BackColor;
-                }
-                else
-                {
-                    dash.ForeColor = yellowColor;
-                    dash.BackColor = defaultBackColor;
-                }
-            }
-
-            if (label1 != null)
-            {
-                if (originalLabelColors.ContainsKey(label1))
-                {
-                    label1.ForeColor = originalLabelColors[label1].ForeColor;
-                    label1.BackColor = originalLabelColors[label1].BackColor;
-                }
-                else
-                {
-                    label1.ForeColor = yellowColor;
-                    label1.BackColor = defaultBackColor;
-                }
-            }
-
-            if (label2 != null)
-            {
-                if (originalLabelColors.ContainsKey(label2))
-                {
-                    label2.ForeColor = originalLabelColors[label2].ForeColor;
-                    label2.BackColor = originalLabelColors[label2].BackColor;
-                }
-                else
-                {
-                    label2.ForeColor = yellowColor;
-                    label2.BackColor = defaultBackColor;
-                }
-            }
-
-            if (label3 != null)
-            {
-                if (originalLabelColors.ContainsKey(label3))
-                {
-                    label3.ForeColor = originalLabelColors[label3].ForeColor;
-                    label3.BackColor = originalLabelColors[label3].BackColor;
-                }
-                else
-                {
-                    label3.ForeColor = yellowColor;
-                    label3.BackColor = defaultBackColor;
-                }
-            }
+            // This method is kept for backward compatibility
+            ResetAllMenuItemsToOriginal();
         }
 
         // ==============================================
@@ -725,8 +785,13 @@ namespace cms
         {
             if (sender is Label label)
             {
-                if (label.BackColor != Color.FromArgb(40, 50, 60))
+                // Check if this label is currently highlighted (has dark background)
+                bool isHighlighted = (label.BackColor == Color.FromArgb(40, 50, 60));
+
+                // Only apply hover effect if this label is NOT the currently highlighted one
+                if (!isHighlighted)
                 {
+                    // Store original colors if not already stored (should already be stored)
                     if (!originalLabelColors.ContainsKey(label))
                     {
                         originalLabelColors[label] = new LabelColors
@@ -735,7 +800,6 @@ namespace cms
                             BackColor = label.BackColor
                         };
                     }
-
                     label.ForeColor = Color.White;
                     label.BackColor = Color.FromArgb(60, 70, 80);
                 }
@@ -746,7 +810,11 @@ namespace cms
         {
             if (sender is Label label)
             {
-                if (label.BackColor != Color.FromArgb(40, 50, 60))
+                // Check if this label is currently highlighted (has dark background)
+                bool isHighlighted = (label.BackColor == Color.FromArgb(40, 50, 60));
+
+                // Only revert if this label is NOT the currently highlighted one
+                if (!isHighlighted)
                 {
                     if (originalLabelColors.ContainsKey(label))
                     {
@@ -762,98 +830,27 @@ namespace cms
             }
         }
 
-        // ⭐ UPDATED - Sales Label Hover Enter (now changes to WHITE text like others)
-        private void SalesLabel_MouseEnter(object sender, EventArgs e)
-        {
-            if (sender is Label label)
-            {
-                if (!originalLabelColors.ContainsKey(label))
-                {
-                    originalLabelColors[label] = new LabelColors
-                    {
-                        ForeColor = label.ForeColor,
-                        BackColor = label.BackColor
-                    };
-                }
-
-                // Apply hover effect - WHITE text like other menu items
-                label.ForeColor = Color.White;
-                label.BackColor = Color.FromArgb(60, 70, 80);
-            }
-        }
-
-        // ⭐ UPDATED - Sales Label Hover Leave (restores original color)
-        private void SalesLabel_MouseLeave(object sender, EventArgs e)
-        {
-            if (sender is Label label)
-            {
-                if (originalLabelColors.ContainsKey(label))
-                {
-                    // Restore original colors
-                    label.ForeColor = originalLabelColors[label].ForeColor;
-                    label.BackColor = originalLabelColors[label].BackColor;
-                }
-                else
-                {
-                    // Default restore (yellow)
-                    label.ForeColor = Color.FromArgb(228, 186, 94);
-                    label.BackColor = Color.Transparent;
-                }
-            }
-        }
-
-        private void SignOut_MouseEnter(object sender, EventArgs e)
-        {
-            if (sender is Label label)
-            {
-                label.ForeColor = Color.Red;
-            }
-        }
-
-        private void SignOut_MouseLeave(object sender, EventArgs e)
-        {
-            if (sender is Label label)
-            {
-                label.ForeColor = Color.FromArgb(40, 41, 34);
-            }
-        }
-
-        private void Settings_MouseEnter(object sender, EventArgs e)
-        {
-            if (sender is Label label)
-            {
-                label.ForeColor = Color.Blue;
-            }
-        }
-
-        private void Settings_MouseLeave(object sender, EventArgs e)
-        {
-            if (sender is Label label)
-            {
-                label.ForeColor = Color.FromArgb(40, 41, 34);
-            }
-        }
-
         // ==============================================
         // FORM EVENT HANDLERS
         // ==============================================
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (isSigningOut)
-            {
-                return;
-            }
+            if (isSigningOut) return;
 
             if (e.CloseReason == CloseReason.UserClosing)
             {
                 DialogResult result = MessageBox.Show("Do you want to exit the application?",
-                    "Exit Application",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+                    "Exit Application", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (result == DialogResult.Yes)
                 {
+                    // Log application exit
+                    try
+                    {
+                        GlobalLogger.LogInfo("System", $"Application closed by {LoggedInUsername}");
+                    }
+                    catch { }
                     Application.Exit();
                 }
                 else
@@ -865,39 +862,129 @@ namespace cms
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            // Your existing Form1_Load code
+            // Reposition icons when form loads
+            RepositionTopIcons();
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            // Reposition icons when form is resized
+            RepositionTopIcons();
         }
 
         private void date_Click(object sender, EventArgs e)
         {
             DateTime currentDate = DateTime.Now;
             string formattedDate = currentDate.ToString("dddd, MMMM dd, yyyy");
-
             MessageBox.Show($"Current date and time:\n{formattedDate}\n{currentDate.ToString("hh:mm:ss tt")}",
-                            "Date Information",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Information);
-
-            if (sender is Label dateLabel)
-            {
-                dateLabel.Text = formattedDate;
-                dateLabel.ForeColor = Color.Blue;
-            }
+                            "Date Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void label8_Click(object sender, EventArgs e)
-        {
-            // Your existing label8_Click code
-        }
+        private void label8_Click(object sender, EventArgs e) { }
 
         private void salesBtn_Click(object sender, EventArgs e)
         {
             ShowSales();
+            HighlightMenuItem(salesBtn);
+            salesBtn.Refresh();
+
+            // Log sales access
+            try
+            {
+                GlobalLogger.LogInfo("Sales", $"{LoggedInUsername} opened Sales report");
+            }
+            catch { }
         }
 
-        private void panel2_Paint(object sender, PaintEventArgs e)
-        {
+        private void panel2_Paint(object sender, PaintEventArgs e) { }
 
+        // ==============================================
+        // PASSWORD VALIDATION METHODS
+        // ==============================================
+
+        /// <summary>
+        /// Validates a password against the current security settings
+        /// </summary>
+        /// <param name="password">The password to validate</param>
+        /// <returns>True if password meets requirements, false otherwise</returns>
+        public bool ValidatePassword(string password)
+        {
+            try
+            {
+                // Create a temporary settings instance to get current policies
+                SETTINGS tempSettings = new SETTINGS();
+                return tempSettings.ValidatePassword(password);
+            }
+            catch (Exception ex)
+            {
+                GlobalLogger.LogError("PasswordValidation", ex.Message, "Error validating password");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the current password requirements as a formatted string
+        /// </summary>
+        /// <returns>Password requirements string</returns>
+        public string GetPasswordRequirements()
+        {
+            try
+            {
+                SETTINGS tempSettings = new SETTINGS();
+                return tempSettings.GetPasswordRequirements();
+            }
+            catch (Exception ex)
+            {
+                GlobalLogger.LogError("PasswordValidation", ex.Message, "Error getting password requirements");
+                return "Minimum 8 characters, at least one uppercase, one number, and one special character";
+            }
+        }
+
+        /// <summary>
+        /// Checks password strength and returns detailed feedback
+        /// </summary>
+        /// <param name="password">The password to check</param>
+        /// <returns>Password strength feedback string</returns>
+        public string CheckPasswordStrength(string password)
+        {
+            SETTINGS tempSettings = new SETTINGS();
+            var settings = tempSettings.GetCurrentSecuritySettings();
+            List<string> issues = new List<string>();
+
+            if (password.Length < settings.MinPasswordLength)
+                issues.Add($"At least {settings.MinPasswordLength} characters");
+
+            if (settings.RequireUppercase && !password.Any(char.IsUpper))
+                issues.Add("At least one uppercase letter");
+
+            if (settings.RequireNumber && !password.Any(char.IsDigit))
+                issues.Add("At least one number");
+
+            if (settings.RequireSpecialChar && !password.Any(ch => !char.IsLetterOrDigit(ch)))
+                issues.Add("At least one special character (!@#$%^&*)");
+
+            if (issues.Count == 0)
+                return "✓ Strong password!";
+            else
+                return $"Password requirements: {string.Join(", ", issues)}";
+        }
+
+        /// <summary>
+        /// Use this method when creating or updating a user's password
+        /// </summary>
+        public bool IsPasswordValid(string password, out string errorMessage)
+        {
+            if (ValidatePassword(password))
+            {
+                errorMessage = "";
+                return true;
+            }
+            else
+            {
+                errorMessage = $"Password does not meet requirements: {GetPasswordRequirements()}";
+                return false;
+            }
         }
     }
 }

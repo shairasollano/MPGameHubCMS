@@ -109,7 +109,7 @@
             // 
             this.lblChange.AutoSize = true;
             this.lblChange.Font = new System.Drawing.Font("Nirmala Text", 10F);
-            this.lblChange.ForeColor = System.Drawing.Color.Red;
+            this.lblChange.ForeColor = System.Drawing.Color.Crimson;
             this.lblChange.Location = new System.Drawing.Point(559, 153);
             this.lblChange.Name = "lblChange";
             this.lblChange.Size = new System.Drawing.Size(100, 28);
@@ -163,7 +163,7 @@
             // 
             // btnConfirmPayment
             // 
-            this.btnConfirmPayment.BackColor = System.Drawing.Color.LimeGreen;
+            this.btnConfirmPayment.BackColor = System.Drawing.Color.Goldenrod;
             this.btnConfirmPayment.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnConfirmPayment.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnConfirmPayment.Location = new System.Drawing.Point(438, 373);
@@ -230,7 +230,7 @@
             // 
             // btnPreviewReceipt
             // 
-            this.btnPreviewReceipt.BackColor = System.Drawing.Color.SkyBlue;
+            this.btnPreviewReceipt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(89)))), ((int)(((byte)(91)))), ((int)(((byte)(86)))));
             this.btnPreviewReceipt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPreviewReceipt.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnPreviewReceipt.Location = new System.Drawing.Point(438, 508);
@@ -253,7 +253,7 @@
             // 
             // btnApplyDiscount
             // 
-            this.btnApplyDiscount.BackColor = System.Drawing.Color.Gold;
+            this.btnApplyDiscount.BackColor = System.Drawing.Color.Goldenrod;
             this.btnApplyDiscount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnApplyDiscount.Font = new System.Drawing.Font("Nirmala Text", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnApplyDiscount.Location = new System.Drawing.Point(217, 425);

@@ -359,7 +359,7 @@
             // 
             // btnProceedPayment
             // 
-            this.btnProceedPayment.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(162)))), ((int)(((byte)(166)))));
+            this.btnProceedPayment.BackColor = System.Drawing.Color.Goldenrod;
             this.btnProceedPayment.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnProceedPayment.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold);
             this.btnProceedPayment.Location = new System.Drawing.Point(478, 650);
@@ -372,7 +372,7 @@
             // 
             // btnRemoveGame
             // 
-            this.btnRemoveGame.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(206)))), ((int)(((byte)(59)))), ((int)(((byte)(114)))));
+            this.btnRemoveGame.BackColor = System.Drawing.Color.Crimson;
             this.btnRemoveGame.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnRemoveGame.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
             this.btnRemoveGame.Location = new System.Drawing.Point(643, 585);
@@ -503,7 +503,7 @@
             // 
             // btnBackspace
             // 
-            this.btnBackspace.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(206)))), ((int)(((byte)(59)))), ((int)(((byte)(114)))));
+            this.btnBackspace.BackColor = System.Drawing.Color.Crimson;
             this.btnBackspace.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnBackspace.Font = new System.Drawing.Font("Mongolian Baiti", 16F);
             this.btnBackspace.Location = new System.Drawing.Point(585, 480);
@@ -527,7 +527,7 @@
             // 
             // btnEnter
             // 
-            this.btnEnter.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(162)))), ((int)(((byte)(166)))));
+            this.btnEnter.BackColor = System.Drawing.Color.Goldenrod;
             this.btnEnter.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEnter.Font = new System.Drawing.Font("Nirmala Text", 9F);
             this.btnEnter.Location = new System.Drawing.Point(692, 482);
@@ -552,7 +552,7 @@
             // 
             // btnClearCashierForm
             // 
-            this.btnClearCashierForm.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(233)))), ((int)(((byte)(190)))), ((int)(((byte)(95)))));
+            this.btnClearCashierForm.BackColor = System.Drawing.Color.Silver;
             this.btnClearCashierForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClearCashierForm.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
             this.btnClearCashierForm.Location = new System.Drawing.Point(478, 585);

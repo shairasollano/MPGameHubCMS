@@ -27,8 +27,9 @@ namespace cms
         private List<GameType> gameTypesList;
         private Dictionary<int, byte[]> _imageCache;
 
-        // Current user (you should set this from your login system)
-        private string currentUser = "admin";
+        // Current user - will be set from login
+        private string currentUser = "";
+        private string currentUserRole = "";
 
         // Database connection string for XAMPP MySQL
         private string connectionString = "Server=localhost;Database=matchpoint_db;Uid=root;Pwd=;";
@@ -55,8 +56,6 @@ namespace cms
             public int Id { get; set; }
             public string CourtName { get; set; }
             public string Description { get; set; }
-
-            // For compatibility with UI
             public string Name => CourtName;
         }
 
@@ -65,8 +64,6 @@ namespace cms
             public int Id { get; set; }
             public string GameName { get; set; }
             public string Description { get; set; }
-
-            // For compatibility with UI
             public string Name => GameName;
         }
 
@@ -103,8 +100,33 @@ namespace cms
             gameTypesList = new List<GameType>();
             _imageCache = new Dictionary<int, byte[]>();
 
-            // Style buttons after they are created by InitializeComponent
+            // Get current user from GlobalLogger if available
+            if (!string.IsNullOrEmpty(GlobalLogger.CurrentUsername))
+            {
+                currentUser = GlobalLogger.CurrentUsername;
+                currentUserRole = GlobalLogger.CurrentUserRole;
+            }
+            else
+            {
+                currentUser = "System";
+                currentUserRole = "ADMIN";
+            }
+
             this.Load += GameRates_Load;
+        }
+
+        // Method to set current user (called from Form1)
+        public void SetCurrentUser(string username, string role)
+        {
+            currentUser = username;
+            currentUserRole = role;
+
+            // Log that user accessed GameRates
+            try
+            {
+                GlobalLogger.LogInfo("GameRates", $"User {username} ({role}) opened Game Rates module");
+            }
+            catch { }
         }
 
         private void GameRates_Load(object sender, EventArgs e)
@@ -122,7 +144,10 @@ namespace cms
             // Log that GameRates module was opened
             try
             {
-                Activitylogs.Instance.AddLogEntry(currentUser, "Module Opened", "Game Rates management module was opened", "Info", "GameRates");
+                if (!string.IsNullOrEmpty(currentUser))
+                {
+                    Activitylogs.Instance?.AddLogEntry(currentUser, "Module Opened", "Game Rates management module was opened", "Info", "GameRates");
+                }
             }
             catch { }
         }
@@ -163,7 +188,7 @@ namespace cms
             {
                 try
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Database initialization error");
+                    GlobalLogger.LogError("GameRates", ex.Message, "Database initialization error");
                 }
                 catch { }
                 MessageBox.Show($"Database initialization error: {ex.Message}\n\nUsing default sample data.",
@@ -200,7 +225,7 @@ namespace cms
             {
                 connection.Open();
 
-                // Create court_types table with your structure
+                // Create court_types table
                 string createCourtTypesTable = @"
                     CREATE TABLE IF NOT EXISTS court_types (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -211,7 +236,7 @@ namespace cms
                 MySqlCommand cmd1 = new MySqlCommand(createCourtTypesTable, connection);
                 cmd1.ExecuteNonQuery();
 
-                // Create game_types table with your structure
+                // Create game_types table
                 string createGameTypesTable = @"
                     CREATE TABLE IF NOT EXISTS game_types (
                         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -234,7 +259,7 @@ namespace cms
 
                 if (tableExists == 0)
                 {
-                    // Create game_rates table with your structure
+                    // Create game_rates table
                     string createGameRatesTable = @"
                         CREATE TABLE game_rates (
                             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -255,7 +280,7 @@ namespace cms
                 }
                 else
                 {
-                    // Check if image column exists in game_rates table
+                    // Check if image column exists
                     string checkColumnQuery = @"
                         SELECT COUNT(*) 
                         FROM information_schema.columns 
@@ -301,7 +326,7 @@ namespace cms
 
                 try
                 {
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default court types were created", "Info", "GameRates");
+                    GlobalLogger.LogInfo("GameRates", "Default court types were created");
                 }
                 catch { }
             }
@@ -325,7 +350,7 @@ namespace cms
 
                 try
                 {
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game types were created", "Info", "GameRates");
+                    GlobalLogger.LogInfo("GameRates", "Default game types were created");
                 }
                 catch { }
             }
@@ -349,7 +374,7 @@ namespace cms
 
                 try
                 {
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Default Data", "Default game rates were created", "Info", "GameRates");
+                    GlobalLogger.LogInfo("GameRates", "Default game rates were created");
                 }
                 catch { }
             }
@@ -403,7 +428,7 @@ namespace cms
 
                 try
                 {
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Data Loaded", $"Loaded {gameRates.Count} game rates from database", "Info", "GameRates");
+                    GlobalLogger.LogInfo("GameRates", $"Loaded {gameRates.Count} game rates from database");
                 }
                 catch { }
             }
@@ -411,7 +436,7 @@ namespace cms
             {
                 try
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading data from database");
+                    GlobalLogger.LogError("GameRates", ex.Message, "Error loading data from database");
                 }
                 catch { }
                 MessageBox.Show($"Error loading data from database: {ex.Message}\nUsing sample data instead.",
@@ -487,7 +512,7 @@ namespace cms
             {
                 try
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error loading game rates");
+                    GlobalLogger.LogError("GameRates", ex.Message, "Error loading game rates");
                 }
                 catch { }
                 MessageBox.Show($"Error loading game rates: {ex.Message}\nUsing sample data.",
@@ -669,14 +694,12 @@ namespace cms
                 Tag = court
             };
 
-            // Modern card styling
             card.Paint += (s, e) =>
             {
                 using (Pen pen = new Pen(Color.FromArgb(229, 231, 235), 1))
                 {
                     e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
                 }
-
                 using (Pen shadowPen = new Pen(Color.FromArgb(20, 0, 0, 0), 1))
                 {
                     e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
@@ -715,7 +738,6 @@ namespace cms
                 FlatAppearance = { BorderSize = 0 }
             };
 
-            // Hover effect
             btnDelete.MouseEnter += (s, e) => btnDelete.BackColor = ControlPaint.Light(dangerColor, 0.2f);
             btnDelete.MouseLeave += (s, e) => btnDelete.BackColor = dangerColor;
             btnDelete.Click += BtnDeleteCourt_Click;
@@ -866,7 +888,6 @@ namespace cms
                 {
                     e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
                 }
-
                 using (Pen shadowPen = new Pen(Color.FromArgb(30, 0, 0, 0), 2))
                 {
                     e.Graphics.DrawLine(shadowPen, 2, card.Height - 1, card.Width - 3, card.Height - 1);
@@ -1022,7 +1043,7 @@ namespace cms
             {
                 try
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error updating statistics");
+                    GlobalLogger.LogError("GameRates", ex.Message, "Error updating statistics");
                 }
                 catch { }
             }
@@ -1054,7 +1075,7 @@ namespace cms
 
                 try
                 {
-                    Activitylogs.Instance.LogGameRateActivity(currentUser, "Status Changed", rate.Name, $"Changed from {oldStatus} to {newStatus}");
+                    GlobalLogger.LogInfo("GameRates", $"Game rate '{rate.Name}' status changed from {oldStatus} to {newStatus}");
                 }
                 catch { }
 
@@ -1065,7 +1086,7 @@ namespace cms
             {
                 try
                 {
-                    Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error changing status for {rate.Name}");
+                    GlobalLogger.LogError("GameRates", ex.Message, $"Error changing status for {rate.Name}");
                 }
                 catch { }
                 MessageBox.Show($"Error updating status: {ex.Message}",
@@ -1411,7 +1432,7 @@ namespace cms
 
                         try
                         {
-                            Activitylogs.Instance.LogGameRateActivity(currentUser, "Updated", rate.Name, changes);
+                            GlobalLogger.LogInfo("GameRates", $"Game rate '{rate.Name}' updated: {changes}");
                         }
                         catch { }
 
@@ -1424,7 +1445,7 @@ namespace cms
                     {
                         try
                         {
-                            Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error updating {rate.Name}");
+                            GlobalLogger.LogError("GameRates", ex.Message, $"Error updating {rate.Name}");
                         }
                         catch { }
                         MessageBox.Show($"Error updating database: {ex.Message}",
@@ -1457,7 +1478,7 @@ namespace cms
 
                             try
                             {
-                                Activitylogs.Instance.LogGameRateActivity(currentUser, "Deleted", deletedName);
+                                GlobalLogger.LogInfo("GameRates", $"Game rate '{deletedName}' was deleted");
                             }
                             catch { }
 
@@ -1469,7 +1490,7 @@ namespace cms
                         {
                             try
                             {
-                                Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting {rate.Name}");
+                                GlobalLogger.LogError("GameRates", ex.Message, $"Error deleting {rate.Name}");
                             }
                             catch { }
                             MessageBox.Show($"Error deleting: {ex.Message}",
@@ -1780,8 +1801,7 @@ namespace cms
 
                         try
                         {
-                            Activitylogs.Instance.LogGameRateActivity(currentUser, "Added", txtName.Text.Trim(),
-                                $"Court: {cboCourtType.Text}, Game: {cboGameType.Text}, Rate: ₱{rate}");
+                            GlobalLogger.LogInfo("GameRates", $"New game rate '{txtName.Text.Trim()}' added - Court: {cboCourtType.Text}, Game: {cboGameType.Text}, Rate: ₱{rate}");
                         }
                         catch { }
 
@@ -1794,7 +1814,7 @@ namespace cms
                     {
                         try
                         {
-                            Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, "Error adding new game rate");
+                            GlobalLogger.LogError("GameRates", ex.Message, "Error adding new game rate");
                         }
                         catch { }
                         MessageBox.Show($"Error saving: {ex.Message}",
@@ -1850,7 +1870,7 @@ namespace cms
 
                     try
                     {
-                        Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Deleted", $"Court type '{deletedCourt}' was deleted", "Info", "GameRates");
+                        GlobalLogger.LogInfo("GameRates", $"Court type '{deletedCourt}' was deleted");
                     }
                     catch { }
 
@@ -1861,7 +1881,7 @@ namespace cms
                 {
                     try
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting court type {court.CourtName}");
+                        GlobalLogger.LogError("GameRates", ex.Message, $"Error deleting court type {court.CourtName}");
                     }
                     catch { }
                     MessageBox.Show($"Error deleting: {ex.Message}",
@@ -1904,7 +1924,7 @@ namespace cms
 
                     try
                     {
-                        Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Deleted", $"Game type '{deletedGame}' was deleted", "Info", "GameRates");
+                        GlobalLogger.LogInfo("GameRates", $"Game type '{deletedGame}' was deleted");
                     }
                     catch { }
 
@@ -1915,7 +1935,7 @@ namespace cms
                 {
                     try
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error deleting game type {gameType.GameName}");
+                        GlobalLogger.LogError("GameRates", ex.Message, $"Error deleting game type {gameType.GameName}");
                     }
                     catch { }
                     MessageBox.Show($"Error deleting: {ex.Message}",
@@ -1961,7 +1981,7 @@ namespace cms
 
                     try
                     {
-                        Activitylogs.Instance.AddLogEntry(currentUser, "Court Type Added", $"New court type '{newCourtName}' was added", "Info", "GameRates");
+                        GlobalLogger.LogInfo("GameRates", $"New court type '{newCourtName}' was added");
                     }
                     catch { }
 
@@ -1972,7 +1992,7 @@ namespace cms
                 {
                     try
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding court type {newCourtName}");
+                        GlobalLogger.LogError("GameRates", ex.Message, $"Error adding court type {newCourtName}");
                     }
                     catch { }
                     MessageBox.Show($"Error adding: {ex.Message}",
@@ -2018,7 +2038,7 @@ namespace cms
 
                     try
                     {
-                        Activitylogs.Instance.AddLogEntry(currentUser, "Game Type Added", $"New game type '{newGameName}' was added", "Info", "GameRates");
+                        GlobalLogger.LogInfo("GameRates", $"New game type '{newGameName}' was added");
                     }
                     catch { }
 
@@ -2029,7 +2049,7 @@ namespace cms
                 {
                     try
                     {
-                        Activitylogs.Instance.LogError(currentUser, "GameRates", ex.Message, $"Error adding game type {newGameName}");
+                        GlobalLogger.LogError("GameRates", ex.Message, $"Error adding game type {newGameName}");
                     }
                     catch { }
                     MessageBox.Show($"Error adding: {ex.Message}",
@@ -2051,7 +2071,7 @@ namespace cms
 
                 try
                 {
-                    Activitylogs.Instance.AddLogEntry(currentUser, "Management View", "Opened court and game type management", "Info", "GameRates");
+                    GlobalLogger.LogInfo("GameRates", "Opened court and game type management");
                 }
                 catch { }
             }
