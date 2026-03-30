@@ -199,20 +199,8 @@ namespace KGHCashierPOS
             ButtonStyleHelper.ApplyDurationButtonStyle(btn30min);
             ButtonStyleHelper.ApplyDurationButtonStyle(btn1hour);
 
-            // Action buttons
-            ButtonStyleHelper.ApplyActionButtonStyle(btnProceedPayment, Color.FromArgb(76, 175, 80));
-            ButtonStyleHelper.ApplyActionButtonStyle(btnRemoveGame, Color.FromArgb(244, 67, 54));
-            ButtonStyleHelper.ApplyActionButtonStyle(btnClearCashierForm, Color.FromArgb(255, 152, 0));
+           
 
-            // Sign out button
-            if (btnSignOut != null)
-            {
-                btnSignOut.BackColor = Color.FromArgb(220, 53, 69);
-                btnSignOut.ForeColor = Color.White;
-                btnSignOut.FlatStyle = FlatStyle.Flat;
-                btnSignOut.FlatAppearance.BorderSize = 0;
-                btnSignOut.Cursor = Cursors.Hand;
-            }
         }
 
         private void InitializeRichTextBox()

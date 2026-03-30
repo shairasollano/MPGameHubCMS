@@ -150,7 +150,7 @@
             // 
             this.lblCashierName.AutoSize = true;
             this.lblCashierName.ForeColor = System.Drawing.SystemColors.Control;
-            this.lblCashierName.Location = new System.Drawing.Point(1028, 48);
+            this.lblCashierName.Location = new System.Drawing.Point(1052, 41);
             this.lblCashierName.Name = "lblCashierName";
             this.lblCashierName.Size = new System.Drawing.Size(58, 20);
             this.lblCashierName.TabIndex = 35;
@@ -161,7 +161,7 @@
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Nirmala Text", 8F, System.Drawing.FontStyle.Bold);
             this.label2.ForeColor = System.Drawing.SystemColors.Control;
-            this.label2.Location = new System.Drawing.Point(917, 46);
+            this.label2.Location = new System.Drawing.Point(957, 39);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(114, 21);
             this.label2.TabIndex = 7;
@@ -361,7 +361,7 @@
             // 
             this.btnProceedPayment.BackColor = System.Drawing.Color.Goldenrod;
             this.btnProceedPayment.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnProceedPayment.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold);
+            this.btnProceedPayment.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnProceedPayment.Location = new System.Drawing.Point(478, 650);
             this.btnProceedPayment.Name = "btnProceedPayment";
             this.btnProceedPayment.Size = new System.Drawing.Size(315, 64);
@@ -374,7 +374,7 @@
             // 
             this.btnRemoveGame.BackColor = System.Drawing.Color.Crimson;
             this.btnRemoveGame.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnRemoveGame.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
+            this.btnRemoveGame.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnRemoveGame.Location = new System.Drawing.Point(643, 585);
             this.btnRemoveGame.Name = "btnRemoveGame";
             this.btnRemoveGame.Size = new System.Drawing.Size(150, 59);
@@ -386,10 +386,10 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Nirmala UI", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Font = new System.Drawing.Font("Nirmala UI", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.Location = new System.Drawing.Point(471, 101);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(285, 38);
+            this.label6.Size = new System.Drawing.Size(326, 45);
             this.label6.TabIndex = 18;
             this.label6.Text = "Enter Order Number";
             // 
@@ -554,7 +554,7 @@
             // 
             this.btnClearCashierForm.BackColor = System.Drawing.Color.Silver;
             this.btnClearCashierForm.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClearCashierForm.Font = new System.Drawing.Font("Microsoft Sans Serif", 5F, System.Drawing.FontStyle.Bold);
+            this.btnClearCashierForm.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnClearCashierForm.Location = new System.Drawing.Point(478, 585);
             this.btnClearCashierForm.Name = "btnClearCashierForm";
             this.btnClearCashierForm.Size = new System.Drawing.Size(159, 59);

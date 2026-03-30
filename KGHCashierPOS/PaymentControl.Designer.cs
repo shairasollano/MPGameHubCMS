@@ -97,44 +97,44 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.ForeColor = System.Drawing.SystemColors.Control;
             this.label1.Location = new System.Drawing.Point(478, 69);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(146, 28);
+            this.label1.Size = new System.Drawing.Size(175, 32);
             this.label1.TabIndex = 73;
             this.label1.Text = "Cash Received";
             // 
             // lblChange
             // 
             this.lblChange.AutoSize = true;
-            this.lblChange.Font = new System.Drawing.Font("Nirmala Text", 10F);
+            this.lblChange.Font = new System.Drawing.Font("Nirmala Text", 11F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblChange.ForeColor = System.Drawing.Color.Crimson;
             this.lblChange.Location = new System.Drawing.Point(559, 153);
             this.lblChange.Name = "lblChange";
-            this.lblChange.Size = new System.Drawing.Size(100, 28);
+            this.lblChange.Size = new System.Drawing.Size(110, 30);
             this.lblChange.TabIndex = 74;
             this.lblChange.Text = "lblChange";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Font = new System.Drawing.Font("Nirmala Text", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label2.ForeColor = System.Drawing.SystemColors.Control;
             this.label2.Location = new System.Drawing.Point(478, 153);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(93, 28);
+            this.label2.Size = new System.Drawing.Size(103, 30);
             this.label2.TabIndex = 75;
             this.label2.Text = "Change: ";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Nirmala Text", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.Font = new System.Drawing.Font("Nirmala Text", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.SystemColors.Control;
             this.label3.Location = new System.Drawing.Point(487, 221);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(251, 28);
+            this.label3.Size = new System.Drawing.Size(302, 32);
             this.label3.TabIndex = 76;
             this.label3.Text = "Gcash Reference Number";
             // 
@@ -152,7 +152,7 @@
             // 
             this.btnCancel.BackColor = System.Drawing.Color.Crimson;
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCancel.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCancel.Font = new System.Drawing.Font("Nirmala Text", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCancel.Location = new System.Drawing.Point(438, 440);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(277, 61);
@@ -165,7 +165,7 @@
             // 
             this.btnConfirmPayment.BackColor = System.Drawing.Color.Goldenrod;
             this.btnConfirmPayment.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnConfirmPayment.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnConfirmPayment.Font = new System.Drawing.Font("Nirmala Text", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnConfirmPayment.Location = new System.Drawing.Point(438, 373);
             this.btnConfirmPayment.Name = "btnConfirmPayment";
             this.btnConfirmPayment.Size = new System.Drawing.Size(277, 61);
@@ -230,7 +230,7 @@
             // 
             // btnPreviewReceipt
             // 
-            this.btnPreviewReceipt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(89)))), ((int)(((byte)(91)))), ((int)(((byte)(86)))));
+            this.btnPreviewReceipt.BackColor = System.Drawing.Color.Silver;
             this.btnPreviewReceipt.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPreviewReceipt.Font = new System.Drawing.Font("Nirmala Text", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnPreviewReceipt.Location = new System.Drawing.Point(438, 508);
@@ -256,9 +256,9 @@
             this.btnApplyDiscount.BackColor = System.Drawing.Color.Goldenrod;
             this.btnApplyDiscount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnApplyDiscount.Font = new System.Drawing.Font("Nirmala Text", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnApplyDiscount.Location = new System.Drawing.Point(217, 425);
+            this.btnApplyDiscount.Location = new System.Drawing.Point(212, 425);
             this.btnApplyDiscount.Name = "btnApplyDiscount";
-            this.btnApplyDiscount.Size = new System.Drawing.Size(128, 40);
+            this.btnApplyDiscount.Size = new System.Drawing.Size(128, 29);
             this.btnApplyDiscount.TabIndex = 110;
             this.btnApplyDiscount.Text = "Apply Discount";
             this.btnApplyDiscount.UseVisualStyleBackColor = false;
